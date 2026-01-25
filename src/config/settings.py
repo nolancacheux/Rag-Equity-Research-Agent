@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     azure_openai_endpoint: str | None = None
     azure_openai_api_key: SecretStr | None = None
     azure_openai_deployment: str | None = None
+    azure_openai_embedding_deployment: str = "text-embedding-ada-002"
+    azure_openai_api_version: str = "2024-02-01"
 
     @model_validator(mode="after")
     def validate_llm_config(self) -> "Settings":
