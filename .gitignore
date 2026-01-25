@@ -1,5 +1,6 @@
-# Documentation (except README)
-*.md
+# Documentation (keep docs/ folder and README)
+!docs/
+!docs/*.md
 !README.md
 
 # Environment
