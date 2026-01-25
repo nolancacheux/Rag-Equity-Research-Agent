@@ -150,6 +150,38 @@ AZURE_OPENAI_ENDPOINT=https://...         # Enterprise
 TELEGRAM_BOT_TOKEN=123456789:ABC...
 ```
 
+### API Authentication (Production)
+
+For production deployments, secure your API with an API key:
+
+```bash
+# 1. Generate a secret key
+openssl rand -hex 32
+# Output: 1e6cbdd9414027a8c9d0ef3c98296d85a885ed7b8db79e7827ff555f552fc117
+
+# 2. Add to your .env file
+API_SECRET_KEY=your-generated-key-here
+
+# 3. All API calls now require the X-API-Key header
+curl -H "X-API-Key: your-key" https://your-api.azurecontainerapps.io/quote/NVDA
+```
+
+**Important:** If `API_SECRET_KEY` is set:
+- `/analyze`, `/quote`, `/compare` require `X-API-Key` header
+- `/health` remains public (for monitoring)
+- The Telegram bot automatically sends the key if `API_SECRET_KEY` is configured
+
+**Azure deployment:** Add the secret to both Container Apps:
+```bash
+# API
+az containerapp secret set --name your-api --resource-group your-rg --secrets api-secret-key="your-key"
+az containerapp update --name your-api --resource-group your-rg --set-env-vars "API_SECRET_KEY=secretref:api-secret-key"
+
+# Telegram Bot
+az containerapp secret set --name your-bot --resource-group your-rg --secrets api-secret-key="your-key"
+az containerapp update --name your-bot --resource-group your-rg --set-env-vars "API_SECRET_KEY=secretref:api-secret-key"
+```
+
 ## Telegram Bot
 
 Interact with the agent directly from Telegram!
