@@ -12,6 +12,15 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from src.agents import run_research
+from src.api.metrics import (
+    ANALYSIS_DURATION,
+    ANALYSIS_REQUESTS,
+    ERRORS_TOTAL,
+    QUOTE_REQUESTS,
+    REQUEST_LATENCY,
+    REQUESTS_TOTAL,
+    metrics_endpoint,
+)
 from src.api.middleware.auth import verify_api_key
 from src.config import get_settings
 
@@ -118,11 +127,18 @@ class HealthResponse(BaseModel):
 @app.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
     """Health check endpoint."""
+    REQUESTS_TOTAL.labels(method="GET", endpoint="/health", status="200").inc()
     return HealthResponse(
         status="healthy",
         version="0.1.0",
         environment=settings.app_env,
     )
+
+
+@app.get("/metrics")
+async def metrics(request: Request):
+    """Prometheus metrics endpoint."""
+    return await metrics_endpoint(request)
 
 
 @app.post("/analyze", response_model=AnalyzeResponse, dependencies=[Depends(verify_api_key)])
@@ -136,6 +152,9 @@ async def analyze(request: Request, analysis_request: AnalyzeRequest) -> Analyze
     3. Searches recent news
     4. Synthesizes everything into a research report
     """
+    import time
+
+    start_time = time.time()
     try:
         logger.info("analysis_requested", query=analysis_request.query[:100])
 
@@ -143,6 +162,13 @@ async def analyze(request: Request, analysis_request: AnalyzeRequest) -> Analyze
             query=analysis_request.query,
             tickers=analysis_request.tickers,
         )
+
+        # Record metrics
+        duration = time.time() - start_time
+        ANALYSIS_DURATION.observe(duration)
+        ANALYSIS_REQUESTS.labels(status="success").inc()
+        REQUESTS_TOTAL.labels(method="POST", endpoint="/analyze", status="200").inc()
+        REQUEST_LATENCY.labels(method="POST", endpoint="/analyze").observe(duration)
 
         return AnalyzeResponse(
             success=True,
@@ -153,6 +179,9 @@ async def analyze(request: Request, analysis_request: AnalyzeRequest) -> Analyze
 
     except Exception as e:
         logger.error("analysis_failed", error=str(e))
+        ANALYSIS_REQUESTS.labels(status="error").inc()
+        ERRORS_TOTAL.labels(type="analysis", endpoint="/analyze").inc()
+        REQUESTS_TOTAL.labels(method="POST", endpoint="/analyze", status="500").inc()
         # Don't leak internal errors in production
         detail = str(e) if not settings.is_production else "Analysis failed"
         raise HTTPException(status_code=500, detail=detail) from None
@@ -165,22 +194,33 @@ async def get_quote(request: Request, ticker: str) -> QuoteResponse:
 
     Returns current price, P/E ratio, market cap, and other metrics.
     """
+    import time
+
     from src.tools import YFinanceTool
 
+    start_time = time.time()
     ticker = ticker.upper()
     if not ticker.isalpha() or len(ticker) > 5:
+        REQUESTS_TOTAL.labels(method="GET", endpoint="/quote", status="400").inc()
         raise HTTPException(status_code=400, detail="Invalid ticker format")
 
     try:
         tool = YFinanceTool()
         quote = tool.get_quote(ticker)
 
+        duration = time.time() - start_time
+        REQUEST_LATENCY.labels(method="GET", endpoint="/quote").observe(duration)
+
         if not quote:
+            QUOTE_REQUESTS.labels(ticker=ticker, status="not_found").inc()
+            REQUESTS_TOTAL.labels(method="GET", endpoint="/quote", status="404").inc()
             return QuoteResponse(
                 success=False,
                 error=f"No data found for {ticker}",
             )
 
+        QUOTE_REQUESTS.labels(ticker=ticker, status="success").inc()
+        REQUESTS_TOTAL.labels(method="GET", endpoint="/quote", status="200").inc()
         return QuoteResponse(
             success=True,
             data=quote.to_dict(),
@@ -188,6 +228,9 @@ async def get_quote(request: Request, ticker: str) -> QuoteResponse:
 
     except Exception as e:
         logger.error("quote_failed", ticker=ticker, error=str(e))
+        QUOTE_REQUESTS.labels(ticker=ticker, status="error").inc()
+        ERRORS_TOTAL.labels(type="quote", endpoint="/quote").inc()
+        REQUESTS_TOTAL.labels(method="GET", endpoint="/quote", status="500").inc()
         return QuoteResponse(
             success=False,
             error=str(e),
