@@ -1,4 +1,4 @@
-# Telegram Bot - Lightweight image
+# Lightweight Telegram Bot Dockerfile
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -6,27 +6,22 @@ WORKDIR /app
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash appuser
 
-# Copy project files
+# Install only bot dependencies (no heavy ML libs)
 COPY pyproject.toml README.md ./
-COPY src/ ./src/
+COPY src/telegram ./src/telegram
+COPY src/config ./src/config
+COPY src/__init__.py ./src/
 
-# Install dependencies (only what's needed for the bot)
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir .
-
-# Set ownership
-RUN chown -R appuser:appuser /app
+# Create minimal requirements for bot
+RUN pip install --no-cache-dir \
+    python-telegram-bot>=21.0 \
+    httpx>=0.27.0 \
+    pydantic>=2.0 \
+    pydantic-settings>=2.0 \
+    python-dotenv>=1.0.0
 
 # Switch to non-root user
 USER appuser
 
-# Environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV APP_ENV=production
-
-# No health check needed - bot uses long polling
-# No port exposed - bot pulls from Telegram API
-
-# Run the bot
+# Run bot
 CMD ["python", "-m", "src.telegram.bot"]
