@@ -82,7 +82,7 @@ output "key_vault_uri" {
 
 output "deploy_commands" {
   description = "Commands to build and deploy"
-  value = <<-EOT
+  value       = <<-EOT
     # Build and push API image
     az acr build --registry ${azurerm_container_registry.main.name} --image ${var.project_name}-api:latest --file Dockerfile.api ..
     

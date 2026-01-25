@@ -162,8 +162,8 @@ resource "azurerm_container_app" "telegram_bot" {
 
   # Container template
   template {
-    min_replicas = 1  # Bot should always run
-    max_replicas = 1  # Single instance to avoid duplicate messages
+    min_replicas = 1 # Bot should always run
+    max_replicas = 1 # Single instance to avoid duplicate messages
 
     container {
       name   = "telegram-bot"

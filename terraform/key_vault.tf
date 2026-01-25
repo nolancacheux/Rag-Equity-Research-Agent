@@ -22,7 +22,7 @@ resource "azurerm_key_vault" "main" {
 
   # Soft delete settings
   soft_delete_retention_days = 7
-  purge_protection_enabled   = false  # Set to true in production
+  purge_protection_enabled   = false # Set to true in production
 
   tags = var.tags
 }
