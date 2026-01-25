@@ -57,7 +57,11 @@ class SynthesizerAgent:
         self._llm = self._create_llm()
 
     def _create_llm(self) -> ChatOpenAI:
-        """Create LLM instance."""
+        """Create LLM instance.
+        
+        Prioritizes Azure OpenAI for production use.
+        Falls back to OpenAI direct if Azure not configured.
+        """
         if self._settings.use_azure_openai:
             from langchain_openai import AzureChatOpenAI
             return AzureChatOpenAI(
@@ -66,12 +70,14 @@ class SynthesizerAgent:
                 deployment_name=self._settings.azure_openai_deployment,
                 temperature=0.3,
             )
-        else:
+        elif self._settings.openai_api_key:
             return ChatOpenAI(
                 api_key=self._settings.openai_api_key.get_secret_value(),
                 model="gpt-4o-mini",
                 temperature=0.3,
             )
+        else:
+            raise RuntimeError("No LLM provider configured")
 
     def _format_context(
         self,

@@ -3,7 +3,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,13 +23,29 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
 
-    # OpenAI
-    openai_api_key: SecretStr = Field(..., description="OpenAI API key")
+    # OpenAI (optional if Azure is configured)
+    openai_api_key: SecretStr | None = None
 
-    # Azure OpenAI (Optional)
+    # Azure OpenAI (recommended for production)
     azure_openai_endpoint: str | None = None
     azure_openai_api_key: SecretStr | None = None
     azure_openai_deployment: str | None = None
+
+    @model_validator(mode="after")
+    def validate_llm_config(self) -> "Settings":
+        """Ensure at least one LLM provider is configured."""
+        has_openai = self.openai_api_key is not None
+        has_azure = (
+            self.azure_openai_endpoint is not None
+            and self.azure_openai_api_key is not None
+            and self.azure_openai_deployment is not None
+        )
+        if not has_openai and not has_azure:
+            raise ValueError(
+                "Either OPENAI_API_KEY or Azure OpenAI (AZURE_OPENAI_ENDPOINT, "
+                "AZURE_OPENAI_API_KEY, AZURE_OPENAI_DEPLOYMENT) must be configured"
+            )
+        return self
 
     # LangSmith (Optional)
     langchain_tracing_v2: bool = False
