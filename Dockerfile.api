@@ -33,7 +33,8 @@ RUN pip install --no-cache-dir \
     httpx>=0.27.0 \
     tenacity>=8.4.0 \
     python-dotenv>=1.0.0 \
-    structlog>=24.0.0
+    structlog>=24.0.0 \
+    prometheus-client>=0.20.0
 
 # Set ownership
 RUN chown -R appuser:appuser /app
