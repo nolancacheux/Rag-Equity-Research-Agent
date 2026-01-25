@@ -3,6 +3,10 @@
 !docs/*.md
 !README.md
 
+# AI Agent Instructions (private)
+claude.md
+CLAUDE.md
+
 # Environment
 .env
 .env.*
