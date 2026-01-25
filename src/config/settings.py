@@ -98,9 +98,8 @@ class Settings(BaseSettings):
     def use_azure_openai(self) -> bool:
         """Check if Azure OpenAI should be used."""
         has_endpoint = bool(self.azure_openai_endpoint)
-        has_key = (
-            self.azure_openai_api_key is not None
-            and bool(self.azure_openai_api_key.get_secret_value())
+        has_key = self.azure_openai_api_key is not None and bool(
+            self.azure_openai_api_key.get_secret_value()
         )
         return has_endpoint and has_key
 

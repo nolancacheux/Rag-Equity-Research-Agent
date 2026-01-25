@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 # Shared API client
 api_client: APIClient | None = None
 
+
 # Conversation states
 class State:
     WAITING_ANALYZE = "waiting_analyze"
@@ -49,6 +50,7 @@ def get_user_lang(user_id: int) -> Language:
 # =============================================================================
 # Command Handlers
 # =============================================================================
+
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /start - show language selection or main menu."""
@@ -103,6 +105,7 @@ async def menu_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 # =============================================================================
 # Callback Query Handlers
 # =============================================================================
+
 
 async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle all callback queries from inline buttons."""
@@ -201,6 +204,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 # Message Handler (natural language + state-based)
 # =============================================================================
 
+
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle free text messages based on state or natural language."""
     if not update.message or not update.effective_user or not api_client:
@@ -232,12 +236,39 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     text_lower = text.lower()
 
     # Detect ticker patterns (1-5 uppercase letters)
-    tickers = re.findall(r'\b([A-Z]{1,5})\b', text.upper())
-    common_words = {"A", "I", "AM", "PM", "VS", "AND", "OR", "THE", "FOR", "WITH", "IT", "IS", "TO", "OF"}
+    tickers = re.findall(r"\b([A-Z]{1,5})\b", text.upper())
+    common_words = {
+        "A",
+        "I",
+        "AM",
+        "PM",
+        "VS",
+        "AND",
+        "OR",
+        "THE",
+        "FOR",
+        "WITH",
+        "IT",
+        "IS",
+        "TO",
+        "OF",
+    }
     tickers = [t for t in tickers if t not in common_words]
 
     # Check for analyze intent
-    analyze_keywords = ["analyze", "analyse", "analysis", "what", "how", "why", "outlook", "situation", "check", "look", "risk"]
+    analyze_keywords = [
+        "analyze",
+        "analyse",
+        "analysis",
+        "what",
+        "how",
+        "why",
+        "outlook",
+        "situation",
+        "check",
+        "look",
+        "risk",
+    ]
     if any(kw in text_lower for kw in analyze_keywords) and tickers:
         await handle_analyze(update, text, lang)
         return
@@ -265,6 +296,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 # Action Handlers
 # =============================================================================
 
+
 async def handle_analyze(update: Update, query: str, lang: Language) -> None:
     """Handle analysis request."""
     if not update.message or not api_client:
@@ -280,8 +312,27 @@ async def handle_analyze(update: Update, query: str, lang: Language) -> None:
     )
 
     # Extract tickers from query
-    tickers = re.findall(r'\b([A-Z]{1,5})\b', query.upper())
-    common_words = {"A", "I", "AM", "PM", "VS", "AND", "OR", "THE", "FOR", "WITH", "SEC", "CEO", "CFO", "IPO", "PE", "EPS", "AI", "USA"}
+    tickers = re.findall(r"\b([A-Z]{1,5})\b", query.upper())
+    common_words = {
+        "A",
+        "I",
+        "AM",
+        "PM",
+        "VS",
+        "AND",
+        "OR",
+        "THE",
+        "FOR",
+        "WITH",
+        "SEC",
+        "CEO",
+        "CFO",
+        "IPO",
+        "PE",
+        "EPS",
+        "AI",
+        "USA",
+    }
     tickers = [t for t in tickers if t not in common_words][:5]
 
     # Run analysis
@@ -304,7 +355,7 @@ async def handle_quote(update: Update, ticker: str, lang: Language) -> None:
         return
 
     ticker = ticker.upper().strip()
-    if not re.match(r'^[A-Z]{1,5}$', ticker):
+    if not re.match(r"^[A-Z]{1,5}$", ticker):
         await update.message.reply_text(
             get_text("quote_error", lang, ticker=ticker),
             reply_markup=back_menu_keyboard(lang),
@@ -329,8 +380,8 @@ async def handle_compare(update: Update, text: str, lang: Language) -> None:
         return
 
     # Parse tickers
-    tickers = re.split(r'[,\s]+', text.upper())
-    tickers = [t.strip() for t in tickers if re.match(r'^[A-Z]{1,5}$', t.strip())]
+    tickers = re.split(r"[,\s]+", text.upper())
+    tickers = [t.strip() for t in tickers if re.match(r"^[A-Z]{1,5}$", t.strip())]
 
     if len(tickers) < 2:
         await update.message.reply_text(
