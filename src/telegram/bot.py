@@ -77,10 +77,12 @@ def create_application(token: str, api_base_url: str | None = None) -> Applicati
     application.add_handler(CallbackQueryHandler(callback_handler))
 
     # Message handler (for free text)
-    application.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND,
-        message_handler,
-    ))
+    application.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            message_handler,
+        )
+    )
 
     # Error handler
     application.add_error_handler(error_handler)
