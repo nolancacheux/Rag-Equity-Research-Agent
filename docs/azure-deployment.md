@@ -2,6 +2,16 @@
 
 > **Recommended**: Use [Terraform](../terraform/README.md) for infrastructure management. This doc covers manual deployment.
 
+## Current Production
+
+| Resource | Value |
+|----------|-------|
+| **API URL** | https://equity-research-agent.thankfulhill-01e4fbbb.swedencentral.azurecontainerapps.io |
+| **Resource Group** | equity-research-rg |
+| **Location** | Sweden Central |
+| **ACR** | equityresearchacrblipenk7.azurecr.io |
+| **Key Vault** | eqres-kv-* |
+
 ## Architecture
 
 ```
