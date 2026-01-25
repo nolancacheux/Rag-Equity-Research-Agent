@@ -74,6 +74,10 @@ class Settings(BaseSettings):
     rate_limit_requests: int = 100
     rate_limit_period: int = 60  # seconds
 
+    # Telegram Bot
+    telegram_bot_token: SecretStr | None = None
+    api_base_url: str = "http://localhost:8000"
+
     # yfinance settings
     yfinance_cache_ttl: int = 300  # 5 minutes for market data
 
@@ -93,7 +97,12 @@ class Settings(BaseSettings):
     @property
     def use_azure_openai(self) -> bool:
         """Check if Azure OpenAI should be used."""
-        return self.azure_openai_endpoint is not None and self.azure_openai_api_key is not None
+        has_endpoint = bool(self.azure_openai_endpoint)
+        has_key = (
+            self.azure_openai_api_key is not None
+            and bool(self.azure_openai_api_key.get_secret_value())
+        )
+        return has_endpoint and has_key
 
 
 @lru_cache
