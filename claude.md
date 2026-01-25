@@ -4,7 +4,7 @@
 
 **Equity Research Agent** - AI-powered financial analysis using LangGraph, RAG, and real-time market data.
 
-**Deployed on Azure Container Apps** with Azure OpenAI for LLM and embeddings.
+Supports multiple LLM providers: Groq (free), Azure OpenAI, OpenAI.
 
 ## Architecture
 
@@ -32,16 +32,7 @@ src/
     ├── cache.py      # Redis caching
     └── rate_limiter.py # Rate limiting
 
-terraform/            # Infrastructure as Code
-├── versions.tf       # Provider config
-├── variables.tf      # Input variables
-├── outputs.tf        # Output values
-├── resource_group.tf # Azure RG
-├── key_vault.tf      # Secrets (Key Vault)
-├── openai.tf         # Azure OpenAI
-├── container_registry.tf # ACR
-├── container_apps.tf # Container Apps
-└── qdrant.tf         # Qdrant instance
+tests/                # Unit tests (98% coverage)
 ```
 
 ## Key Technologies
@@ -49,35 +40,19 @@ terraform/            # Infrastructure as Code
 | Component | Technology | Purpose |
 |-----------|------------|---------|
 | Orchestration | LangGraph | Agent workflow |
-| LLM | Azure OpenAI (gpt-4o-mini) | Analysis & synthesis |
+| LLM | Groq / Azure OpenAI / OpenAI | Analysis and synthesis |
 | Embeddings | Azure OpenAI (ada-002) | 1536-dim vectors |
 | Vector DB | Qdrant | Semantic search |
 | API | FastAPI | REST endpoints |
 | Data | yfinance, SEC EDGAR | Financial data |
-| Hosting | Azure Container Apps | Serverless containers |
+| Cache | Redis | Response caching |
 
-## Infrastructure
+## LLM Configuration
 
-**Deployment**: Terraform (recommended) or Azure CLI
-
-```bash
-# Deploy with Terraform
-cd terraform/
-terraform init && terraform apply
-
-# Or manual (see docs/azure-deployment.md)
-```
-
-## Azure Resources
-
-| Resource | Name | Region |
-|----------|------|--------|
-| Resource Group | equity-research-rg | Sweden Central |
-| Container Apps | equity-research-agent | Sweden Central |
-| Container Registry | cae661ada46dacr | Sweden Central |
-| Azure OpenAI | equity-research-openai | Sweden Central |
-| Key Vault | equity-research-kv-* | Sweden Central |
-| Qdrant | equity-research-qdrant | Sweden Central |
+Priority order (first available is used):
+1. **Groq** (free tier) - `GROQ_API_KEY`
+2. **Azure OpenAI** - `AZURE_OPENAI_*`
+3. **OpenAI** - `OPENAI_API_KEY`
 
 ## Development Commands
 
@@ -85,8 +60,8 @@ terraform init && terraform apply
 # Install dependencies
 pip install -e ".[dev]"
 
-# Run tests
-pytest --cov=src
+# Run tests with coverage
+pytest --cov=src --cov-report=term-missing
 
 # Lint
 ruff check src/
@@ -96,33 +71,52 @@ mypy src/
 
 # Run API locally
 uvicorn src.api.main:app --reload
-
-# Build & deploy to Azure
-az acr build --registry cae661ada46dacr --image equity-research-agent:v6 .
-az containerapp update --name equity-research-agent --resource-group equity-research-rg --image cae661ada46dacr.azurecr.io/equity-research-agent:v6
 ```
 
 ## Environment Variables
 
-### Azure OpenAI (required)
-- `AZURE_OPENAI_ENDPOINT` - Azure OpenAI endpoint
-- `AZURE_OPENAI_API_KEY` - API key
-- `AZURE_OPENAI_DEPLOYMENT` - LLM deployment (gpt-4o-mini)
-- `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` - Embeddings (text-embedding-ada-002)
-- `AZURE_OPENAI_API_VERSION` - API version (2024-02-01)
+### LLM Providers (at least one required)
 
-### Qdrant
-- `QDRANT_URL` - Qdrant endpoint
+```bash
+# Option 1: Groq (FREE)
+GROQ_API_KEY=gsk_...
 
-### Optional
-- `LANGCHAIN_API_KEY` - LangSmith tracing
-- `GROQ_API_KEY` - Alternative LLM (free tier)
+# Option 2: Azure OpenAI
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_API_KEY=your-key
+AZURE_OPENAI_DEPLOYMENT=gpt-4o-mini
+
+# Option 3: OpenAI
+OPENAI_API_KEY=sk-...
+```
+
+### Embeddings (required for RAG)
+
+```bash
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_API_KEY=your-key
+AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-ada-002
+```
+
+### Infrastructure
+
+```bash
+QDRANT_URL=http://localhost:6333
+REDIS_URL=redis://localhost:6379
+```
+
+### Monitoring (optional)
+
+```bash
+LANGCHAIN_API_KEY=your-langsmith-key
+LANGCHAIN_TRACING_V2=true
+```
 
 ## Code Standards
 
 - **Typing**: Full type hints with mypy strict mode
 - **Formatting**: Ruff (line length 100)
-- **Testing**: pytest with 80%+ coverage target
+- **Testing**: pytest with 98% coverage
 - **Commits**: Conventional commits (feat/fix/docs/test/chore)
 
 ## API Endpoints
@@ -132,13 +126,22 @@ az containerapp update --name equity-research-agent --resource-group equity-rese
 | `/health` | GET | - | Health check |
 | `/analyze` | POST | 10/min | Run research analysis |
 | `/quote/{ticker}` | GET | 30/min | Real-time stock quote |
-| `/compare/{tickers}` | GET | 20/min | Compare P/E ratios (max 5)
+| `/compare/{tickers}` | GET | 20/min | Compare P/E ratios (max 5) |
 
-## Live URLs
+## Testing
 
-- **API**: https://equity-research-agent.wonderfulstone-1de7f015.swedencentral.azurecontainerapps.io
-- **Health**: /health
-- **Docs**: /docs
+Current status: **187 tests passing, 98% coverage**
+
+```bash
+# Quick test
+pytest -q
+
+# With coverage report
+pytest --cov=src --cov-report=term-missing
+
+# Single file
+pytest tests/test_tools.py -v
+```
 
 ## Notes
 
@@ -146,4 +149,4 @@ az containerapp update --name equity-research-agent --resource-group equity-rese
 - yfinance has rate limits (~2000 req/hour)
 - Qdrant runs on port 6333 (REST)
 - Azure OpenAI embeddings: 1536 dimensions (ada-002)
-- Cold start: ~10-30s when scaled to zero
+- Groq model: llama-3.3-70b-versatile (free tier)

@@ -78,6 +78,7 @@ class SynthesizerAgent:
                 azure_endpoint=self._settings.azure_openai_endpoint,
                 api_key=self._settings.azure_openai_api_key.get_secret_value(),
                 deployment_name=self._settings.azure_openai_deployment,
+                api_version=self._settings.azure_openai_api_version,
                 temperature=0.3,
             )
         # OpenAI direct
@@ -188,12 +189,15 @@ Format as a professional markdown report."""
 
         try:
             # Call LLM
+            logger.info("synthesis_starting", context_length=len(context))
             messages = [
                 SystemMessage(content=SYNTHESIS_SYSTEM_PROMPT),
                 HumanMessage(content=user_prompt),
             ]
 
+            logger.info("synthesis_calling_llm")
             response = self._llm.invoke(messages)
+            logger.info("synthesis_llm_responded")
             full_report = response.content
 
             # Extract executive summary (first section after title)

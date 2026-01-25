@@ -126,10 +126,6 @@ class YFinanceTool:
         except (ValueError, TypeError):
             return 0
 
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=2, max=10),
-    )
     def get_quote(self, symbol: str) -> StockQuote | None:
         """Get real-time stock quote.
 
@@ -141,13 +137,23 @@ class YFinanceTool:
         """
         cache_key = f"yf:quote:{symbol.upper()}"
 
-        # Check cache first
+        # Check cache first (outside retry logic)
         cached = self._cache.get(cache_key)
         if cached:
             logger.debug("yfinance_quote_cached", symbol=symbol)
             return StockQuote(
                 **{**cached, "timestamp": datetime.fromisoformat(cached["timestamp"])}
             )
+
+        # Fetch with retry
+        return self._fetch_quote_with_retry(symbol, cache_key)
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+    )
+    def _fetch_quote_with_retry(self, symbol: str, cache_key: str) -> StockQuote | None:
+        """Fetch quote from yfinance with retry logic."""
 
         # Rate limit
         yfinance_limiter.acquire_sync("quote")
