@@ -74,7 +74,8 @@ class TestSettings:
         with patch.dict(os.environ, {
             "GROQ_API_KEY": "test-key",
             "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
-            # No API key
+            "AZURE_OPENAI_API_KEY": "",  # Explicitly empty to override .env
+            "AZURE_OPENAI_DEPLOYMENT": "",  # Explicitly empty
         }, clear=True):
             importlib.reload(settings_module)
             settings = settings_module.Settings()

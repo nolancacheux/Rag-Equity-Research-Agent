@@ -34,7 +34,7 @@ class TestStockQuote:
 
         assert result["symbol"] == "NVDA"
         assert result["price"] == 875.50
-        assert result["52_week_high"] == 950.00
+        assert result["fifty_two_week_high"] == 950.00
         assert "timestamp" in result
 
 
