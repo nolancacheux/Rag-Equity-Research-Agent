@@ -216,12 +216,35 @@ Short aliases: `/q` (quote), `/c` (compare), `/a` (analyze)
 
 ## API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/analyze` | POST | Run full research analysis |
-| `/quote/{ticker}` | GET | Get real-time stock quote |
-| `/compare/{tickers}` | GET | Compare P/E ratios (comma-separated) |
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/health` | GET | No | Health check |
+| `/metrics` | GET | No | Prometheus metrics |
+| `/analyze` | POST | Yes | Run full research analysis |
+| `/quote/{ticker}` | GET | Yes | Get real-time stock quote |
+| `/compare/{tickers}` | GET | Yes | Compare P/E ratios (comma-separated) |
+
+## Monitoring
+
+### Prometheus Metrics
+
+The `/metrics` endpoint exposes Prometheus-format metrics:
+
+```bash
+curl http://localhost:8000/metrics
+```
+
+**Available metrics:**
+| Metric | Type | Description |
+|--------|------|-------------|
+| `http_requests_total` | Counter | Total requests by method/endpoint/status |
+| `http_request_duration_seconds` | Histogram | Request latency |
+| `analysis_requests_total` | Counter | Analysis requests by status |
+| `analysis_duration_seconds` | Histogram | Analysis duration |
+| `quote_requests_total` | Counter | Quote requests by ticker/status |
+| `errors_total` | Counter | Errors by type/endpoint |
+
+**Grafana Cloud (free):** Import metrics from your Azure Container App URL.
 
 ### Example: Full Analysis
 
