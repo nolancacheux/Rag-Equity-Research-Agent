@@ -3,148 +3,173 @@
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                   Azure Container Apps                       │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐    │
-│  │   Main App   │   │    Redis     │   │   Qdrant     │    │
-│  │   (FastAPI)  │──▶│   (Cache)    │   │  (Vectors)   │    │
-│  │   :8000      │   │   :6379      │   │  :6333       │    │
-│  └──────────────┘   └──────────────┘   └──────────────┘    │
-│         │                                                   │
-│    ┌────┴────┐                                             │
-│    │ Ingress │◀─── HTTPS                                   │
-│    └─────────┘                                             │
-├─────────────────────────────────────────────────────────────┤
-│  Container Registry │ Log Analytics │ Managed Environment   │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                      Azure Resource Group                         │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   ┌─────────────────────────────────────────────────────────┐    │
+│   │             Azure Container Apps Environment            │    │
+│   ├─────────────────────────────────────────────────────────┤    │
+│   │  ┌──────────────────┐    ┌──────────────────┐          │    │
+│   │  │   Main App       │    │   Qdrant         │          │    │
+│   │  │   (FastAPI)      │───▶│   (Vectors)      │          │    │
+│   │  │   :8000          │    │   :6333          │          │    │
+│   │  └────────┬─────────┘    └──────────────────┘          │    │
+│   │           │                                             │    │
+│   │      ┌────┴────┐                                       │    │
+│   │      │ Ingress │◀─── HTTPS                             │    │
+│   │      └─────────┘                                       │    │
+│   └─────────────────────────────────────────────────────────┘    │
+│                                                                   │
+│   ┌─────────────────────────────────────────────────────────┐    │
+│   │              Azure OpenAI Service                       │    │
+│   │  ┌──────────────────┐    ┌──────────────────┐          │    │
+│   │  │   gpt-4o-mini    │    │   text-embedding │          │    │
+│   │  │   (LLM)          │    │   -ada-002       │          │    │
+│   │  └──────────────────┘    └──────────────────┘          │    │
+│   └─────────────────────────────────────────────────────────┘    │
+│                                                                   │
+│   ┌──────────────────┐    ┌──────────────────┐                   │
+│   │ Container        │    │ Log Analytics    │                   │
+│   │ Registry (ACR)   │    │ Workspace        │                   │
+│   └──────────────────┘    └──────────────────┘                   │
+└──────────────────────────────────────────────────────────────────┘
 ```
+
+## Resources Deployed
+
+| Resource | Purpose | SKU |
+|----------|---------|-----|
+| Container Apps | Host FastAPI app | Consumption |
+| Container Registry | Store Docker images | Basic |
+| Azure OpenAI | LLM + Embeddings | Standard |
+| Container Instance | Qdrant vector DB | Standard |
+| Log Analytics | Centralized logging | Pay-as-you-go |
 
 ## Prerequisites
 
-1. **Azure CLI** installé et connecté
-2. **Docker** installé localement
-3. **Variables d'environnement** :
-   - `OPENAI_API_KEY` (requis)
-   - `LANGSMITH_API_KEY` (optionnel)
+1. **Azure CLI** installed and logged in
+2. **Docker** installed locally
+3. **Azure subscription** with credits (Azure for Students works)
 
-## Quick Deploy
+## Environment Variables
 
-```bash
-# Set required env vars
-export OPENAI_API_KEY="sk-xxx"
-export LANGSMITH_API_KEY="ls-xxx"  # optional
-
-# Deploy
-chmod +x infra/deploy.sh
-./infra/deploy.sh
-```
-
-## Manual Deployment
-
-### 1. Create Resource Group
+### Required for Container App
 
 ```bash
-az group create \
-    --name equity-research-rg \
-    --location westeurope
+AZURE_OPENAI_ENDPOINT=https://equity-research-openai-se.openai.azure.com
+AZURE_OPENAI_API_KEY=xxx
+AZURE_OPENAI_DEPLOYMENT=gpt-4o-mini
+AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-ada-002
+AZURE_OPENAI_API_VERSION=2024-02-01
+QDRANT_URL=http://qdrant-vector-db:6333
 ```
 
-### 2. Deploy Infrastructure
+## Deployment Steps
+
+### 1. Build & Push Docker Image
 
 ```bash
-az deployment group create \
-    --resource-group equity-research-rg \
-    --template-file infra/main.bicep \
-    --parameters \
-        environmentName=dev \
-        openaiApiKey=$OPENAI_API_KEY
+# Login to ACR
+az acr login --name cae661ada46dacr
+
+# Build with ACR Tasks (recommended)
+az acr build \
+  --registry cae661ada46dacr \
+  --image equity-research-agent:v6 \
+  .
 ```
 
-### 3. Build & Push Image
-
-```bash
-# Get registry name
-REGISTRY=$(az acr list --resource-group equity-research-rg --query "[0].loginServer" -o tsv)
-
-# Login to registry
-az acr login --name ${REGISTRY%%.*}
-
-# Build and push
-docker build -t $REGISTRY/equity-research-agent:latest .
-docker push $REGISTRY/equity-research-agent:latest
-```
-
-### 4. Update Container App
+### 2. Update Container App
 
 ```bash
 az containerapp update \
-    --name equity-research-agent \
-    --resource-group equity-research-rg \
-    --image $REGISTRY/equity-research-agent:latest
+  --name equity-research-agent \
+  --resource-group equity-research-rg \
+  --image cae661ada46dacr.azurecr.io/equity-research-agent:v6
 ```
 
-## CI/CD with GitHub Actions
-
-Le workflow `.github/workflows/ci.yml` inclut un job de déploiement Azure.
-
-### Secrets GitHub requis
-
-| Secret | Description |
-|--------|-------------|
-| `AZURE_CREDENTIALS` | Service principal JSON |
-| `OPENAI_API_KEY` | Clé API OpenAI |
-| `LANGSMITH_API_KEY` | Clé API LangSmith (optionnel) |
-
-### Créer le Service Principal
+### 3. Set Environment Variables
 
 ```bash
-az ad sp create-for-rbac \
-    --name "equity-research-agent-sp" \
-    --role contributor \
-    --scopes /subscriptions/{subscription-id}/resourceGroups/equity-research-rg \
-    --sdk-auth
+az containerapp update \
+  --name equity-research-agent \
+  --resource-group equity-research-rg \
+  --set-env-vars \
+    AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-ada-002 \
+    AZURE_OPENAI_API_VERSION=2024-02-01
 ```
 
-Copier le JSON output dans le secret `AZURE_CREDENTIALS`.
+## Endpoints
 
-## Coûts estimés
-
-| Resource | SKU | Coût estimé/mois |
-|----------|-----|------------------|
-| Container Apps | Consumption | ~$10-30 |
-| Container Registry | Basic | ~$5 |
-| Log Analytics | Pay-as-you-go | ~$2-5 |
-
-**Total estimé**: ~$17-40/mois (selon utilisation)
-
-## Scaling
-
-Le déploiement utilise le scaling HTTP automatique :
-- **Min replicas**: 0 (scale to zero)
-- **Max replicas**: 3
-- **Trigger**: 10 requêtes concurrentes
+| Service | URL |
+|---------|-----|
+| API | https://equity-research-agent.wonderfulstone-1de7f015.swedencentral.azurecontainerapps.io |
+| Health | /health |
+| Docs | /docs |
 
 ## Monitoring
 
-### Logs
+### View Logs
 
 ```bash
 az containerapp logs show \
-    --name equity-research-agent \
-    --resource-group equity-research-rg \
-    --follow
+  --name equity-research-agent \
+  --resource-group equity-research-rg \
+  --follow
 ```
 
-### Metrics
+### Check Status
 
-Disponibles dans Azure Portal > Container App > Metrics :
-- Requests per second
-- CPU/Memory usage
-- Response times
+```bash
+az containerapp show \
+  --name equity-research-agent \
+  --resource-group equity-research-rg \
+  --query "{status:properties.runningStatus, replicas:properties.template.scale}"
+```
+
+## Scaling Configuration
+
+```yaml
+scale:
+  minReplicas: 0      # Scale to zero when idle
+  maxReplicas: 3
+  cooldownPeriod: 300  # 5 minutes
+```
+
+## Cost Optimization
+
+1. **Scale to zero**: `minReplicas: 0` saves money when idle
+2. **Consumption plan**: Pay only for actual usage
+3. **Azure for Students**: $100 free credits
+4. **Azure OpenAI**: Included in credits
+
+## Troubleshooting
+
+### Cold Start Issues
+
+With `minReplicas: 0`, first request after idle period may take 10-30s.
+Solutions:
+- Set `minReplicas: 1` for always-on (costs more)
+- Implement health check warmup
+
+### Container Crash Loop
+
+Check logs for errors:
+```bash
+az containerapp logs show --name equity-research-agent --resource-group equity-research-rg --tail 100
+```
+
+### Image Pull Errors
+
+Verify ACR access:
+```bash
+az containerapp identity show --name equity-research-agent --resource-group equity-research-rg
+```
 
 ## Cleanup
 
 ```bash
+# Delete all resources
 az group delete --name equity-research-rg --yes --no-wait
 ```
