@@ -108,6 +108,22 @@ variable "qdrant_memory" {
 }
 
 # -----------------------------------------------------------------------------
+# Telegram Bot
+# -----------------------------------------------------------------------------
+
+variable "telegram_bot_cpu" {
+  description = "CPU cores for Telegram bot"
+  type        = number
+  default     = 0.25
+}
+
+variable "telegram_bot_memory" {
+  description = "Memory (Gi) for Telegram bot"
+  type        = string
+  default     = "0.5Gi"
+}
+
+# -----------------------------------------------------------------------------
 # Secrets (sensitive - use tfvars or env vars)
 # -----------------------------------------------------------------------------
 
@@ -116,4 +132,10 @@ variable "sec_user_agent" {
   type        = string
   sensitive   = true
   default     = ""
+}
+
+variable "telegram_bot_token" {
+  description = "Telegram Bot API token from @BotFather"
+  type        = string
+  sensitive   = true
 }
