@@ -1,5 +1,7 @@
 # Azure Deployment
 
+> **Recommended**: Use [Terraform](../terraform/README.md) for infrastructure management. This doc covers manual deployment.
+
 ## Architecture
 
 ```
@@ -49,8 +51,27 @@
 ## Prerequisites
 
 1. **Azure CLI** installed and logged in
-2. **Docker** installed locally
+2. **Docker** installed locally (optional with ACR Tasks)
 3. **Azure subscription** with credits (Azure for Students works)
+
+## Deployment Options
+
+### Option 1: Terraform (Recommended)
+
+Infrastructure as Code - reproducible, versioned, secrets in Key Vault.
+
+```bash
+cd terraform/
+terraform init
+terraform plan
+terraform apply
+```
+
+See [terraform/README.md](../terraform/README.md) for details.
+
+### Option 2: Manual (Below)
+
+Step-by-step Azure CLI commands.
 
 ## Environment Variables
 
