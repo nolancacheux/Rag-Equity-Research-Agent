@@ -17,7 +17,7 @@ def format_quote(response: QuoteResponse) -> str:
 
     # Format price change with emoji
     change = response.change_percent or 0
-    change_emoji = "" if change > 0 else "" if change < 0 else ""
+    change_emoji = "📈" if change > 0 else "📉" if change < 0 else "➖"
     change_str = f"{change:+.2f}%" if change else "N/A"
 
     # Format market cap
@@ -84,7 +84,7 @@ def format_compare(response: CompareResponse) -> str:
         pe = stock.get("pe_ratio")
         change = stock.get("change_percent", 0)
 
-        change_emoji = "" if change > 0 else "" if change < 0 else ""
+        change_emoji = "📈" if change > 0 else "📉" if change < 0 else "➖"
         price_str = f"${price:.2f}" if price else "N/A"
         pe_str = f"{pe:.1f}" if pe else "N/A"
         change_str = f"{change:+.2f}%" if change else "N/A"
