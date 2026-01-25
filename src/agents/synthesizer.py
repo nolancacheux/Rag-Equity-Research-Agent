@@ -5,8 +5,8 @@ from datetime import datetime
 from typing import Any
 
 import structlog
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.language_models import BaseChatModel
 
 from src.config import get_settings
 
@@ -56,13 +56,21 @@ class SynthesizerAgent:
         self._settings = get_settings()
         self._llm = self._create_llm()
 
-    def _create_llm(self) -> ChatOpenAI:
+    def _create_llm(self) -> BaseChatModel:
         """Create LLM instance.
         
-        Prioritizes Azure OpenAI for production use.
-        Falls back to OpenAI direct if Azure not configured.
+        Priority: Groq (free) > Azure OpenAI > OpenAI
         """
-        if self._settings.use_azure_openai:
+        # Groq - Free tier (recommended for zero-cost deployment)
+        if self._settings.use_groq:
+            from langchain_groq import ChatGroq
+            return ChatGroq(
+                api_key=self._settings.groq_api_key.get_secret_value(),
+                model="llama-3.3-70b-versatile",  # Free, fast, capable
+                temperature=0.3,
+            )
+        # Azure OpenAI
+        elif self._settings.use_azure_openai:
             from langchain_openai import AzureChatOpenAI
             return AzureChatOpenAI(
                 azure_endpoint=self._settings.azure_openai_endpoint,
@@ -70,7 +78,9 @@ class SynthesizerAgent:
                 deployment_name=self._settings.azure_openai_deployment,
                 temperature=0.3,
             )
+        # OpenAI direct
         elif self._settings.openai_api_key:
+            from langchain_openai import ChatOpenAI
             return ChatOpenAI(
                 api_key=self._settings.openai_api_key.get_secret_value(),
                 model="gpt-4o-mini",

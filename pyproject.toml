@@ -19,7 +19,8 @@ dependencies = [
     # Core LLM & Agents
     "langchain>=0.3.0",
     "langgraph>=0.2.0",
-    "langchain-openai>=0.2.0",
+    "langchain-groq>=0.2.0",  # Free tier LLM
+    "langchain-openai>=0.2.0",  # Optional paid
     "langsmith>=0.1.0",
     
     # Financial Data

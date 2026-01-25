@@ -23,10 +23,13 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
 
-    # OpenAI (optional if Azure is configured)
+    # Groq (free tier - recommended for zero-cost deployment)
+    groq_api_key: SecretStr | None = None
+
+    # OpenAI (optional)
     openai_api_key: SecretStr | None = None
 
-    # Azure OpenAI (recommended for production)
+    # Azure OpenAI (optional)
     azure_openai_endpoint: str | None = None
     azure_openai_api_key: SecretStr | None = None
     azure_openai_deployment: str | None = None
@@ -34,16 +37,17 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_llm_config(self) -> "Settings":
         """Ensure at least one LLM provider is configured."""
+        has_groq = self.groq_api_key is not None
         has_openai = self.openai_api_key is not None
         has_azure = (
             self.azure_openai_endpoint is not None
             and self.azure_openai_api_key is not None
             and self.azure_openai_deployment is not None
         )
-        if not has_openai and not has_azure:
+        if not has_groq and not has_openai and not has_azure:
             raise ValueError(
-                "Either OPENAI_API_KEY or Azure OpenAI (AZURE_OPENAI_ENDPOINT, "
-                "AZURE_OPENAI_API_KEY, AZURE_OPENAI_DEPLOYMENT) must be configured"
+                "At least one LLM provider must be configured: "
+                "GROQ_API_KEY (free), OPENAI_API_KEY, or Azure OpenAI"
             )
         return self
 
@@ -78,6 +82,11 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Check if running in production."""
         return self.app_env == "production"
+
+    @property
+    def use_groq(self) -> bool:
+        """Check if Groq should be used (free tier priority)."""
+        return self.groq_api_key is not None
 
     @property
     def use_azure_openai(self) -> bool:
