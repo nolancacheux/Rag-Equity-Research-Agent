@@ -254,6 +254,7 @@ See [docs/azure-deployment.md](docs/azure-deployment.md) for detailed instructio
 
 | Document | Description |
 |----------|-------------|
+| [docs/ci-cd-setup.md](docs/ci-cd-setup.md) | CI/CD pipeline with Terraform |
 | [docs/telegram-bot.md](docs/telegram-bot.md) | Telegram bot setup & commands |
 | [docs/azure-deployment.md](docs/azure-deployment.md) | Azure setup guide |
 | [docs/langgraph-orchestration.md](docs/langgraph-orchestration.md) | Agent workflow |
