@@ -3,7 +3,6 @@
 import logging
 import re
 
-from telegram import Update
 from telegram.constants import ChatAction, ParseMode
 from telegram.ext import ContextTypes
 
@@ -22,6 +21,7 @@ from src.telegram.keyboards import (
     settings_keyboard,
 )
 from src.telegram.storage import get_storage
+from telegram import Update
 
 logger = logging.getLogger(__name__)
 

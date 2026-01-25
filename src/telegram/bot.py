@@ -1,11 +1,9 @@
 """Main Telegram bot entry point."""
 
-import asyncio
 import logging
 import os
 import sys
 
-from telegram import Update
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -27,6 +25,7 @@ from src.telegram.handlers import (
     set_api_client,
     start_command,
 )
+from telegram import Update
 
 # Configure logging
 logging.basicConfig(
