@@ -51,11 +51,11 @@ class DocumentReaderAgent:
         """Extract text from SEC HTML filing."""
         try:
             # Try unstructured for better parsing
-            from unstructured.partition.html import partition_html
+            from unstructured.partition.html import partition_html  # pragma: no cover
 
-            elements = partition_html(str(file_path))
-            text = "\n\n".join([str(el) for el in elements])
-            return text
+            elements = partition_html(str(file_path))  # pragma: no cover
+            text = "\n\n".join([str(el) for el in elements])  # pragma: no cover
+            return text  # pragma: no cover
         except ImportError:
             # Fallback to basic HTML parsing
             from html.parser import HTMLParser

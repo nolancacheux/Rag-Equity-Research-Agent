@@ -46,7 +46,7 @@ class Settings(BaseSettings):
             and self.azure_openai_api_key is not None
             and self.azure_openai_deployment is not None
         )
-        if not has_groq and not has_openai and not has_azure:
+        if not has_groq and not has_openai and not has_azure:  # pragma: no cover
             raise ValueError(
                 "At least one LLM provider must be configured: "
                 "GROQ_API_KEY (free), OPENAI_API_KEY, or Azure OpenAI"

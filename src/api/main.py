@@ -223,7 +223,7 @@ async def compare_stocks(request: Request, tickers: str) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=detail) from None
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     import uvicorn
 
     uvicorn.run(
