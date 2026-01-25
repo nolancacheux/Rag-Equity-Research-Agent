@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     yfinance_cache_ttl: int = 300  # 5 minutes for market data
 
     # SEC EDGAR settings
-    sec_user_agent: str = "EquityResearchAgent cachnolan@gmail.com"
+    sec_user_agent: str = "EquityResearchAgent nolan.cacheux@student.junia.com"
 
     @property
     def is_production(self) -> bool:
