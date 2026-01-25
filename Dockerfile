@@ -15,9 +15,8 @@ RUN useradd --create-home --shell /bin/bash appuser
 COPY pyproject.toml README.md ./
 COPY src/ ./src/
 
-# Install PyTorch CPU-only FIRST (avoids 3GB CUDA deps)
+# Install dependencies (no PyTorch needed - using Azure OpenAI embeddings)
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir .
 
 # Set ownership
