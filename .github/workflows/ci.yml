@@ -94,7 +94,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build API image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile.api
@@ -104,7 +104,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build Telegram Bot image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile.bot
