@@ -86,9 +86,9 @@ variable "container_app_min_replicas" {
 }
 
 variable "container_app_max_replicas" {
-  description = "Maximum replicas"
+  description = "Maximum replicas (keep low to control costs)"
   type        = number
-  default     = 3
+  default     = 1
 }
 
 # -----------------------------------------------------------------------------
