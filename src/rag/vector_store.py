@@ -17,7 +17,7 @@ logger = structlog.get_logger()
 
 class QdrantStore:
     """Vector store using Qdrant for document retrieval.
-    
+
     Supports:
     - Document indexing with metadata
     - Semantic similarity search
@@ -30,7 +30,7 @@ class QdrantStore:
         embedding_service: EmbeddingService | None = None,
     ) -> None:
         """Initialize Qdrant store.
-        
+
         Args:
             collection_name: Name of the Qdrant collection
             embedding_service: Optional embedding service instance
@@ -54,7 +54,7 @@ class QdrantStore:
     def _ensure_collection(self) -> None:
         """Ensure collection exists with proper schema."""
         client = self._get_client()
-        
+
         try:
             client.get_collection(self._collection_name)
             logger.debug("collection_exists", name=self._collection_name)
@@ -75,27 +75,27 @@ class QdrantStore:
         batch_size: int = 100,
     ) -> int:
         """Add document chunks to the vector store.
-        
+
         Args:
             chunks: List of DocumentChunk objects
             batch_size: Batch size for indexing
-            
+
         Returns:
             Number of chunks indexed
         """
         if not chunks:
             return 0
-        
+
         self._ensure_collection()
         client = self._get_client()
-        
+
         # Generate embeddings in batches
         texts = [chunk.content for chunk in chunks]
         embeddings = self._embeddings.embed_batch(texts, batch_size=batch_size)
-        
+
         # Create points
         points = []
-        for chunk, embedding in zip(chunks, embeddings):
+        for chunk, embedding in zip(chunks, embeddings, strict=False):
             point_id = str(uuid4())
             points.append(
                 models.PointStruct(
@@ -110,15 +110,15 @@ class QdrantStore:
                     },
                 )
             )
-        
+
         # Upsert in batches
         for i in range(0, len(points), batch_size):
-            batch = points[i:i + batch_size]
+            batch = points[i : i + batch_size]
             client.upsert(
                 collection_name=self._collection_name,
                 points=batch,
             )
-        
+
         logger.info("chunks_indexed", count=len(chunks))
         return len(chunks)
 
@@ -130,22 +130,22 @@ class QdrantStore:
         score_threshold: float = 0.5,
     ) -> list[dict[str, Any]]:
         """Search for relevant documents.
-        
+
         Args:
             query: Search query
             top_k: Number of results to return
             filters: Optional filters (e.g., {"ticker": "NVDA"})
             score_threshold: Minimum similarity score
-            
+
         Returns:
             List of matching documents with scores
         """
         self._ensure_collection()
         client = self._get_client()
-        
+
         # Generate query embedding
         query_embedding = self._embeddings.embed(query)
-        
+
         # Build filter conditions
         filter_conditions = None
         if filters:
@@ -166,7 +166,7 @@ class QdrantStore:
                         )
                     )
             filter_conditions = models.Filter(must=conditions)
-        
+
         # Search using query_points (qdrant-client 1.16+)
         results = client.query_points(
             collection_name=self._collection_name,
@@ -175,19 +175,18 @@ class QdrantStore:
             query_filter=filter_conditions,
             score_threshold=score_threshold,
         )
-        
+
         # Format results
         formatted = []
         for result in results.points:
-            formatted.append({
-                "content": result.payload.get("content", ""),
-                "score": result.score,
-                "metadata": {
-                    k: v for k, v in result.payload.items() 
-                    if k not in ["content"]
-                },
-            })
-        
+            formatted.append(
+                {
+                    "content": result.payload.get("content", ""),
+                    "score": result.score,
+                    "metadata": {k: v for k, v in result.payload.items() if k not in ["content"]},
+                }
+            )
+
         logger.info("search_completed", query=query[:50], results=len(formatted))
         return formatted
 
@@ -199,13 +198,13 @@ class QdrantStore:
         top_k: int = 5,
     ) -> list[dict[str, Any]]:
         """Search within a specific SEC filing.
-        
+
         Args:
             query: Search query (e.g., "China supply chain risks")
             ticker: Stock ticker symbol
             form_type: SEC form type (10-K, 10-Q, etc.)
             top_k: Number of results
-            
+
         Returns:
             List of relevant passages
         """
@@ -220,15 +219,15 @@ class QdrantStore:
 
     def delete_by_ticker(self, ticker: str) -> bool:
         """Delete all documents for a ticker.
-        
+
         Args:
             ticker: Stock ticker symbol
-            
+
         Returns:
             True if successful
         """
         client = self._get_client()
-        
+
         try:
             client.delete(
                 collection_name=self._collection_name,
@@ -251,12 +250,12 @@ class QdrantStore:
 
     def get_stats(self) -> dict[str, Any]:
         """Get collection statistics.
-        
+
         Returns:
             Collection statistics
         """
         client = self._get_client()
-        
+
         try:
             info = client.get_collection(self._collection_name)
             return {

@@ -1,7 +1,7 @@
 """Redis caching utilities for API responses."""
 
-import json
 import hashlib
+import json
 from functools import lru_cache
 from typing import Any
 
@@ -18,7 +18,7 @@ class RedisCache:
 
     def __init__(self, url: str, default_ttl: int = 3600) -> None:
         """Initialize Redis cache.
-        
+
         Args:
             url: Redis connection URL
             default_ttl: Default TTL in seconds
@@ -32,7 +32,7 @@ class RedisCache:
         """Establish Redis connection with error handling."""
         if self._client is not None:
             return self._client
-        
+
         try:
             self._client = redis.from_url(
                 self._url,
@@ -58,17 +58,17 @@ class RedisCache:
 
     def get(self, key: str) -> Any | None:
         """Get value from cache.
-        
+
         Args:
             key: Cache key
-            
+
         Returns:
             Cached value or None if not found
         """
         client = self._connect()
         if client is None:
             return None
-        
+
         try:
             value = client.get(key)
             if value:
@@ -82,19 +82,19 @@ class RedisCache:
 
     def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """Set value in cache.
-        
+
         Args:
             key: Cache key
             value: Value to cache (must be JSON serializable)
             ttl: Time to live in seconds (uses default if not specified)
-            
+
         Returns:
             True if successful, False otherwise
         """
         client = self._connect()
         if client is None:
             return False
-        
+
         try:
             ttl = ttl or self._default_ttl
             client.setex(key, ttl, json.dumps(value))
@@ -106,17 +106,17 @@ class RedisCache:
 
     def delete(self, key: str) -> bool:
         """Delete value from cache.
-        
+
         Args:
             key: Cache key
-            
+
         Returns:
             True if deleted, False otherwise
         """
         client = self._connect()
         if client is None:
             return False
-        
+
         try:
             client.delete(key)
             logger.debug("cache_delete", key=key)

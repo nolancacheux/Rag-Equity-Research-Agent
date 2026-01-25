@@ -4,7 +4,7 @@ import asyncio
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 import structlog
 
@@ -23,14 +23,14 @@ class RateLimitState:
 
 class RateLimiter:
     """Token bucket rate limiter for API calls.
-    
+
     Implements a sliding window rate limiter that tracks requests
     per source (e.g., different APIs have different limits).
     """
 
     def __init__(self, requests_per_period: int = 100, period_seconds: int = 60) -> None:
         """Initialize rate limiter.
-        
+
         Args:
             requests_per_period: Max requests allowed per period
             period_seconds: Time period in seconds
@@ -46,16 +46,16 @@ class RateLimiter:
 
     async def acquire(self, source: str = "default") -> None:
         """Acquire a rate limit slot, waiting if necessary.
-        
+
         Args:
             source: Identifier for the rate limit bucket (e.g., "yfinance", "sec")
         """
         state = self._states[source]
-        
+
         async with state.lock:
             while True:
                 self._cleanup_old_requests(state)
-                
+
                 if len(state.requests) < self._max_requests:
                     state.requests.append(time.time())
                     logger.debug(
@@ -65,11 +65,11 @@ class RateLimiter:
                         max=self._max_requests,
                     )
                     return
-                
+
                 # Calculate wait time until oldest request expires
                 oldest = min(state.requests)
                 wait_time = oldest + self._period - time.time()
-                
+
                 if wait_time > 0:
                     logger.info(
                         "rate_limit_waiting",
@@ -80,22 +80,22 @@ class RateLimiter:
 
     def acquire_sync(self, source: str = "default") -> None:
         """Synchronous version of acquire for non-async contexts.
-        
+
         Args:
             source: Identifier for the rate limit bucket
         """
         state = self._states[source]
-        
+
         while True:
             self._cleanup_old_requests(state)
-            
+
             if len(state.requests) < self._max_requests:
                 state.requests.append(time.time())
                 return
-            
+
             oldest = min(state.requests)
             wait_time = oldest + self._period - time.time()
-            
+
             if wait_time > 0:
                 logger.info(
                     "rate_limit_waiting_sync",
@@ -106,10 +106,10 @@ class RateLimiter:
 
     def remaining(self, source: str = "default") -> int:
         """Get remaining requests in current window.
-        
+
         Args:
             source: Identifier for the rate limit bucket
-            
+
         Returns:
             Number of remaining requests
         """

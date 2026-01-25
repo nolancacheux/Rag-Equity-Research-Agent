@@ -70,14 +70,14 @@ class DocumentReaderAgent:
                     if text:
                         self.text_parts.append(text)
 
-            content = file_path.read_text(encoding='utf-8', errors='ignore')
+            content = file_path.read_text(encoding="utf-8", errors="ignore")
             parser = TextExtractor()
             parser.feed(content)
             return "\n".join(parser.text_parts)
         except Exception as e:
             logger.error("text_extraction_failed", path=str(file_path), error=str(e))
             # Last resort: just read the file
-            return file_path.read_text(encoding='utf-8', errors='ignore')
+            return file_path.read_text(encoding="utf-8", errors="ignore")
 
     def index_filing(self, ticker: str, form_type: str = "10-K") -> bool:
         """Download and index a SEC filing.
@@ -230,9 +230,9 @@ class DocumentReaderAgent:
 
             lines.append(f"### Passage {i} (Relevance: {score:.2f})")
             lines.append(f"**Section**: {section}")
-            lines.append(f"```")
+            lines.append("```")
             lines.append(preview)
-            lines.append(f"```\n")
+            lines.append("```\n")
 
         return "\n".join(lines)
 
@@ -262,13 +262,15 @@ def run_document_reader_node(state: dict) -> dict:
     for ticker in tickers:
         for query in document_queries:
             result = agent.search_filing(ticker, query)
-            all_results.append({
-                "ticker": result.ticker,
-                "query": result.query,
-                "filing_date": result.filing_date,
-                "passages": result.passages,
-                "summary": result.summary,
-            })
+            all_results.append(
+                {
+                    "ticker": result.ticker,
+                    "query": result.query,
+                    "filing_date": result.filing_date,
+                    "passages": result.passages,
+                    "summary": result.summary,
+                }
+            )
             all_errors.extend(result.errors)
 
     return {

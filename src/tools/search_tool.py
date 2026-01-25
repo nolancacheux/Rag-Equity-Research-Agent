@@ -1,7 +1,6 @@
 """DuckDuckGo search tool for news and sentiment."""
 
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Any
 
 import structlog
@@ -35,7 +34,7 @@ class SearchResult:
         }
 
 
-@dataclass  
+@dataclass
 class NewsResult:
     """News article from DuckDuckGo News."""
 
@@ -60,14 +59,14 @@ class NewsResult:
 
 class DuckDuckGoSearchTool:
     """Tool for web and news search using DuckDuckGo.
-    
+
     Free, no API key required. Implements rate limiting
     to avoid being blocked.
     """
 
     def __init__(self, cache: RedisCache | None = None) -> None:
         """Initialize DuckDuckGo search tool.
-        
+
         Args:
             cache: Optional Redis cache instance
         """
@@ -85,26 +84,26 @@ class DuckDuckGoSearchTool:
         region: str = "wt-wt",
     ) -> list[SearchResult]:
         """Perform a web search.
-        
+
         Args:
             query: Search query
             max_results: Maximum number of results (1-25)
             region: Region code (wt-wt for worldwide)
-            
+
         Returns:
             List of SearchResult objects
         """
         cache_key = f"ddg:search:{query}:{max_results}"
-        
+
         # Check cache
         cached = self._cache.get(cache_key)
         if cached:
             logger.debug("ddg_search_cached", query=query)
             return [SearchResult(**r) for r in cached]
-        
+
         # Rate limit
         search_limiter.acquire_sync("web")
-        
+
         try:
             results = []
             raw_results = self._ddgs.text(
@@ -112,7 +111,7 @@ class DuckDuckGoSearchTool:
                 max_results=max_results,
                 region=region,
             )
-            
+
             for r in raw_results:
                 results.append(
                     SearchResult(
@@ -123,13 +122,13 @@ class DuckDuckGoSearchTool:
                         published=r.get("published"),
                     )
                 )
-            
+
             # Cache results (15 min TTL for search)
             self._cache.set(cache_key, [r.to_dict() for r in results], ttl=900)
             logger.info("ddg_search_completed", query=query, results=len(results))
-            
+
             return results
-            
+
         except Exception as e:
             logger.error("ddg_search_error", query=query, error=str(e))
             raise
@@ -145,26 +144,26 @@ class DuckDuckGoSearchTool:
         timelimit: str | None = "w",  # d=day, w=week, m=month
     ) -> list[NewsResult]:
         """Search for news articles.
-        
+
         Args:
             query: Search query
             max_results: Maximum number of results
             timelimit: Time filter (d=day, w=week, m=month, None=all)
-            
+
         Returns:
             List of NewsResult objects
         """
         cache_key = f"ddg:news:{query}:{max_results}:{timelimit}"
-        
+
         # Check cache
         cached = self._cache.get(cache_key)
         if cached:
             logger.debug("ddg_news_cached", query=query)
             return [NewsResult(**r) for r in cached]
-        
+
         # Rate limit
         search_limiter.acquire_sync("news")
-        
+
         try:
             results = []
             raw_results = self._ddgs.news(
@@ -172,7 +171,7 @@ class DuckDuckGoSearchTool:
                 max_results=max_results,
                 timelimit=timelimit,
             )
-            
+
             for r in raw_results:
                 results.append(
                     NewsResult(
@@ -184,31 +183,31 @@ class DuckDuckGoSearchTool:
                         image=r.get("image"),
                     )
                 )
-            
+
             # Cache results (10 min TTL for news)
             self._cache.set(cache_key, [r.to_dict() for r in results], ttl=600)
             logger.info("ddg_news_completed", query=query, results=len(results))
-            
+
             return results
-            
+
         except Exception as e:
             logger.error("ddg_news_error", query=query, error=str(e))
             raise
 
     def search_stock_news(self, ticker: str, company_name: str | None = None) -> list[NewsResult]:
         """Search for news about a specific stock.
-        
+
         Args:
             ticker: Stock ticker symbol
             company_name: Company name (optional, enhances search)
-            
+
         Returns:
             List of NewsResult objects
         """
         query = f"{ticker} stock"
         if company_name:
             query = f"{company_name} {ticker} stock news"
-        
+
         return self.search_news(query, max_results=10, timelimit="w")
 
     def search_financial_topic(
@@ -217,16 +216,16 @@ class DuckDuckGoSearchTool:
         company: str | None = None,
     ) -> list[SearchResult]:
         """Search for information about a financial topic.
-        
+
         Args:
             topic: Financial topic (e.g., "China supply chain risks")
             company: Company context (optional)
-            
+
         Returns:
             List of SearchResult objects
         """
         query = topic
         if company:
             query = f"{company} {topic}"
-        
+
         return self.search(query, max_results=10)

@@ -5,15 +5,15 @@ from datetime import datetime
 from typing import Any
 
 import structlog
-from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.config import get_settings
 
 logger = structlog.get_logger()
 
 
-SYNTHESIS_SYSTEM_PROMPT = """You are a professional equity research analyst. 
+SYNTHESIS_SYSTEM_PROMPT = """You are a professional equity research analyst.
 Your task is to synthesize market data, SEC filings analysis, and news into a cohesive research report.
 
 Guidelines:
@@ -43,7 +43,7 @@ class ResearchReport:
 
 class SynthesizerAgent:
     """Agent for synthesizing research reports using LLM.
-    
+
     Responsibilities:
     - Compile all gathered data into coherent report
     - Generate executive summary
@@ -58,12 +58,13 @@ class SynthesizerAgent:
 
     def _create_llm(self) -> BaseChatModel:
         """Create LLM instance.
-        
+
         Priority: Groq (free) > Azure OpenAI > OpenAI
         """
         # Groq - Free tier (recommended for zero-cost deployment)
         if self._settings.use_groq:
             from langchain_groq import ChatGroq
+
             return ChatGroq(
                 api_key=self._settings.groq_api_key.get_secret_value(),
                 model="llama-3.3-70b-versatile",  # Free, fast, capable
@@ -72,6 +73,7 @@ class SynthesizerAgent:
         # Azure OpenAI
         elif self._settings.use_azure_openai:
             from langchain_openai import AzureChatOpenAI
+
             return AzureChatOpenAI(
                 azure_endpoint=self._settings.azure_openai_endpoint,
                 api_key=self._settings.azure_openai_api_key.get_secret_value(),
@@ -81,6 +83,7 @@ class SynthesizerAgent:
         # OpenAI direct
         elif self._settings.openai_api_key:
             from langchain_openai import ChatOpenAI
+
             return ChatOpenAI(
                 api_key=self._settings.openai_api_key.get_secret_value(),
                 model="gpt-4o-mini",
@@ -98,7 +101,7 @@ class SynthesizerAgent:
     ) -> str:
         """Format all data into context for LLM."""
         sections = [f"# Research Query\n{query}\n"]
-        
+
         # Market Data Section
         if market_data:
             sections.append("# Market Data")
@@ -107,14 +110,17 @@ class SynthesizerAgent:
             else:
                 sections.append("```json")
                 import json
+
                 sections.append(json.dumps(market_data, indent=2, default=str))
                 sections.append("```")
-        
+
         # SEC Filing Analysis Section
         if document_analysis:
             sections.append("\n# SEC Filing Analysis")
             for doc in document_analysis:
-                sections.append(f"\n## {doc.get('ticker', 'Unknown')} - Query: {doc.get('query', '')}")
+                sections.append(
+                    f"\n## {doc.get('ticker', 'Unknown')} - Query: {doc.get('query', '')}"
+                )
                 if doc.get("filing_date"):
                     sections.append(f"**Filing Date**: {doc['filing_date']}")
                 if doc.get("summary"):
@@ -124,14 +130,14 @@ class SynthesizerAgent:
                         content = passage.get("content", "")[:800]
                         sections.append(f"\n**Passage {i}** (Score: {passage.get('score', 0):.2f})")
                         sections.append(f"```\n{content}\n```")
-        
+
         # News Section
         if news_analysis:
             sections.append("\n# Recent News")
             for news in news_analysis:
                 if news.get("summary"):
                     sections.append(news["summary"])
-        
+
         return "\n".join(sections)
 
     def synthesize(
@@ -144,7 +150,7 @@ class SynthesizerAgent:
         errors: list[str] | None = None,
     ) -> ResearchReport:
         """Synthesize all data into a research report.
-        
+
         Args:
             query: Original research query
             tickers: List of analyzed tickers
@@ -152,17 +158,15 @@ class SynthesizerAgent:
             document_analysis: SEC filing analysis from DocumentReaderAgent
             news_analysis: News from NewsSentimentAgent
             errors: Any errors encountered
-            
+
         Returns:
             ResearchReport with full analysis
         """
         errors = errors or []
-        
+
         # Format context
-        context = self._format_context(
-            query, market_data, document_analysis, news_analysis
-        )
-        
+        context = self._format_context(query, market_data, document_analysis, news_analysis)
+
         # Build prompt
         user_prompt = f"""Based on the following research data, create a comprehensive equity research report.
 
@@ -188,15 +192,15 @@ Format as a professional markdown report."""
                 SystemMessage(content=SYNTHESIS_SYSTEM_PROMPT),
                 HumanMessage(content=user_prompt),
             ]
-            
+
             response = self._llm.invoke(messages)
             full_report = response.content
-            
+
             # Extract executive summary (first section after title)
             exec_summary = self._extract_executive_summary(full_report)
-            
+
             logger.info("report_synthesized", tickers=tickers, length=len(full_report))
-            
+
         except Exception as e:
             logger.error("synthesis_failed", error=str(e))
             errors.append(f"LLM synthesis failed: {str(e)}")
@@ -204,7 +208,7 @@ Format as a professional markdown report."""
                 query, tickers, market_data, document_analysis, news_analysis
             )
             exec_summary = "Report generation encountered errors. See detailed analysis below."
-        
+
         # Determine data sources used
         data_sources = []
         if market_data:
@@ -213,7 +217,7 @@ Format as a professional markdown report."""
             data_sources.append("SEC EDGAR (10-K filings)")
         if news_analysis:
             data_sources.append("DuckDuckGo News")
-        
+
         return ResearchReport(
             title=f"Equity Research: {', '.join(tickers)}",
             tickers=tickers,
@@ -228,7 +232,7 @@ Format as a professional markdown report."""
         """Extract executive summary from report."""
         # Look for executive summary section
         lower = report.lower()
-        
+
         markers = ["executive summary", "summary", "overview"]
         for marker in markers:
             if marker in lower:
@@ -237,13 +241,13 @@ Format as a professional markdown report."""
                 next_section = report.find("\n##", start + len(marker))
                 if next_section == -1:
                     next_section = report.find("\n#", start + len(marker))
-                
+
                 if next_section != -1:
                     summary = report[start:next_section].strip()
                     # Remove the header
                     lines = summary.split("\n")
                     return "\n".join(lines[1:]).strip()
-        
+
         # Fallback: first 500 chars
         return report[:500] + "..."
 
@@ -260,31 +264,31 @@ Format as a professional markdown report."""
         lines.append(f"**Query**: {query}")
         lines.append(f"**Generated**: {datetime.now().isoformat()}\n")
         lines.append("---\n")
-        
+
         if market_data and "summary" in market_data:
             lines.append(market_data["summary"])
             lines.append("\n---\n")
-        
+
         if document_analysis:
             for doc in document_analysis:
                 if doc.get("summary"):
                     lines.append(doc["summary"])
             lines.append("\n---\n")
-        
+
         if news_analysis:
             for news in news_analysis:
                 if news.get("summary"):
                     lines.append(news["summary"])
-        
+
         return "\n".join(lines)
 
 
 def run_synthesizer_node(state: dict) -> dict:
     """LangGraph node function for synthesizer agent.
-    
+
     Args:
         state: Current graph state
-        
+
     Returns:
         Updated state with final report
     """
@@ -294,7 +298,7 @@ def run_synthesizer_node(state: dict) -> dict:
     document_analysis = state.get("document_analysis")
     news_analysis = state.get("news_analysis")
     errors = state.get("errors", [])
-    
+
     agent = SynthesizerAgent()
     report = agent.synthesize(
         query=query,
@@ -304,7 +308,7 @@ def run_synthesizer_node(state: dict) -> dict:
         news_analysis=news_analysis,
         errors=errors,
     )
-    
+
     return {
         "report": {
             "title": report.title,

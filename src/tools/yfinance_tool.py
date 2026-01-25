@@ -91,14 +91,14 @@ class FinancialMetrics:
 
 class YFinanceTool:
     """Tool for fetching real-time market data from Yahoo Finance.
-    
+
     Implements caching and rate limiting to avoid API blocks.
     Handles NaN values and API errors gracefully.
     """
 
     def __init__(self, cache: RedisCache | None = None) -> None:
         """Initialize YFinance tool.
-        
+
         Args:
             cache: Optional Redis cache instance
         """
@@ -111,6 +111,7 @@ class YFinanceTool:
             return None
         try:
             import math
+
             f = float(value)
             return None if math.isnan(f) else f
         except (ValueError, TypeError):
@@ -131,36 +132,39 @@ class YFinanceTool:
     )
     def get_quote(self, symbol: str) -> StockQuote | None:
         """Get real-time stock quote.
-        
+
         Args:
             symbol: Stock ticker symbol (e.g., "NVDA", "AAPL")
-            
+
         Returns:
             StockQuote object or None if failed
         """
         cache_key = f"yf:quote:{symbol.upper()}"
-        
+
         # Check cache first
         cached = self._cache.get(cache_key)
         if cached:
             logger.debug("yfinance_quote_cached", symbol=symbol)
-            return StockQuote(**{**cached, "timestamp": datetime.fromisoformat(cached["timestamp"])})
-        
+            return StockQuote(
+                **{**cached, "timestamp": datetime.fromisoformat(cached["timestamp"])}
+            )
+
         # Rate limit
         yfinance_limiter.acquire_sync("quote")
-        
+
         try:
             ticker = yf.Ticker(symbol)
             info = ticker.info
-            
+
             if not info or "symbol" not in info:
                 logger.warning("yfinance_no_data", symbol=symbol)
                 return None
-            
+
             quote = StockQuote(
                 symbol=info.get("symbol", symbol.upper()),
                 name=info.get("longName", info.get("shortName", symbol)),
-                price=self._safe_float(info.get("currentPrice", info.get("regularMarketPrice"))) or 0.0,
+                price=self._safe_float(info.get("currentPrice", info.get("regularMarketPrice")))
+                or 0.0,
                 change=self._safe_float(info.get("regularMarketChange")) or 0.0,
                 change_percent=self._safe_float(info.get("regularMarketChangePercent")) or 0.0,
                 volume=self._safe_int(info.get("regularMarketVolume")),
@@ -173,13 +177,13 @@ class YFinanceTool:
                 market_state=info.get("marketState", "UNKNOWN"),
                 timestamp=datetime.now(),
             )
-            
+
             # Cache the result
             self._cache.set(cache_key, quote.to_dict(), ttl=self._settings.yfinance_cache_ttl)
             logger.info("yfinance_quote_fetched", symbol=symbol, price=quote.price)
-            
+
             return quote
-            
+
         except Exception as e:
             logger.error("yfinance_quote_error", symbol=symbol, error=str(e))
             raise
@@ -190,32 +194,32 @@ class YFinanceTool:
     )
     def get_financials(self, symbol: str) -> FinancialMetrics | None:
         """Get key financial metrics.
-        
+
         Args:
             symbol: Stock ticker symbol
-            
+
         Returns:
             FinancialMetrics object or None if failed
         """
         cache_key = f"yf:financials:{symbol.upper()}"
-        
+
         # Check cache (longer TTL for financials as they change less frequently)
         cached = self._cache.get(cache_key)
         if cached:
             logger.debug("yfinance_financials_cached", symbol=symbol)
             return FinancialMetrics(**cached)
-        
+
         # Rate limit
         yfinance_limiter.acquire_sync("financials")
-        
+
         try:
             ticker = yf.Ticker(symbol)
             info = ticker.info
-            
+
             if not info:
                 logger.warning("yfinance_no_financials", symbol=symbol)
                 return None
-            
+
             metrics = FinancialMetrics(
                 symbol=symbol.upper(),
                 revenue=self._safe_float(info.get("totalRevenue")),
@@ -230,23 +234,23 @@ class YFinanceTool:
                 current_ratio=self._safe_float(info.get("currentRatio")),
                 fiscal_year_end=info.get("lastFiscalYearEnd"),
             )
-            
+
             # Cache with longer TTL (1 hour)
             self._cache.set(cache_key, metrics.to_dict(), ttl=3600)
             logger.info("yfinance_financials_fetched", symbol=symbol)
-            
+
             return metrics
-            
+
         except Exception as e:
             logger.error("yfinance_financials_error", symbol=symbol, error=str(e))
             raise
 
     def compare_pe_ratios(self, symbols: list[str]) -> dict[str, float | None]:
         """Compare P/E ratios across multiple stocks.
-        
+
         Args:
             symbols: List of ticker symbols
-            
+
         Returns:
             Dictionary of symbol -> P/E ratio
         """
@@ -254,6 +258,6 @@ class YFinanceTool:
         for symbol in symbols:
             quote = self.get_quote(symbol)
             results[symbol] = quote.pe_ratio if quote else None
-        
+
         logger.info("yfinance_pe_comparison", symbols=symbols, results=results)
         return results

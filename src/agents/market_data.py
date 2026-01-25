@@ -23,7 +23,7 @@ class MarketDataResult:
 
 class MarketDataAgent:
     """Agent for fetching and analyzing market data.
-    
+
     Responsibilities:
     - Fetch real-time stock quotes
     - Get financial metrics
@@ -46,35 +46,35 @@ class MarketDataAgent:
         if num is None:
             return "N/A"
         if num >= 1e12:
-            return f"${num/1e12:.2f}T"
+            return f"${num / 1e12:.2f}T"
         if num >= 1e9:
-            return f"${num/1e9:.2f}B"
+            return f"${num / 1e9:.2f}B"
         if num >= 1e6:
-            return f"${num/1e6:.2f}M"
+            return f"${num / 1e6:.2f}M"
         return f"${num:,.0f}"
 
     def _format_percent(self, pct: float | None) -> str:
         """Format percentage."""
         if pct is None:
             return "N/A"
-        return f"{pct*100:.2f}%" if abs(pct) < 1 else f"{pct:.2f}%"
+        return f"{pct * 100:.2f}%" if abs(pct) < 1 else f"{pct:.2f}%"
 
     def analyze(self, tickers: list[str]) -> MarketDataResult:
         """Analyze market data for given tickers.
-        
+
         Args:
             tickers: List of stock ticker symbols
-            
+
         Returns:
             MarketDataResult with all gathered data
         """
         quotes = {}
         financials = {}
         errors = []
-        
+
         for ticker in tickers:
             ticker = ticker.upper()
-            
+
             # Get quote
             try:
                 quote = self._yfinance.get_quote(ticker)
@@ -85,7 +85,7 @@ class MarketDataAgent:
             except Exception as e:
                 errors.append(f"Error fetching quote for {ticker}: {str(e)}")
                 logger.error("quote_fetch_error", ticker=ticker, error=str(e))
-            
+
             # Get financials
             try:
                 metrics = self._yfinance.get_financials(ticker)
@@ -94,23 +94,20 @@ class MarketDataAgent:
             except Exception as e:
                 errors.append(f"Error fetching financials for {ticker}: {str(e)}")
                 logger.error("financials_fetch_error", ticker=ticker, error=str(e))
-        
+
         # Compare P/E ratios
-        pe_comparison = {
-            ticker: quotes.get(ticker, {}).get("pe_ratio")
-            for ticker in tickers
-        }
-        
+        pe_comparison = {ticker: quotes.get(ticker, {}).get("pe_ratio") for ticker in tickers}
+
         # Generate market summary
         summary = self._generate_summary(quotes, financials, pe_comparison)
-        
+
         logger.info(
             "market_data_analyzed",
             tickers=tickers,
             quotes_count=len(quotes),
             errors_count=len(errors),
         )
-        
+
         return MarketDataResult(
             quotes=quotes,
             financials=financials,
@@ -128,9 +125,9 @@ class MarketDataAgent:
         """Generate a summary of market data."""
         if not quotes:
             return "No market data available."
-        
+
         lines = ["## Market Data Summary\n"]
-        
+
         for ticker, quote in quotes.items():
             price = self._format_price(quote.get("price"))
             change_pct = quote.get("change_percent", 0)
@@ -138,22 +135,26 @@ class MarketDataAgent:
             market_cap = self._format_large_number(quote.get("market_cap"))
             pe = quote.get("pe_ratio")
             pe_str = f"{pe:.2f}" if pe else "N/A"
-            
+
             lines.append(f"### {ticker} ({quote.get('name', ticker)})")
             lines.append(f"- **Price**: {price} ({change_str})")
             lines.append(f"- **Market Cap**: {market_cap}")
             lines.append(f"- **P/E Ratio**: {pe_str}")
             lines.append(f"- **Market State**: {quote.get('market_state', 'Unknown')}")
-            
+
             # Add financial metrics if available
             if ticker in financials:
                 fin = financials[ticker]
                 lines.append(f"- **Revenue**: {self._format_large_number(fin.get('revenue'))}")
-                lines.append(f"- **Net Income**: {self._format_large_number(fin.get('net_income'))}")
-                lines.append(f"- **Profit Margin**: {self._format_percent(fin.get('profit_margin'))}")
-            
+                lines.append(
+                    f"- **Net Income**: {self._format_large_number(fin.get('net_income'))}"
+                )
+                lines.append(
+                    f"- **Profit Margin**: {self._format_percent(fin.get('profit_margin'))}"
+                )
+
             lines.append("")
-        
+
         # P/E Comparison
         if len(pe_comparison) > 1:
             lines.append("### P/E Ratio Comparison")
@@ -163,30 +164,30 @@ class MarketDataAgent:
             )
             for ticker, pe in sorted_pe:
                 lines.append(f"- **{ticker}**: {pe:.2f}")
-        
+
         return "\n".join(lines)
 
 
 def run_market_data_node(state: dict) -> dict:
     """LangGraph node function for market data agent.
-    
+
     Args:
         state: Current graph state
-        
+
     Returns:
         Updated state with market data
     """
     tickers = state.get("tickers", [])
-    
+
     if not tickers:
         return {
             "market_data": None,
             "errors": state.get("errors", []) + ["No tickers provided"],
         }
-    
+
     agent = MarketDataAgent()
     result = agent.analyze(tickers)
-    
+
     return {
         "market_data": {
             "quotes": result.quotes,
