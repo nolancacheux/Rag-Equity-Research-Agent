@@ -78,13 +78,16 @@ Go to **Settings > Secrets and variables > Actions** and add:
 
 | Secret | Description | How to get |
 |--------|-------------|------------|
-| `ARM_CLIENT_ID` | Service Principal App ID | From `az ad sp create-for-rbac` output |
-| `ARM_CLIENT_SECRET` | Service Principal Password | From `az ad sp create-for-rbac` output |
-| `ARM_SUBSCRIPTION_ID` | Azure Subscription ID | `az account show --query id` |
-| `ARM_TENANT_ID` | Azure AD Tenant ID | `az account show --query tenantId` |
-| `AZURE_CREDENTIALS` | Full SP JSON | Entire output of `az ad sp create-for-rbac --sdk-auth` |
-| `TELEGRAM_BOT_TOKEN` | Bot token from @BotFather | Create bot on Telegram |
-| `SEC_USER_AGENT` | SEC EDGAR identifier | `"AppName your-email@example.com"` |
+| `AZURE_CREDENTIALS` | Full SP JSON | `az ad sp create-for-rbac --sdk-auth` |
+| `ACR_LOGIN_SERVER` | ACR URL | `equityresearchacr*.azurecr.io` |
+| `ACR_USERNAME` | SP Client ID | From `az ad sp create-for-rbac` |
+| `ACR_PASSWORD` | SP Client Secret | From `az ad sp create-for-rbac` |
+| `TELEGRAM_BOT_TOKEN` | Bot token | Create bot via @BotFather |
+
+**Current production values:**
+- Storage: `tfstateequity2026`
+- ACR: `equityresearchacrblipenk7.azurecr.io`
+- API: `equity-research-agent.thankfulhill-01e4fbbb.swedencentral.azurecontainerapps.io`
 
 ### 4. GitHub Environment
 
