@@ -1,13 +1,13 @@
-# 📊 Real-Time Equity Research Agent
+# Real-Time Equity Research Agent
 
-> AI-powered financial analysis agent that acts as an autonomous Quantitative Analyst, scanning real market data, SEC filings, and news to generate professional equity research reports.
+AI-powered financial analysis agent that acts as an autonomous Quantitative Analyst, scanning real market data, SEC filings, and news to generate professional equity research reports.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![CI](https://github.com/nolancacheux/equity-research-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/nolancacheux/equity-research-agent/actions/workflows/ci.yml)
 
-## 🎯 What It Does
+## What It Does
 
 Ask a question like:
 
@@ -15,61 +15,62 @@ Ask a question like:
 
 The agent will:
 1. **Fetch real-time market data** via Yahoo Finance (prices, P/E ratios, financials)
-2. **Download & analyze SEC 10-K reports** using RAG (finds the exact paragraph about China risks)
+2. **Download and analyze SEC 10-K reports** using RAG (finds the exact paragraph about China risks)
 3. **Search recent news** for market sentiment
 4. **Synthesize everything** into a professional research report with citations
 
-## 🏗️ Architecture
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      LangGraph Orchestrator                  │
-├─────────────┬─────────────┬─────────────┬──────────────────┤
-│  Market     │  Document   │    News     │   Synthesizer    │
-│  Data Agent │  Reader     │  Sentiment  │   Agent          │
-├─────────────┼─────────────┼─────────────┼──────────────────┤
-│  yfinance   │  SEC EDGAR  │  DuckDuckGo │   Azure OpenAI   │
-│  (+ Cache)  │  + RAG      │  Search     │   (GPT-4o)       │
-└─────────────┴─────────────┴─────────────┴──────────────────┘
-                              │
-              ┌───────────────┼───────────────┐
-              │               │               │
++-------------------------------------------------------------+
+|                      LangGraph Orchestrator                  |
++-------------+-------------+-------------+-------------------+
+|  Market     |  Document   |    News     |   Synthesizer     |
+|  Data Agent |  Reader     |  Sentiment  |   Agent           |
++-------------+-------------+-------------+-------------------+
+|  yfinance   |  SEC EDGAR  |  DuckDuckGo |   Groq / OpenAI   |
+|  (+ Cache)  |  + RAG      |  Search     |   (LLM)           |
++-------------+-------------+-------------+-------------------+
+                              |
+              +---------------+---------------+
+              |               |               |
          Qdrant          Redis          LangSmith
        (Vector DB)      (Cache)       (Monitoring)
 ```
 
-## ⚡ Features
+## Features
 
 | Feature | Description |
 |---------|-------------|
 | **Real Market Data** | Live prices, financials, ratios via yfinance |
-| **SEC 10-K Analysis** | Automatic download & RAG search on annual reports |
+| **SEC 10-K Analysis** | Automatic download and RAG search on annual reports |
 | **News Sentiment** | Real-time news search with DuckDuckGo |
+| **Zero-Cost LLM Option** | Groq free tier supported (Llama 3.3 70B) |
 | **Production-Ready** | Caching, rate limiting, security hardening |
 | **Observable** | Full tracing with LangSmith |
-| **Cloud-Native** | Azure Container Apps deployment ready |
+| **Cloud-Native** | Docker and Azure Container Apps ready |
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Category | Technologies |
 |----------|--------------|
-| **LLM** | Azure OpenAI (GPT-4o-mini) |
+| **LLM** | Groq (free), Azure OpenAI, OpenAI |
 | **Orchestration** | LangGraph, LangChain |
 | **Data Sources** | yfinance, SEC EDGAR, DuckDuckGo |
-| **RAG** | Qdrant, Sentence Transformers |
+| **RAG** | Qdrant, Azure OpenAI Embeddings |
 | **API** | FastAPI, Pydantic |
 | **Cache** | Redis |
-| **Infrastructure** | Azure Container Apps, Docker |
+| **Infrastructure** | Docker, Azure Container Apps |
 | **CI/CD** | GitHub Actions |
 | **Monitoring** | LangSmith, structlog |
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
 - Python 3.11+
-- Docker & Docker Compose
-- Azure OpenAI resource (or OpenAI API key for dev)
+- Docker and Docker Compose
+- At least one LLM provider API key (Groq is free)
 
 ### Local Development
 
@@ -80,7 +81,7 @@ cd equity-research-agent
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your Azure OpenAI credentials
+# Edit .env with your API credentials
 
 # Start services
 docker compose up -d
@@ -94,16 +95,19 @@ curl http://localhost:8000/health
 Edit `.env` with your credentials:
 
 ```bash
-# Azure OpenAI (Recommended for production)
+# Option 1: Groq (FREE - Recommended for development)
+GROQ_API_KEY=gsk_...
+
+# Option 2: Azure OpenAI (Production)
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
 AZURE_OPENAI_API_KEY=your-key
 AZURE_OPENAI_DEPLOYMENT=gpt-4o-mini
 
-# OR OpenAI Direct (Development only)
+# Option 3: OpenAI Direct
 OPENAI_API_KEY=sk-...
 ```
 
-## 📡 API Endpoints
+## API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -135,7 +139,7 @@ curl http://localhost:8000/quote/NVDA
 curl http://localhost:8000/compare/NVDA,AMD,INTC
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 equity-research-agent/
@@ -146,12 +150,12 @@ equity-research-agent/
 │   │   ├── document_reader.py
 │   │   ├── news_sentiment.py
 │   │   └── synthesizer.py
-│   ├── api/             # FastAPI
+│   ├── api/             # FastAPI application
 │   ├── config/          # Pydantic settings
-│   ├── rag/             # Vector store & embeddings
+│   ├── rag/             # Vector store and embeddings
 │   ├── tools/           # Data integrations
 │   └── utils/           # Cache, rate limiting
-├── tests/               # Unit tests
+├── tests/               # Unit tests (98% coverage)
 ├── docs/                # Technical documentation
 ├── infra/               # Azure Bicep templates
 ├── docker-compose.yml   # Local development
@@ -159,7 +163,7 @@ equity-research-agent/
 └── pyproject.toml
 ```
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Install dev dependencies
@@ -175,7 +179,7 @@ ruff check src/
 mypy src/
 ```
 
-## ☁️ Azure Deployment
+## Azure Deployment
 
 ### One-Command Deploy
 
@@ -191,17 +195,16 @@ export AZURE_OPENAI_API_KEY=your-key
 
 See [docs/azure-deployment.md](docs/azure-deployment.md) for detailed instructions.
 
-## 📚 Documentation
+## Documentation
 
 | Document | Description |
 |----------|-------------|
-| [claude.md](claude.md) | Agent instructions |
 | [docs/azure-deployment.md](docs/azure-deployment.md) | Azure setup guide |
 | [docs/langgraph-orchestration.md](docs/langgraph-orchestration.md) | Agent workflow |
 | [docs/qdrant-vector-database.md](docs/qdrant-vector-database.md) | RAG setup |
 | [docs/embeddings-rag.md](docs/embeddings-rag.md) | Embeddings pipeline |
 
-## 🔒 Security
+## Security
 
 - Rate limiting (10 req/min for analysis, 30/min for quotes)
 - Input validation with Pydantic
@@ -209,10 +212,13 @@ See [docs/azure-deployment.md](docs/azure-deployment.md) for detailed instructio
 - Error masking in production
 - CORS restricted in production
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-## 👤 Author
+## Author
 
-Built with AI & ML engineering best practices.
+**Nolan Cacheux** - AI/ML Engineer
+
+- GitHub: [@nolancacheux](https://github.com/nolancacheux)
+- LinkedIn: [nolancacheux](https://linkedin.com/in/nolancacheux)
