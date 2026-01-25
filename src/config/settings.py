@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # App
     app_env: Literal["development", "staging", "production"] = "development"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
-    api_host: str = "0.0.0.0"
+    api_host: str = "0.0.0.0"  # nosec B104 - Required for Docker
     api_port: int = 8000
 
     # Groq (free tier - recommended for zero-cost deployment)
