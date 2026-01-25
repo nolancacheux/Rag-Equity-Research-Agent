@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   app:
     build:
@@ -8,16 +6,16 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - AZURE_OPENAI_DEPLOYMENT=${AZURE_OPENAI_DEPLOYMENT}
       - QDRANT_URL=http://qdrant:6333
       - REDIS_URL=redis://redis:6379
-      - APP_ENV=development
-      - LOG_LEVEL=INFO
+      - APP_ENV=${APP_ENV:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
     depends_on:
       - qdrant
       - redis
-    volumes:
-      - ./src:/app/src:ro
     restart: unless-stopped
 
   qdrant:
