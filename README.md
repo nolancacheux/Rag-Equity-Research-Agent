@@ -215,8 +215,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## 👤 Author
 
-**Nolan Cacheux**  
-AI & ML Engineer | JUNIA ISEN Lille
-
-- GitHub: [@nolancacheux](https://github.com/nolancacheux)
-- LinkedIn: [nolancacheux](https://www.linkedin.com/in/nolancacheux/)
+Built with AI & ML engineering best practices.
