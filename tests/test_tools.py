@@ -17,10 +17,10 @@ class TestYFinanceTool:
         # Setup mocks
         mock_cache.return_value.get.return_value = None
         mock_ticker.return_value.info = sample_stock_info
-        
+
         tool = YFinanceTool()
         quote = tool.get_quote("NVDA")
-        
+
         assert quote is not None
         assert quote.symbol == "NVDA"
         assert quote.name == "NVIDIA Corporation"
@@ -42,16 +42,16 @@ class TestYFinanceTool:
             "pe_ratio": 65.5,
             "forward_pe": 45.2,
             "dividend_yield": 0.0003,
-            "52_week_high": 950.00,
-            "52_week_low": 450.00,
+            "fifty_two_week_high": 950.00,
+            "fifty_two_week_low": 450.00,
             "market_state": "REGULAR",
             "timestamp": "2024-01-01T12:00:00",
         }
         mock_cache.return_value.get.return_value = cached_data
-        
+
         tool = YFinanceTool()
         quote = tool.get_quote("NVDA")
-        
+
         assert quote is not None
         assert quote.symbol == "NVDA"
         # Ticker should not be called when cache hit
@@ -63,18 +63,18 @@ class TestYFinanceTool:
         """Test handling of missing data."""
         mock_cache.return_value.get.return_value = None
         mock_ticker.return_value.info = {}
-        
+
         tool = YFinanceTool()
         quote = tool.get_quote("INVALID")
-        
+
         assert quote is None
 
     def test_safe_float_with_nan(self):
         """Test NaN handling."""
         tool = YFinanceTool()
-        
+
         assert tool._safe_float(None) is None
-        assert tool._safe_float(float('nan')) is None
+        assert tool._safe_float(float("nan")) is None
         assert tool._safe_float(123.45) == 123.45
         assert tool._safe_float("invalid") is None
 
@@ -83,7 +83,7 @@ class TestYFinanceTool:
     def test_compare_pe_ratios(self, mock_cache, mock_ticker, sample_stock_info):
         """Test P/E ratio comparison."""
         mock_cache.return_value.get.return_value = None
-        
+
         # Different P/E for each ticker
         def get_info(ticker):
             info = sample_stock_info.copy()
@@ -91,12 +91,12 @@ class TestYFinanceTool:
                 info["symbol"] = "AMD"
                 info["trailingPE"] = 45.0
             return MagicMock(info=info)
-        
+
         mock_ticker.side_effect = get_info
-        
+
         tool = YFinanceTool()
         comparison = tool.compare_pe_ratios(["NVDA", "AMD"])
-        
+
         assert "NVDA" in comparison
         assert "AMD" in comparison
 
@@ -110,10 +110,10 @@ class TestDuckDuckGoSearchTool:
         """Test successful search."""
         mock_cache.return_value.get.return_value = None
         mock_ddgs.return_value.text.return_value = sample_search_results
-        
+
         tool = DuckDuckGoSearchTool()
         results = tool.search("NVIDIA stock news")
-        
+
         assert len(results) == 2
         assert results[0].title == "NVIDIA Stock Surges on AI Demand"
 
@@ -131,10 +131,10 @@ class TestDuckDuckGoSearchTool:
             }
         ]
         mock_cache.return_value.get.return_value = cached_data
-        
+
         tool = DuckDuckGoSearchTool()
         results = tool.search("test query")
-        
+
         assert len(results) == 1
         assert results[0].title == "Cached Result"
         mock_ddgs.return_value.text.assert_not_called()
@@ -154,10 +154,10 @@ class TestDuckDuckGoSearchTool:
                 "image": None,
             }
         ]
-        
+
         tool = DuckDuckGoSearchTool()
         results = tool.search_news("NVIDIA")
-        
+
         assert len(results) == 1
         assert results[0].title == "Breaking News"
         assert results[0].source == "NewsSource"
