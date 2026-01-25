@@ -6,6 +6,8 @@ Documentation technique du projet Equity Research Agent.
 
 | Document | Description |
 |----------|-------------|
+| [azure-deployment.md](./azure-deployment.md) | Deployment Azure (Container Apps, OpenAI) |
+| [terraform/](../terraform/README.md) | Infrastructure as Code (recommended) |
 | [qdrant-vector-database.md](./qdrant-vector-database.md) | Base de données vectorielle pour le RAG |
 | [langgraph-orchestration.md](./langgraph-orchestration.md) | Orchestration des agents avec LangGraph |
 | [redis-caching.md](./redis-caching.md) | Caching Redis pour les API calls |
@@ -25,6 +27,7 @@ equity-research-agent/
 │   ├── rag/             # RAG pipeline (embeddings, chunking, vector store)
 │   ├── tools/           # Data fetching tools
 │   └── utils/           # Utilities (cache, rate limiter)
+├── terraform/           # Infrastructure as Code (Azure)
 ├── tests/               # Tests unitaires
 ├── docs/                # Cette documentation
 ├── docker-compose.yml   # Orchestration services
