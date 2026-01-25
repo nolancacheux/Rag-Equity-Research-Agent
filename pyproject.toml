@@ -30,7 +30,7 @@ dependencies = [
     # RAG & Vector DB
     "qdrant-client>=1.9.0",
     "unstructured[pdf]>=0.15.0",
-    "sentence-transformers>=3.0.0",
+    # Using Azure OpenAI embeddings instead of local sentence-transformers
     
     # Web Search
     "duckduckgo-search>=6.0.0",
