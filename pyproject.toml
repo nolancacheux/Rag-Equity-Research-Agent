@@ -5,7 +5,7 @@ description = "Real-Time Equity Research Agent - AI-powered financial analysis w
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [{ name = "Nolan Cacheux", email = "cachnolan@gmail.com" }]
+authors = [{ name = "Nolan C.", email = "contact@example.com" }]
 keywords = ["finance", "ai", "langchain", "langgraph", "rag", "equity-research"]
 classifiers = [
     "Development Status :: 3 - Alpha",
