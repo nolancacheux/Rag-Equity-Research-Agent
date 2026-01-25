@@ -1,9 +1,9 @@
-"""Embedding service for vector representations."""
+"""Embedding service for vector representations using Azure OpenAI."""
 
 from functools import lru_cache
 
+import httpx
 import structlog
-from sentence_transformers import SentenceTransformer
 
 from src.config import get_settings
 
@@ -11,30 +11,38 @@ logger = structlog.get_logger()
 
 
 class EmbeddingService:
-    """Service for generating text embeddings.
+    """Service for generating text embeddings using Azure OpenAI.
     
-    Uses sentence-transformers for local embeddings.
-    Supports batched processing for efficiency.
+    Uses Azure OpenAI text-embedding-ada-002 for production-ready embeddings.
+    Dimension: 1536
     """
 
-    DEFAULT_MODEL = "all-MiniLM-L6-v2"
+    DIMENSION = 1536  # text-embedding-ada-002 dimension
 
-    def __init__(self, model_name: str | None = None) -> None:
-        """Initialize embedding service.
+    def __init__(self) -> None:
+        """Initialize embedding service with Azure OpenAI."""
+        settings = get_settings()
         
-        Args:
-            model_name: HuggingFace model name (default: all-MiniLM-L6-v2)
-        """
-        self._model_name = model_name or self.DEFAULT_MODEL
-        self._model: SentenceTransformer | None = None
+        if not settings.azure_openai_endpoint or not settings.azure_openai_api_key:
+            raise ValueError("Azure OpenAI credentials required for embeddings")
+        
+        self._endpoint = settings.azure_openai_endpoint.rstrip("/")
+        self._api_key = settings.azure_openai_api_key.get_secret_value()
+        self._deployment = settings.azure_openai_embedding_deployment
+        self._api_version = settings.azure_openai_api_version
+        
+        logger.info(
+            "embedding_service_initialized",
+            endpoint=self._endpoint,
+            deployment=self._deployment,
+        )
 
-    def _load_model(self) -> SentenceTransformer:
-        """Lazy load the embedding model."""
-        if self._model is None:
-            logger.info("loading_embedding_model", model=self._model_name)
-            self._model = SentenceTransformer(self._model_name)
-            logger.info("embedding_model_loaded", model=self._model_name)
-        return self._model
+    def _get_url(self) -> str:
+        """Build Azure OpenAI embeddings API URL."""
+        return (
+            f"{self._endpoint}/openai/deployments/{self._deployment}"
+            f"/embeddings?api-version={self._api_version}"
+        )
 
     def embed(self, text: str) -> list[float]:
         """Generate embedding for a single text.
@@ -43,18 +51,17 @@ class EmbeddingService:
             text: Text to embed
             
         Returns:
-            Embedding vector as list of floats
+            Embedding vector as list of floats (1536 dimensions)
         """
-        model = self._load_model()
-        embedding = model.encode(text, convert_to_numpy=True)
-        return embedding.tolist()
+        embeddings = self.embed_batch([text])
+        return embeddings[0] if embeddings else []
 
-    def embed_batch(self, texts: list[str], batch_size: int = 32) -> list[list[float]]:
+    def embed_batch(self, texts: list[str], batch_size: int = 16) -> list[list[float]]:
         """Generate embeddings for multiple texts.
         
         Args:
             texts: List of texts to embed
-            batch_size: Batch size for processing
+            batch_size: Batch size for API calls (max 16 for Azure)
             
         Returns:
             List of embedding vectors
@@ -62,22 +69,34 @@ class EmbeddingService:
         if not texts:
             return []
         
-        model = self._load_model()
-        embeddings = model.encode(
-            texts,
-            batch_size=batch_size,
-            show_progress_bar=False,
-            convert_to_numpy=True,
-        )
+        all_embeddings: list[list[float]] = []
+        
+        # Process in batches
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i:i + batch_size]
+            
+            response = httpx.post(
+                self._get_url(),
+                headers={
+                    "api-key": self._api_key,
+                    "Content-Type": "application/json",
+                },
+                json={"input": batch},
+                timeout=30.0,
+            )
+            response.raise_for_status()
+            
+            data = response.json()
+            batch_embeddings = [item["embedding"] for item in data["data"]]
+            all_embeddings.extend(batch_embeddings)
         
         logger.debug("batch_embedded", count=len(texts))
-        return [e.tolist() for e in embeddings]
+        return all_embeddings
 
     @property
     def dimension(self) -> int:
-        """Get embedding dimension."""
-        model = self._load_model()
-        return model.get_sentence_embedding_dimension()
+        """Get embedding dimension (1536 for ada-002)."""
+        return self.DIMENSION
 
 
 @lru_cache
