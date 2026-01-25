@@ -66,45 +66,75 @@ The agent will:
 
 ## Quick Start
 
-### Prerequisites
+### Option A: Local Development (Recommended to start)
 
-- Python 3.11+
-- Docker and Docker Compose
-- At least one LLM provider API key (Groq is free)
-
-### Local Development
+**Prerequisites:** Python 3.11+, Docker, Docker Compose
 
 ```bash
-# Clone
+# 1. Clone the repository
 git clone https://github.com/nolancacheux/equity-research-agent.git
 cd equity-research-agent
 
-# Configure environment
+# 2. Configure environment
 cp .env.example .env
-# Edit .env with your API credentials
+# Edit .env - add at least one LLM provider:
+#   GROQ_API_KEY=gsk_...        (FREE - recommended)
+#   or OPENAI_API_KEY=sk-...    (paid)
 
-# Start services
+# 3. Start all services (API + Qdrant + Redis)
 docker compose up -d
 
-# Check health
+# 4. Verify it works
 curl http://localhost:8000/health
+curl http://localhost:8000/quote/NVDA
 ```
+
+**Add Telegram bot (optional):**
+```bash
+# Add to .env:
+TELEGRAM_BOT_TOKEN=your_token_from_botfather
+
+# Start the bot
+python run_telegram_bot.py
+```
+
+### Option B: Deploy to Azure
+
+**Prerequisites:** Azure CLI, Terraform 1.5+, Azure subscription
+
+```bash
+# 1. Login to Azure
+az login
+
+# 2. Create Terraform state backend (one-time)
+az group create -n terraform-state-rg -l swedencentral
+az storage account create -n tfstateequityresearch -g terraform-state-rg -l swedencentral --sku Standard_LRS
+az storage container create -n tfstate --account-name tfstateequityresearch
+
+# 3. Configure secrets
+cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+# Edit terraform.tfvars with your TELEGRAM_BOT_TOKEN
+
+# 4. Deploy infrastructure + containers
+./scripts/deploy.sh full
+
+# Your API will be available at: https://<app-name>.azurecontainerapps.io
+```
+
+See [docs/ci-cd-setup.md](docs/ci-cd-setup.md) for CI/CD automation setup.
 
 ### Configuration
 
 Edit `.env` with your credentials:
 
 ```bash
-# Option 1: Groq (FREE - Recommended for development)
-GROQ_API_KEY=gsk_...
+# LLM Provider (choose one)
+GROQ_API_KEY=gsk_...                      # FREE tier - recommended for dev
+OPENAI_API_KEY=sk-...                     # Paid
+AZURE_OPENAI_ENDPOINT=https://...         # Enterprise
 
-# Option 2: Azure OpenAI (Production)
-AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
-AZURE_OPENAI_API_KEY=your-key
-AZURE_OPENAI_DEPLOYMENT=gpt-4o-mini
-
-# Option 3: OpenAI Direct
-OPENAI_API_KEY=sk-...
+# Telegram Bot (optional)
+TELEGRAM_BOT_TOKEN=123456789:ABC...
 ```
 
 ## Telegram Bot
@@ -218,37 +248,30 @@ ruff check src/
 mypy src/
 ```
 
-## Azure Deployment
+## Deployment
 
-### Prerequisites
-
-- Azure CLI (`az login`)
-- Terraform 1.5+
-- Telegram bot token from @BotFather
-
-### One-Command Deploy
-
+### Local Only
 ```bash
-# Set required secrets
-export TELEGRAM_BOT_TOKEN=your_bot_token
-
-# Full deployment (infrastructure + containers)
-./scripts/deploy.sh full
+docker compose up -d          # Start everything
+docker compose logs -f api    # View API logs
+docker compose down           # Stop
 ```
 
-### Step-by-Step Deploy
-
+### Azure (Manual)
 ```bash
-./scripts/deploy.sh init    # Initialize Terraform
-./scripts/deploy.sh plan    # Review infrastructure changes
-./scripts/deploy.sh apply   # Create Azure resources
-./scripts/deploy.sh build   # Build & push Docker images
-./scripts/deploy.sh update  # Update container apps
+./scripts/deploy.sh full      # One-command deploy
 ```
 
-### Manual Deploy
+### CI/CD Pipeline
 
-See [docs/azure-deployment.md](docs/azure-deployment.md) for detailed instructions.
+The GitHub Actions workflow runs automatically on push/PR:
+- **Lint** → Ruff linter and formatter
+- **Test** → Pytest with 89% coverage
+- **Security** → Bandit security scan
+- **Build** → Docker images (API + Bot)
+- **Terraform** → Validate infrastructure code
+
+Deployment to Azure is **manual** via `./scripts/deploy.sh`. See [docs/ci-cd-setup.md](docs/ci-cd-setup.md) to enable auto-deploy.
 
 ## Documentation
 
