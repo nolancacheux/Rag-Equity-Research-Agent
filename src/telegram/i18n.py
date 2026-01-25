@@ -23,6 +23,10 @@ MESSAGES: dict[str, dict[str, str]] = {
             "💡 _Send your question as a message_"
         ),
         "analyze_running": "⏳ *Running analysis...*\n\nThis may take 30-60 seconds.",
+        "analyze_step_1": "📡 *Fetching market data...*",
+        "analyze_step_2": "📡 *Fetching market data...* ✓\n📰 *Searching financial news...*",
+        "analyze_step_3": "📡 *Fetching market data...* ✓\n📰 *Searching financial news...* ✓\n📄 *Analyzing SEC filings...*",
+        "analyze_step_4": "📡 *Fetching market data...* ✓\n📰 *Searching financial news...* ✓\n📄 *Analyzing SEC filings...* ✓\n🤖 *Generating report...*",
         "analyze_error": "❌ Analysis failed. Please try again.",
         "analyze_another": "🔄 Analyze another",
         # Quote
@@ -89,6 +93,10 @@ MESSAGES: dict[str, dict[str, str]] = {
             "💡 _Envoyez votre question en message_"
         ),
         "analyze_running": "⏳ *Analyse en cours...*\n\nCela peut prendre 30-60 secondes.",
+        "analyze_step_1": "📡 *Récupération des données de marché...*",
+        "analyze_step_2": "📡 *Récupération des données de marché...* ✓\n📰 *Recherche des actualités...*",
+        "analyze_step_3": "📡 *Récupération des données de marché...* ✓\n📰 *Recherche des actualités...* ✓\n📄 *Analyse des documents SEC...*",
+        "analyze_step_4": "📡 *Récupération des données de marché...* ✓\n📰 *Recherche des actualités...* ✓\n📄 *Analyse des documents SEC...* ✓\n🤖 *Génération du rapport...*",
         "analyze_error": "❌ L'analyse a échoué. Réessayez.",
         "analyze_another": "🔄 Autre analyse",
         # Quote
