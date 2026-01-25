@@ -95,3 +95,6 @@ secrets/
 
 # LangSmith
 .langsmith/
+terraform.tfvars
+.terraform/
+*.tfplan

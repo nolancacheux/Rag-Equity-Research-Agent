@@ -1,0 +1,58 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  RESOURCE_GROUP: equity-research-rg
+  ACR_NAME: equityresearchacrblipenk7
+  API_APP_NAME: equity-research-agent
+  BOT_APP_NAME: equity-research-telegram-bot
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to ACR
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push API image
+        run: |
+          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/equity-research-api:${{ github.sha }} -t ${{ secrets.ACR_LOGIN_SERVER }}/equity-research-api:latest -f Dockerfile.api .
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/equity-research-api:${{ github.sha }}
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/equity-research-api:latest
+
+      - name: Build and push Bot image
+        run: |
+          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/equity-research-telegram-bot:${{ github.sha }} -t ${{ secrets.ACR_LOGIN_SERVER }}/equity-research-telegram-bot:latest -f Dockerfile.bot .
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/equity-research-telegram-bot:${{ github.sha }}
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/equity-research-telegram-bot:latest
+
+      - name: Deploy API
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          resourceGroup: ${{ env.RESOURCE_GROUP }}
+          containerAppName: ${{ env.API_APP_NAME }}
+          imageToDeploy: ${{ secrets.ACR_LOGIN_SERVER }}/equity-research-api:${{ github.sha }}
+
+      - name: Deploy Bot
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          resourceGroup: ${{ env.RESOURCE_GROUP }}
+          containerAppName: ${{ env.BOT_APP_NAME }}
+          imageToDeploy: ${{ secrets.ACR_LOGIN_SERVER }}/equity-research-telegram-bot:${{ github.sha }}

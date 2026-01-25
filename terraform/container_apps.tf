@@ -67,7 +67,7 @@ resource "azurerm_container_app" "api" {
 
     container {
       name   = "api"
-      image  = "${azurerm_container_registry.main.login_server}/${var.project_name}-api:latest"
+      image  = "${azurerm_container_registry.main.login_server}/equity-research-api:latest"
       cpu    = var.container_app_cpu
       memory = var.container_app_memory
 
@@ -167,7 +167,7 @@ resource "azurerm_container_app" "telegram_bot" {
 
     container {
       name   = "telegram-bot"
-      image  = "${azurerm_container_registry.main.login_server}/${var.project_name}-telegram-bot:latest"
+      image  = "${azurerm_container_registry.main.login_server}/equity-research-telegram-bot:latest"
       cpu    = var.telegram_bot_cpu
       memory = var.telegram_bot_memory
 
