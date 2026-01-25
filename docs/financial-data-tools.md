@@ -59,7 +59,7 @@ history = tool.get_history("NVDA", period="1mo")
 ### Configuration
 
 ```env
-SEC_USER_AGENT=EquityResearchAgent cachnolan@gmail.com
+SEC_USER_AGENT=EquityResearchAgent your-email@example.com
 ```
 
 > **Important** : SEC requiert un User-Agent valide avec email de contact.
