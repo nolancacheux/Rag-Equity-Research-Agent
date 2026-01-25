@@ -15,12 +15,12 @@ STORAGE_FILE = Path("/tmp/telegram_bot_users.json")
 
 class UserPreferences:
     """Manages user preferences."""
-    
+
     def __init__(self) -> None:
         """Initialize storage."""
         self._cache: dict[int, dict[str, Any]] = {}
         self._load()
-    
+
     def _load(self) -> None:
         """Load preferences from file."""
         try:
@@ -33,7 +33,7 @@ class UserPreferences:
         except Exception as e:
             logger.warning(f"Could not load preferences: {e}")
             self._cache = {}
-    
+
     def _save(self) -> None:
         """Save preferences to file."""
         try:
@@ -41,13 +41,13 @@ class UserPreferences:
                 json.dump(self._cache, f)
         except Exception as e:
             logger.warning(f"Could not save preferences: {e}")
-    
+
     def get_language(self, user_id: int) -> Language | None:
         """Get user's preferred language.
-        
+
         Args:
             user_id: Telegram user ID
-            
+
         Returns:
             Language code or None if not set
         """
@@ -56,10 +56,10 @@ class UserPreferences:
         if lang in ("en", "fr"):
             return lang  # type: ignore
         return None
-    
+
     def set_language(self, user_id: int, language: Language) -> None:
         """Set user's preferred language.
-        
+
         Args:
             user_id: Telegram user ID
             language: Language code
@@ -69,21 +69,21 @@ class UserPreferences:
         self._cache[user_id]["language"] = language
         self._save()
         logger.info(f"User {user_id} set language to {language}")
-    
+
     def get_state(self, user_id: int) -> str | None:
         """Get user's conversation state.
-        
+
         Args:
             user_id: Telegram user ID
-            
+
         Returns:
             State string or None
         """
         return self._cache.get(user_id, {}).get("state")
-    
+
     def set_state(self, user_id: int, state: str | None) -> None:
         """Set user's conversation state.
-        
+
         Args:
             user_id: Telegram user ID
             state: State string or None to clear
@@ -95,13 +95,13 @@ class UserPreferences:
         else:
             self._cache[user_id]["state"] = state
         self._save()
-    
+
     def is_new_user(self, user_id: int) -> bool:
         """Check if this is a new user.
-        
+
         Args:
             user_id: Telegram user ID
-            
+
         Returns:
             True if user has no preferences set
         """

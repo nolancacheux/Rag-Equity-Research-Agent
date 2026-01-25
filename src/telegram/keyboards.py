@@ -8,21 +8,21 @@ from src.telegram.i18n import Language, get_text
 # Callback data constants
 class Callback:
     """Callback data constants."""
-    
+
     # Language
     LANG_EN = "lang:en"
     LANG_FR = "lang:fr"
-    
+
     # Main menu
     ANALYZE = "menu:analyze"
     QUOTE = "menu:quote"
     COMPARE = "menu:compare"
     SETTINGS = "menu:settings"
     HELP = "menu:help"
-    
+
     # Navigation
     BACK_MENU = "nav:menu"
-    
+
     # Actions
     ANALYZE_ANOTHER = "action:analyze"
     QUOTE_ANOTHER = "action:quote"
@@ -55,7 +55,7 @@ def main_menu_keyboard(lang: Language = "en") -> InlineKeyboardMarkup:
                 InlineKeyboardButton("⚙️ Paramètres", callback_data=Callback.SETTINGS),
             ],
         ])
-    
+
     return InlineKeyboardMarkup([
         [
             InlineKeyboardButton("📊 Analyze", callback_data=Callback.ANALYZE),
