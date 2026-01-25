@@ -1,38 +1,38 @@
 # Embeddings & RAG Pipeline
 
-## Vue d'ensemble
+## Overview
 
-Le pipeline RAG (Retrieval-Augmented Generation) permet de chercher dans les SEC filings et autres documents pour répondre aux questions financières.
+The RAG (Retrieval-Augmented Generation) pipeline enables searching through SEC filings and other documents to answer financial questions.
 
 ```
 Document → Chunking → Embeddings → Qdrant → Search → LLM Synthesis
 ```
 
-## Modèle d'embeddings
+## Embedding Model
 
 ### Azure OpenAI text-embedding-ada-002
 
-| Propriété | Valeur |
-|-----------|--------|
+| Property | Value |
+|----------|-------|
 | **Dimension** | 1536 |
 | **Provider** | Azure OpenAI |
 | **Max tokens** | 8191 |
-| **Qualité** | Production-ready, excellent semantic search |
+| **Quality** | Production-ready, excellent semantic search |
 
-### Pourquoi Azure OpenAI ?
+### Why Azure OpenAI?
 
-1. **Production-ready** : API stable et scalable
-2. **Crédits Azure** : Utilisation des crédits gratuits Azure for Students
-3. **Pas de PyTorch** : Image Docker légère (~500MB vs 2GB+)
-4. **Cold start rapide** : Pas de chargement de modèle local
-5. **Maintenance réduite** : Pas de gestion de modèles ML
+1. **Production-ready**: Stable and scalable API
+2. **Azure credits**: Use free Azure for Students credits
+3. **No PyTorch**: Lightweight Docker image (~500MB vs 2GB+)
+4. **Fast cold start**: No local model loading
+5. **Reduced maintenance**: No ML model management
 
 ## Configuration
 
-### Variables d'environnement
+### Environment Variables
 
 ```bash
-# Azure OpenAI (requis)
+# Azure OpenAI (required)
 AZURE_OPENAI_ENDPOINT=https://xxx.openai.azure.com
 AZURE_OPENAI_API_KEY=xxx
 AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-ada-002
@@ -58,11 +58,11 @@ embeddings = get_embedding_service()
 # Single text
 vector = embeddings.embed("NVIDIA revenue growth")  # → [0.1, 0.2, ...] (1536 dims)
 
-# Batch (plus efficace)
+# Batch (more efficient)
 vectors = embeddings.embed_batch(["text1", "text2", "text3"])
 ```
 
-### Propriétés
+### Properties
 
 ```python
 embeddings.dimension  # 1536
@@ -70,17 +70,17 @@ embeddings.dimension  # 1536
 
 ## Chunking Strategy
 
-Les documents longs sont découpés en chunks pour :
-1. Respecter les limites de context window
-2. Améliorer la précision de la recherche
-3. Permettre des citations précises
+Long documents are split into chunks to:
+1. Respect context window limits
+2. Improve search precision
+3. Enable precise citations
 
-### Paramètres
+### Parameters
 
-| Paramètre | Valeur | Raison |
-|-----------|--------|--------|
-| `chunk_size` | 500 chars | Balance précision/contexte |
-| `chunk_overlap` | 50 chars | Évite de couper des phrases |
+| Parameter | Value | Reason |
+|-----------|-------|--------|
+| `chunk_size` | 500 chars | Balance precision/context |
+| `chunk_overlap` | 50 chars | Avoid cutting sentences |
 
 ### DocumentChunk
 
@@ -94,18 +94,18 @@ class DocumentChunk:
     metadata: dict[str, Any]
 ```
 
-## Pipeline complet
+## Full Pipeline
 
-### 1. Ingestion d'un SEC filing
+### 1. Ingesting a SEC Filing
 
 ```python
 from src.rag.chunking import chunk_document
 from src.rag.vector_store import QdrantStore
 
-# Télécharger le 10-K
+# Download the 10-K
 filing_text = download_sec_filing("NVDA", "10-K")
 
-# Chunker
+# Chunk it
 chunks = chunk_document(
     text=filing_text,
     metadata={
@@ -115,12 +115,12 @@ chunks = chunk_document(
     }
 )
 
-# Indexer dans Qdrant
+# Index in Qdrant
 store = QdrantStore()
-store.add_chunks(chunks)  # Embeddings générés via Azure OpenAI
+store.add_chunks(chunks)  # Embeddings generated via Azure OpenAI
 ```
 
-### 2. Recherche
+### 2. Search
 
 ```python
 results = store.search_sec_filing(
@@ -137,35 +137,35 @@ for r in results:
 
 ## Performance
 
-### Batch processing
+### Batch Processing
 
-Pour l'indexation de gros documents :
+For indexing large documents:
 
 ```python
 store.add_chunks(chunks, batch_size=16)  # Azure max batch = 16
 ```
 
-### Rate limiting
+### Rate Limiting
 
-Azure OpenAI a des limites de rate :
+Azure OpenAI has rate limits:
 - 10 requests / 10 seconds
 - 10,000 tokens / minute
 
-Le service gère automatiquement les batches pour respecter ces limites.
+The service automatically handles batching to respect these limits.
 
-## Migration depuis sentence-transformers
+## Migration from sentence-transformers
 
-Si vous aviez des embeddings en 384 dimensions (all-MiniLM-L6-v2), vous devez :
-1. Recréer la collection Qdrant avec dimension=1536
-2. Ré-indexer tous les documents
+If you had embeddings in 384 dimensions (all-MiniLM-L6-v2), you need to:
+1. Recreate the Qdrant collection with dimension=1536
+2. Re-index all documents
 
 ```python
-# Mise à jour de la collection Qdrant
+# Update Qdrant collection
 store = QdrantStore()
 store.recreate_collection(vector_size=1536)
 ```
 
-## Ressources
+## Resources
 
 - [Azure OpenAI Embeddings](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/understand-embeddings)
 - [text-embedding-ada-002](https://platform.openai.com/docs/guides/embeddings)

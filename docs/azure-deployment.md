@@ -6,7 +6,7 @@
 
 | Resource | Value |
 |----------|-------|
-| **API URL** | https://equity-research-agent.thankfulhill-01e4fbbb.swedencentral.azurecontainerapps.io |
+| **API URL** | https://<your-app>.azurecontainerapps.io |
 | **Resource Group** | equity-research-rg |
 | **Location** | Sweden Central |
 | **ACR** | equityresearchacrblipenk7.azurecr.io |
@@ -135,7 +135,7 @@ az containerapp update \
 
 | Service | URL |
 |---------|-----|
-| API | https://equity-research-agent.wonderfulstone-1de7f015.swedencentral.azurecontainerapps.io |
+| API | https://<your-app>.azurecontainerapps.io |
 | Health | /health |
 | Docs | /docs |
 

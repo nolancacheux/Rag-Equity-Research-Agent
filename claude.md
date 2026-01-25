@@ -150,7 +150,7 @@ pytest tests/test_tools.py -v
 Deployed via Terraform + GitHub Actions CI/CD:
 
 ```
-API: https://equity-research-agent.thankfulhill-01e4fbbb.swedencentral.azurecontainerapps.io
+API: https://<your-app>.azurecontainerapps.io
 Bot: equity-research-telegram-bot (internal)
 ```
 

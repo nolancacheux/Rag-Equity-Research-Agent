@@ -1,45 +1,45 @@
 # LangGraph Orchestration
 
-## Pourquoi LangGraph ?
+## Why LangGraph?
 
-LangGraph orchestre les différents agents de recherche financière dans un workflow structuré et déterministe.
+LangGraph orchestrates the different financial research agents in a structured and deterministic workflow.
 
-### Avantages par rapport à LangChain classique
+### Advantages over Classic LangChain
 
-| Critère | LangGraph | LangChain Agents |
-|---------|-----------|------------------|
-| **Contrôle du flux** | Explicite (graphe) | Implicite (LLM décide) |
-| **Déterminisme** | Élevé | Variable |
-| **Debugging** | Facile (visualisation) | Difficile |
-| **État partagé** | Natif (TypedDict) | Manuel |
-| **Coûts LLM** | Prévisibles | Imprévisibles |
+| Criteria | LangGraph | LangChain Agents |
+|----------|-----------|------------------|
+| **Flow Control** | Explicit (graph) | Implicit (LLM decides) |
+| **Determinism** | High | Variable |
+| **Debugging** | Easy (visualization) | Difficult |
+| **Shared State** | Native (TypedDict) | Manual |
+| **LLM Costs** | Predictable | Unpredictable |
 
-### Raisons du choix
+### Reasons for Choice
 
-1. **Workflow financier structuré** : L'ordre des analyses est important (data → docs → news → synthèse)
-2. **État typé** : TypedDict garantit la cohérence des données entre agents
-3. **Debugging** : Visualisation claire du flux pour identifier les erreurs
-4. **Coûts maîtrisés** : Pas de boucles infinies possibles
+1. **Structured financial workflow**: The order of analyses matters (data → docs → news → synthesis)
+2. **Typed state**: TypedDict ensures data consistency between agents
+3. **Debugging**: Clear flow visualization to identify errors
+4. **Controlled costs**: No infinite loops possible
 
-## Architecture du graphe
+## Graph Architecture
 
 ```
 [parse_query] → [market_data] → [document_reader?] → [news_sentiment] → [synthesizer] → END
                                        ↓
-                              (skip si pas de doc queries)
+                              (skip if no doc queries)
 ```
 
 ### Nodes
 
-| Node | Responsabilité | Input | Output |
+| Node | Responsibility | Input | Output |
 |------|----------------|-------|--------|
-| `parse_query` | Extraction tickers + queries | `query` | `tickers`, `document_queries` |
-| `market_data` | Prix, fondamentaux yfinance | `tickers` | `market_data` |
-| `document_reader` | RAG sur SEC filings | `tickers`, `document_queries` | `document_analysis` |
-| `news_sentiment` | Analyse sentiment news | `tickers` | `news_analysis` |
-| `synthesizer` | Rapport final LLM | Tous les outputs | `report` |
+| `parse_query` | Extract tickers + queries | `query` | `tickers`, `document_queries` |
+| `market_data` | Prices, fundamentals via yfinance | `tickers` | `market_data` |
+| `document_reader` | RAG on SEC filings | `tickers`, `document_queries` | `document_analysis` |
+| `news_sentiment` | News sentiment analysis | `tickers` | `news_analysis` |
+| `synthesizer` | Final LLM report | All outputs | `report` |
 
-## État du graphe (ResearchState)
+## Graph State (ResearchState)
 
 ```python
 class ResearchState(TypedDict, total=False):
@@ -60,22 +60,22 @@ class ResearchState(TypedDict, total=False):
     errors: list[str]
 ```
 
-## Utilisation
+## Usage
 
-### Recherche asynchrone
+### Async Research
 
 ```python
 from src.agents.graph import run_research
 
 result = await run_research(
     query="Analyze NVDA and check their 10-K for China risks",
-    tickers=["NVDA"]  # Optionnel, auto-détecté sinon
+    tickers=["NVDA"]  # Optional, auto-detected otherwise
 )
 
 print(result["report"])
 ```
 
-### Recherche synchrone
+### Sync Research
 
 ```python
 from src.agents.graph import run_research_sync
@@ -83,21 +83,21 @@ from src.agents.graph import run_research_sync
 result = run_research_sync("Compare AAPL and MSFT revenue growth")
 ```
 
-## Edges conditionnels
+## Conditional Edges
 
-Le graphe inclut une logique conditionnelle :
+The graph includes conditional logic:
 
 ```python
 def should_analyze_documents(state: ResearchState) -> str:
-    """Skip document analysis si pas de queries documentaires."""
+    """Skip document analysis if no document queries."""
     if state.get("document_queries"):
         return "document_reader"
-    return "news_sentiment"  # Skip direct vers news
+    return "news_sentiment"  # Skip directly to news
 ```
 
-## Tracing avec LangSmith
+## Tracing with LangSmith
 
-Activé via variables d'environnement :
+Enabled via environment variables:
 
 ```env
 LANGCHAIN_TRACING_V2=true
@@ -105,12 +105,12 @@ LANGCHAIN_API_KEY=ls_xxx
 LANGCHAIN_PROJECT=equity-research-agent
 ```
 
-Permet de visualiser :
-- Temps d'exécution par node
-- Tokens consommés
-- Erreurs et retries
+Allows visualization of:
+- Execution time per node
+- Tokens consumed
+- Errors and retries
 
-## Ressources
+## Resources
 
-- [Documentation LangGraph](https://langchain-ai.github.io/langgraph/)
+- [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
 - [LangSmith](https://smith.langchain.com/)

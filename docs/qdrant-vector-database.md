@@ -1,35 +1,35 @@
 # Qdrant Vector Database
 
-## Pourquoi Qdrant ?
+## Why Qdrant?
 
-Qdrant est utilisé comme base de données vectorielle pour le stockage et la recherche sémantique des documents financiers (SEC filings, rapports annuels, etc.).
+Qdrant is used as the vector database for storing and semantic searching of financial documents (SEC filings, annual reports, etc.).
 
-### Avantages par rapport aux alternatives
+### Advantages over Alternatives
 
-| Critère | Qdrant | Pinecone | Chroma |
-|---------|--------|----------|--------|
-| **Self-hosted** | Oui | Non (SaaS) | Oui |
-| **Performance** | Excellent | Excellent | Moyen |
-| **Filtrage** | Natif et rapide | Bon | Limité |
-| **Coût** | Gratuit (self-hosted) | Payant | Gratuit |
-| **Production-ready** | Oui | Oui | Non recommandé |
+| Criteria | Qdrant | Pinecone | Chroma |
+|----------|--------|----------|--------|
+| **Self-hosted** | Yes | No (SaaS) | Yes |
+| **Performance** | Excellent | Excellent | Medium |
+| **Filtering** | Native and fast | Good | Limited |
+| **Cost** | Free (self-hosted) | Paid | Free |
+| **Production-ready** | Yes | Yes | Not recommended |
 
-### Raisons du choix
+### Reasons for Choice
 
-1. **Self-hosted** : Pas de dépendance SaaS, contrôle total des données financières sensibles
-2. **Filtrage puissant** : Filtrage par ticker, type de document (10-K, 10-Q), date
-3. **Performance** : Recherche HNSW optimisée pour la similarité cosinus
-4. **Docker-native** : S'intègre parfaitement dans notre stack Docker Compose
+1. **Self-hosted**: No SaaS dependency, full control over sensitive financial data
+2. **Powerful filtering**: Filter by ticker, document type (10-K, 10-Q), date
+3. **Performance**: HNSW search optimized for cosine similarity
+4. **Docker-native**: Integrates perfectly into our Docker Compose stack
 
-## Architecture dans le projet
+## Architecture in the Project
 
 ```
 src/rag/vector_store.py
 └── QdrantStore
-    ├── add_chunks()      # Indexation des documents
-    ├── search()          # Recherche sémantique générique
-    ├── search_sec_filing() # Recherche dans un filing spécifique
-    └── delete_by_ticker() # Suppression par ticker
+    ├── add_chunks()        # Document indexing
+    ├── search()            # Generic semantic search
+    ├── search_sec_filing() # Search in a specific filing
+    └── delete_by_ticker()  # Delete by ticker
 ```
 
 ## Configuration
@@ -46,17 +46,17 @@ qdrant:
     - qdrant_data:/qdrant/storage
 ```
 
-### Variables d'environnement
+### Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `QDRANT_URL` | URL du serveur Qdrant | `http://localhost:6333` |
-| `QDRANT_API_KEY` | Clé API (optionnel en dev) | `None` |
-| `QDRANT_COLLECTION` | Nom de la collection | `sec_filings` |
+| `QDRANT_URL` | Qdrant server URL | `http://localhost:6333` |
+| `QDRANT_API_KEY` | API key (optional in dev) | `None` |
+| `QDRANT_COLLECTION` | Collection name | `sec_filings` |
 
-## Utilisation
+## Usage
 
-### Indexation de documents
+### Document Indexing
 
 ```python
 from src.rag.vector_store import QdrantStore
@@ -64,22 +64,22 @@ from src.rag.chunking import chunk_document
 
 store = QdrantStore()
 
-# Chunker un document et l'indexer
+# Chunk a document and index it
 chunks = chunk_document(document_text, metadata={"ticker": "NVDA", "form_type": "10-K"})
 store.add_chunks(chunks)
 ```
 
-### Recherche sémantique
+### Semantic Search
 
 ```python
-# Recherche générique
+# Generic search
 results = store.search(
     query="China supply chain risks",
     top_k=5,
     score_threshold=0.5
 )
 
-# Recherche dans un filing spécifique
+# Search in a specific filing
 results = store.search_sec_filing(
     query="revenue growth drivers",
     ticker="NVDA",
@@ -87,16 +87,16 @@ results = store.search_sec_filing(
 )
 ```
 
-## Schema des données
+## Data Schema
 
-Chaque point dans Qdrant contient :
+Each point in Qdrant contains:
 
 ```json
 {
   "id": "uuid",
-  "vector": [0.1, 0.2, ...],  // 384 dimensions (MiniLM)
+  "vector": [0.1, 0.2, ...],  // 1536 dimensions (Azure OpenAI)
   "payload": {
-    "content": "Texte du chunk",
+    "content": "Chunk text",
     "chunk_index": 0,
     "start_char": 0,
     "end_char": 500,
@@ -110,20 +110,20 @@ Chaque point dans Qdrant contient :
 
 ## Maintenance
 
-### Stats de la collection
+### Collection Stats
 
 ```python
 stats = store.get_stats()
 # {"collection": "sec_filings", "vectors_count": 15000, "points_count": 15000, "status": "green"}
 ```
 
-### Suppression par ticker
+### Delete by Ticker
 
 ```python
-store.delete_by_ticker("NVDA")  # Supprime tous les docs NVDA
+store.delete_by_ticker("NVDA")  # Removes all NVDA docs
 ```
 
-## Ressources
+## Resources
 
-- [Documentation Qdrant](https://qdrant.tech/documentation/)
+- [Qdrant Documentation](https://qdrant.tech/documentation/)
 - [Qdrant Python Client](https://github.com/qdrant/qdrant-client)

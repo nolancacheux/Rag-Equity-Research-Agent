@@ -176,7 +176,7 @@ docker-compose up app
 Swagger UI auto-généré disponible sur :
 - **Swagger:** http://localhost:8000/docs
 - **ReDoc:** http://localhost:8000/redoc
-- **Live:** https://equity-research-agent.wonderfulstone-1de7f015.swedencentral.azurecontainerapps.io/docs
+- **Live:** https://<your-app>.azurecontainerapps.io/docs
 
 ## Ressources
 

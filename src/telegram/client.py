@@ -46,7 +46,13 @@ class APIClient:
         """
         settings = get_settings()
         self.base_url = base_url or settings.api_base_url
-        self.client = httpx.AsyncClient(timeout=120.0)  # Long timeout for analysis
+
+        # Build headers with API key if configured
+        headers = {}
+        if settings.api_secret_key:
+            headers["X-API-Key"] = settings.api_secret_key.get_secret_value()
+
+        self.client = httpx.AsyncClient(timeout=120.0, headers=headers)
 
     async def health_check(self) -> bool:
         """Check if the API is healthy."""
