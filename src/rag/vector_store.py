@@ -167,10 +167,10 @@ class QdrantStore:
                     )
             filter_conditions = models.Filter(must=conditions)
         
-        # Search
-        results = client.search(
+        # Search using query_points (qdrant-client 1.16+)
+        results = client.query_points(
             collection_name=self._collection_name,
-            query_vector=query_embedding,
+            query=query_embedding,
             limit=top_k,
             query_filter=filter_conditions,
             score_threshold=score_threshold,
@@ -178,7 +178,7 @@ class QdrantStore:
         
         # Format results
         formatted = []
-        for result in results:
+        for result in results.points:
             formatted.append({
                 "content": result.payload.get("content", ""),
                 "score": result.score,
