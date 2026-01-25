@@ -103,11 +103,12 @@ az containerapp update --name equity-research-agent --resource-group equity-rese
 
 ## API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/research` | POST | Start research analysis |
-| `/research/{id}` | GET | Get research results |
+| Endpoint | Method | Rate Limit | Description |
+|----------|--------|------------|-------------|
+| `/health` | GET | - | Health check |
+| `/analyze` | POST | 10/min | Run research analysis |
+| `/quote/{ticker}` | GET | 30/min | Real-time stock quote |
+| `/compare/{tickers}` | GET | 20/min | Compare P/E ratios (max 5)
 
 ## Live URLs
 
