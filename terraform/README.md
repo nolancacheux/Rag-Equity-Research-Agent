@@ -39,22 +39,45 @@ Infrastructure as Code for Equity Research Agent on Azure.
 # 1. Login to Azure
 az login
 
-# 2. Initialize Terraform
+# 2. Bootstrap remote state (first time only)
+az group create -n terraform-state-rg -l swedencentral
+az storage account create \
+  -n tfstateequityresearch \
+  -g terraform-state-rg \
+  -l swedencentral \
+  --sku Standard_LRS \
+  --encryption-services blob
+az storage container create \
+  -n tfstate \
+  --account-name tfstateequityresearch
+
+# 3. Uncomment backend block in backend.tf, then:
 terraform init
 
-# 3. Copy and edit variables
+# 4. Copy and edit variables
 cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your values
 
-# 4. Preview changes
+# 5. Preview changes
 terraform plan
 
-# 5. Apply infrastructure
+# 6. Apply infrastructure
 terraform apply
 
-# 6. Get outputs
+# 7. Get outputs
 terraform output
 ```
+
+## Remote State
+
+The tfstate file contains sensitive data (API keys, passwords). **Never commit it to git.**
+
+State is stored in Azure Blob Storage with:
+- Encryption at rest
+- State locking (prevents concurrent modifications)
+- Versioning (rollback capability)
+
+See `backend.tf` for configuration.
 
 ## Files
 
