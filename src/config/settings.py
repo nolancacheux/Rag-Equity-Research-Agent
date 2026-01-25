@@ -1,0 +1,75 @@
+"""Application settings using Pydantic Settings."""
+
+from functools import lru_cache
+from typing import Literal
+
+from pydantic import Field, SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    """Application settings loaded from environment variables."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+    # App
+    app_env: Literal["development", "staging", "production"] = "development"
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    api_host: str = "0.0.0.0"
+    api_port: int = 8000
+
+    # OpenAI
+    openai_api_key: SecretStr = Field(..., description="OpenAI API key")
+
+    # Azure OpenAI (Optional)
+    azure_openai_endpoint: str | None = None
+    azure_openai_api_key: SecretStr | None = None
+    azure_openai_deployment: str | None = None
+
+    # LangSmith (Optional)
+    langchain_tracing_v2: bool = False
+    langchain_api_key: SecretStr | None = None
+    langchain_project: str = "equity-research-agent"
+
+    # Qdrant
+    qdrant_url: str = "http://localhost:6333"
+    qdrant_api_key: SecretStr | None = None
+    qdrant_collection: str = "sec_filings"
+
+    # Redis
+    redis_url: str = "redis://localhost:6379"
+    cache_ttl_seconds: int = 3600  # 1 hour default
+
+    # Companies House (UK)
+    companies_house_api_key: SecretStr | None = None
+
+    # Rate Limiting
+    rate_limit_requests: int = 100
+    rate_limit_period: int = 60  # seconds
+
+    # yfinance settings
+    yfinance_cache_ttl: int = 300  # 5 minutes for market data
+
+    # SEC EDGAR settings
+    sec_user_agent: str = "EquityResearchAgent cachnolan@gmail.com"
+
+    @property
+    def is_production(self) -> bool:
+        """Check if running in production."""
+        return self.app_env == "production"
+
+    @property
+    def use_azure_openai(self) -> bool:
+        """Check if Azure OpenAI should be used."""
+        return self.azure_openai_endpoint is not None and self.azure_openai_api_key is not None
+
+
+@lru_cache
+def get_settings() -> Settings:
+    """Get cached settings instance."""
+    return Settings()
