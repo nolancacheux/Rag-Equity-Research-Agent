@@ -204,3 +204,27 @@ az containerapp identity show --name equity-research-agent --resource-group equi
 # Delete all resources
 az group delete --name equity-research-rg --yes --no-wait
 ```
+
+## Cost Control
+
+### Container Apps Scaling
+- `min_replicas = 0`: Scale to zero when idle
+- `max_replicas = 1`: Limit concurrent instances
+
+### Azure OpenAI
+- Quota: 10K tokens/min (free tier)
+- Model: gpt-4o-mini (cheapest)
+
+### Budget Alerts (Manual Setup)
+1. Go to Azure Portal > Cost Management + Billing
+2. Create Budget: $10/month for equity-research-rg
+3. Set alert at 80% threshold
+
+### Estimated Monthly Cost (Low Usage)
+| Resource | Cost |
+|----------|------|
+| Container Apps (idle) | ~$0 |
+| Azure OpenAI (10K tokens) | ~$0.01 |
+| Container Registry (Basic) | ~$5 |
+| Storage (tfstate) | ~$0.02 |
+| **Total** | **~$5-10/month** |
