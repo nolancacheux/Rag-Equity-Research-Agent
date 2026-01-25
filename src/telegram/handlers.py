@@ -299,15 +299,17 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 async def handle_analyze(update: Update, query: str, lang: Language) -> None:
     """Handle analysis request."""
+    import asyncio
+
     if not update.message or not api_client:
         return
 
     # Send typing indicator
     await update.message.chat.send_action(ChatAction.TYPING)
 
-    # Send status message
+    # Send initial status message
     status_msg = await update.message.reply_text(
-        get_text("analyze_running", lang),
+        get_text("analyze_step_1", lang),
         parse_mode=ParseMode.MARKDOWN,
     )
 
@@ -335,8 +337,38 @@ async def handle_analyze(update: Update, query: str, lang: Language) -> None:
     }
     tickers = [t for t in tickers if t not in common_words][:5]
 
-    # Run analysis
-    response = await api_client.analyze(query, tickers if tickers else None)
+    # Progress update task
+    update_task_done = asyncio.Event()
+
+    async def update_progress() -> None:
+        """Update status message with progress steps."""
+        steps = ["analyze_step_2", "analyze_step_3", "analyze_step_4"]
+        for step in steps:
+            await asyncio.sleep(8)  # Wait 8 seconds between updates
+            if update_task_done.is_set():
+                return
+            try:
+                await status_msg.edit_text(
+                    get_text(step, lang),
+                    parse_mode=ParseMode.MARKDOWN,
+                )
+            except Exception:
+                pass  # Ignore edit errors
+
+    # Start progress updates in background
+    progress_task = asyncio.create_task(update_progress())
+
+    try:
+        # Run analysis
+        response = await api_client.analyze(query, tickers if tickers else None)
+    finally:
+        # Stop progress updates
+        update_task_done.set()
+        progress_task.cancel()
+        try:
+            await progress_task
+        except asyncio.CancelledError:
+            pass
 
     # Delete status
     await status_msg.delete()
