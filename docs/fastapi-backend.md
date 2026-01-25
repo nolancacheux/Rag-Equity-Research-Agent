@@ -25,52 +25,13 @@ FastAPI est le framework web pour exposer l'API de recherche financière.
 ```
 src/api/
 └── main.py
-    ├── /health          # Health check
-    ├── /research        # Lancer une recherche
-    └── /research/{id}   # Récupérer résultats
+    ├── GET  /health           # Health check
+    ├── POST /analyze          # Lancer une analyse
+    ├── GET  /quote/{ticker}   # Quote temps réel
+    └── GET  /compare/{tickers}# Comparer P/E ratios
 ```
 
 ## Endpoints
-
-### POST /research
-
-Lance une recherche asynchrone.
-
-**Request:**
-```json
-{
-  "query": "Analyze NVDA and check their 10-K for China supply chain risks",
-  "tickers": ["NVDA"]  // Optionnel
-}
-```
-
-**Response:**
-```json
-{
-  "research_id": "uuid",
-  "status": "processing",
-  "tickers": ["NVDA"],
-  "created_at": "2024-01-15T10:30:00Z"
-}
-```
-
-### GET /research/{research_id}
-
-Récupère les résultats d'une recherche.
-
-**Response:**
-```json
-{
-  "research_id": "uuid",
-  "status": "completed",
-  "report": {
-    "summary": "...",
-    "market_data": {...},
-    "document_analysis": [...],
-    "news_sentiment": {...}
-  }
-}
-```
 
 ### GET /health
 
@@ -80,10 +41,86 @@ Health check pour monitoring.
 ```json
 {
   "status": "healthy",
-  "qdrant": "connected",
-  "redis": "connected"
+  "version": "0.1.0",
+  "environment": "production"
 }
 ```
+
+### POST /analyze
+
+Lance une recherche d'analyse financière.
+
+**Request:**
+```json
+{
+  "query": "Analyze NVDA and check their 10-K for China supply chain risks",
+  "tickers": ["NVDA"]
+}
+```
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `query` | string | Requête de recherche (10-1000 chars) |
+| `tickers` | string[] | Optionnel, max 5 tickers (auto-détecté sinon) |
+
+**Response:**
+```json
+{
+  "success": true,
+  "report": {
+    "summary": "...",
+    "analysis": "..."
+  },
+  "market_data": {
+    "NVDA": {...}
+  },
+  "errors": []
+}
+```
+
+**Rate limit:** 10/minute
+
+### GET /quote/{ticker}
+
+Récupère un quote temps réel pour un ticker.
+
+**Example:** `GET /quote/NVDA`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "ticker": "NVDA",
+    "price": 875.50,
+    "pe_ratio": 65.2,
+    "market_cap": 2150000000000,
+    "volume": 45000000
+  }
+}
+```
+
+**Rate limit:** 30/minute
+
+### GET /compare/{tickers}
+
+Compare les P/E ratios de plusieurs actions.
+
+**Example:** `GET /compare/NVDA,AMD,INTC`
+
+**Response:**
+```json
+{
+  "success": true,
+  "comparison": {
+    "NVDA": {"pe_ratio": 65.2, "price": 875.50},
+    "AMD": {"pe_ratio": 45.8, "price": 178.20},
+    "INTC": {"pe_ratio": 22.1, "price": 42.30}
+  }
+}
+```
+
+**Rate limit:** 20/minute (max 5 tickers)
 
 ## Rate Limiting
 
@@ -91,21 +128,17 @@ Implémenté avec `slowapi` pour éviter les abus :
 
 ```python
 from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 limiter = Limiter(key_func=get_remote_address)
 
-@app.post("/research")
-@limiter.limit("100/minute")
-async def create_research(request: ResearchRequest):
+@app.post("/analyze")
+@limiter.limit("10/minute")
+async def analyze(request: Request, analysis_request: AnalyzeRequest):
     ...
 ```
 
-### Configuration
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `RATE_LIMIT_REQUESTS` | Requêtes max | `100` |
-| `RATE_LIMIT_PERIOD` | Période (sec) | `60` |
+> **Note:** Depuis slowapi, le premier paramètre doit être `Request` pour que le rate limiting fonctionne.
 
 ## Validation Pydantic
 
@@ -114,10 +147,15 @@ Les requêtes sont validées automatiquement :
 ```python
 from pydantic import BaseModel, Field
 
-class ResearchRequest(BaseModel):
+class AnalyzeRequest(BaseModel):
     query: str = Field(..., min_length=10, max_length=1000)
     tickers: list[str] | None = Field(default=None, max_length=5)
 ```
+
+## CORS
+
+- **Dev:** `allow_origins=["*"]`
+- **Prod:** CORS désactivé (API-only)
 
 ## Lancer le serveur
 
@@ -138,9 +176,11 @@ docker-compose up app
 Swagger UI auto-généré disponible sur :
 - **Swagger:** http://localhost:8000/docs
 - **ReDoc:** http://localhost:8000/redoc
+- **Live:** https://equity-research-agent.wonderfulstone-1de7f015.swedencentral.azurecontainerapps.io/docs
 
 ## Ressources
 
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Pydantic](https://docs.pydantic.dev/)
 - [Uvicorn](https://www.uvicorn.org/)
+- [slowapi](https://github.com/laurentS/slowapi)
