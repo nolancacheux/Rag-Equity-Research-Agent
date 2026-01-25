@@ -128,10 +128,23 @@ class APIClient:
             )
             if response.status_code == 200:
                 data = response.json()
+                report_data = data.get("report")
+                
+                # Handle both dict (new format) and string (legacy) report
+                if isinstance(report_data, dict):
+                    report_str = report_data.get("full_report", "")
+                    sources = report_data.get("data_sources", [])
+                elif isinstance(report_data, str):
+                    report_str = report_data
+                    sources = data.get("sources", [])
+                else:
+                    report_str = None
+                    sources = []
+                
                 return AnalyzeResponse(
                     query=query,
-                    report=data.get("report"),
-                    sources=data.get("sources", []),
+                    report=report_str,
+                    sources=sources,
                 )
             return AnalyzeResponse(query=query, error=f"API error: {response.status_code}")
         except httpx.RequestError as e:
