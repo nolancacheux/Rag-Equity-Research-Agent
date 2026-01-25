@@ -1,23 +1,70 @@
 services:
-  app:
+  # ===========================================
+  # Core API
+  # ===========================================
+  api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.api
     ports:
       - "8000:8000"
     environment:
-      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
-      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
-      - AZURE_OPENAI_DEPLOYMENT=${AZURE_OPENAI_DEPLOYMENT}
+      # LLM Provider (choose one)
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT:-}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY:-}
+      - AZURE_OPENAI_DEPLOYMENT=${AZURE_OPENAI_DEPLOYMENT:-}
+      # Infrastructure
       - QDRANT_URL=http://qdrant:6333
       - REDIS_URL=redis://redis:6379
+      # App settings
+      - APP_ENV=${APP_ENV:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SEC_USER_AGENT=${SEC_USER_AGENT:-}
+      # Observability
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-false}
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY:-}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT:-equity-research-agent}
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ===========================================
+  # Telegram Bot
+  # ===========================================
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
+    environment:
+      # Bot config
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - API_BASE_URL=http://api:8000
+      # LLM Provider (for settings validation)
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT:-}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY:-}
+      - AZURE_OPENAI_DEPLOYMENT=${AZURE_OPENAI_DEPLOYMENT:-}
+      # App settings
       - APP_ENV=${APP_ENV:-development}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     depends_on:
-      - qdrant
-      - redis
+      api:
+        condition: service_healthy
     restart: unless-stopped
 
+  # ===========================================
+  # Vector Database
+  # ===========================================
   qdrant:
     image: qdrant/qdrant:latest
     ports:
@@ -26,7 +73,16 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 
+  # ===========================================
+  # Cache
+  # ===========================================
   redis:
     image: redis:7-alpine
     ports:
@@ -35,6 +91,11 @@ services:
       - redis_data:/data
     restart: unless-stopped
     command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 volumes:
   qdrant_data:
