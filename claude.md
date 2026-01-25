@@ -143,6 +143,41 @@ pytest --cov=src --cov-report=term-missing
 pytest tests/test_tools.py -v
 ```
 
+## Deployment
+
+### Azure Container Apps (Production)
+
+Deployed via Terraform + GitHub Actions CI/CD:
+
+```
+API: https://equity-research-agent.thankfulhill-01e4fbbb.swedencentral.azurecontainerapps.io
+Bot: equity-research-telegram-bot (internal)
+```
+
+**Infrastructure:**
+- Azure Container Apps (serverless)
+- Azure Container Registry (ACR)
+- Azure OpenAI (embeddings + LLM)
+- Qdrant (Azure Container Instance)
+- Key Vault (secrets)
+
+### CI/CD
+
+GitHub Actions workflow (`.github/workflows/deploy.yml`):
+1. Build Docker images
+2. Push to ACR
+3. Deploy to Container Apps
+
+Triggered on push to `main`.
+
+### Environment Variables (Azure)
+
+Set via Terraform in `terraform/container_apps.tf`:
+- `APP_ENV=production`
+- `AZURE_OPENAI_*` (from Key Vault)
+- `QDRANT_URL` (internal)
+- `TELEGRAM_BOT_TOKEN` (for bot)
+
 ## Notes
 
 - SEC EDGAR requires valid User-Agent with contact email
