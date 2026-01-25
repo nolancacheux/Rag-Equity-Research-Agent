@@ -40,13 +40,18 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS
+# CORS - In production, configure ALLOWED_ORIGINS env var
+# Default: restrictive in prod, permissive in dev
+ALLOWED_ORIGINS = (
+    ["*"] if not settings.is_production 
+    else []  # No CORS in prod (API-only, or configure via env)
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if not settings.is_production else [],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,  # Safer default
+    allow_methods=["GET", "POST"],  # Only what we need
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 
@@ -148,7 +153,9 @@ async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
         
     except Exception as e:
         logger.error("analysis_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        # Don't leak internal errors in production
+        detail = str(e) if not settings.is_production else "Analysis failed"
+        raise HTTPException(status_code=500, detail=detail)
 
 
 @app.get("/quote/{ticker}", response_model=QuoteResponse)
@@ -213,7 +220,8 @@ async def compare_stocks(tickers: str) -> dict[str, Any]:
         
     except Exception as e:
         logger.error("comparison_failed", tickers=ticker_list, error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        detail = str(e) if not settings.is_production else "Comparison failed"
+        raise HTTPException(status_code=500, detail=detail)
 
 
 if __name__ == "__main__":
