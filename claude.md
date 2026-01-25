@@ -4,6 +4,8 @@
 
 **Equity Research Agent** - AI-powered financial analysis using LangGraph, RAG, and real-time market data.
 
+**Deployed on Azure Container Apps** with Azure OpenAI for LLM and embeddings.
+
 ## Architecture
 
 ```
@@ -19,7 +21,7 @@ src/
 ├── config/           # Pydantic settings
 │   └── settings.py   # Environment config
 ├── rag/              # RAG pipeline
-│   ├── embeddings.py # Sentence transformers
+│   ├── embeddings.py # Azure OpenAI embeddings
 │   ├── chunking.py   # Document chunking
 │   └── vector_store.py # Qdrant integration
 ├── tools/            # Data sources
@@ -36,11 +38,22 @@ src/
 | Component | Technology | Purpose |
 |-----------|------------|---------|
 | Orchestration | LangGraph | Agent workflow |
-| Embeddings | sentence-transformers (MiniLM) | Local embeddings |
+| LLM | Azure OpenAI (gpt-4o-mini) | Analysis & synthesis |
+| Embeddings | Azure OpenAI (ada-002) | 1536-dim vectors |
 | Vector DB | Qdrant | Semantic search |
-| Cache | Redis | API response caching |
 | API | FastAPI | REST endpoints |
 | Data | yfinance, SEC EDGAR | Financial data |
+| Hosting | Azure Container Apps | Serverless containers |
+
+## Azure Resources
+
+| Resource | Name | Region |
+|----------|------|--------|
+| Resource Group | equity-research-rg | - |
+| Container Apps | equity-research-agent | Sweden Central |
+| Container Registry | cae661ada46dacr | Sweden Central |
+| Azure OpenAI | equity-research-openai-se | Sweden Central |
+| Qdrant | qdrant-vector-db | Sweden Central |
 
 ## Development Commands
 
@@ -60,19 +73,26 @@ mypy src/
 # Run API locally
 uvicorn src.api.main:app --reload
 
-# Docker
-docker compose up -d
+# Build & deploy to Azure
+az acr build --registry cae661ada46dacr --image equity-research-agent:v6 .
+az containerapp update --name equity-research-agent --resource-group equity-research-rg --image cae661ada46dacr.azurecr.io/equity-research-agent:v6
 ```
 
 ## Environment Variables
 
-Required:
-- `OPENAI_API_KEY` - For LLM synthesis
+### Azure OpenAI (required)
+- `AZURE_OPENAI_ENDPOINT` - Azure OpenAI endpoint
+- `AZURE_OPENAI_API_KEY` - API key
+- `AZURE_OPENAI_DEPLOYMENT` - LLM deployment (gpt-4o-mini)
+- `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` - Embeddings (text-embedding-ada-002)
+- `AZURE_OPENAI_API_VERSION` - API version (2024-02-01)
 
-Optional:
+### Qdrant
+- `QDRANT_URL` - Qdrant endpoint
+
+### Optional
 - `LANGCHAIN_API_KEY` - LangSmith tracing
-- `QDRANT_API_KEY` - If using Qdrant Cloud
-- `COMPANIES_HOUSE_API_KEY` - UK company data
+- `GROQ_API_KEY` - Alternative LLM (free tier)
 
 ## Code Standards
 
@@ -89,9 +109,16 @@ Optional:
 | `/research` | POST | Start research analysis |
 | `/research/{id}` | GET | Get research results |
 
+## Live URLs
+
+- **API**: https://equity-research-agent.wonderfulstone-1de7f015.swedencentral.azurecontainerapps.io
+- **Health**: /health
+- **Docs**: /docs
+
 ## Notes
 
 - SEC EDGAR requires valid User-Agent with contact email
 - yfinance has rate limits (~2000 req/hour)
-- Qdrant runs on port 6333 (REST) and 6334 (gRPC)
-- Redis on port 6379
+- Qdrant runs on port 6333 (REST)
+- Azure OpenAI embeddings: 1536 dimensions (ada-002)
+- Cold start: ~10-30s when scaled to zero
