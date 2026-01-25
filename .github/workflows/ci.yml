@@ -1,4 +1,4 @@
-name: CI/CD
+name: CI
 
 on:
   push:
@@ -8,11 +8,6 @@ on:
 
 env:
   PYTHON_VERSION: "3.11"
-  TF_VERSION: "1.7.0"
-  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
 jobs:
   # ===========================================================================
@@ -86,49 +81,6 @@ jobs:
         run: bandit -r src/ -ll
 
   # ===========================================================================
-  # Terraform
-  # ===========================================================================
-  terraform-plan:
-    name: Terraform Plan
-    runs-on: ubuntu-latest
-    needs: [test, security]
-    defaults:
-      run:
-        working-directory: terraform
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
-
-      - name: Terraform Format Check
-        run: terraform fmt -check -recursive
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Validate
-        run: terraform validate
-
-      - name: Terraform Plan
-        run: |
-          terraform plan \
-            -var="telegram_bot_token=${{ secrets.TELEGRAM_BOT_TOKEN }}" \
-            -var="sec_user_agent=${{ secrets.SEC_USER_AGENT }}" \
-            -out=tfplan \
-            -no-color
-        continue-on-error: false
-
-      - name: Upload Plan
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: terraform/tfplan
-          retention-days: 5
-
-  # ===========================================================================
   # Build Docker Images
   # ===========================================================================
   build:
@@ -162,14 +114,12 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ===========================================================================
-  # Deploy (main branch only)
+  # Terraform Validation (no apply - manual deployment)
   # ===========================================================================
-  terraform-apply:
-    name: Terraform Apply
+  terraform:
+    name: Terraform Validate
     runs-on: ubuntu-latest
-    needs: [terraform-plan, build]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: production
+    needs: [test, security]
     defaults:
       run:
         working-directory: terraform
@@ -179,76 +129,13 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: ${{ env.TF_VERSION }}
+          terraform_version: "1.7.0"
 
-      - name: Terraform Init
-        run: terraform init
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
 
-      - name: Download Plan
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-          path: terraform
+      - name: Terraform Init (no backend)
+        run: terraform init -backend=false
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
-
-  deploy-images:
-    name: Deploy Images
-    runs-on: ubuntu-latest
-    needs: terraform-apply
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: production
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Get ACR credentials
-        id: acr
-        run: |
-          ACR_NAME=$(az acr list -g equity-research-rg --query "[0].name" -o tsv)
-          echo "name=$ACR_NAME" >> $GITHUB_OUTPUT
-          echo "server=$(az acr show -n $ACR_NAME --query loginServer -o tsv)" >> $GITHUB_OUTPUT
-
-      - name: Login to ACR
-        uses: azure/docker-login@v2
-        with:
-          login-server: ${{ steps.acr.outputs.server }}
-          username: ${{ secrets.ARM_CLIENT_ID }}
-          password: ${{ secrets.ARM_CLIENT_SECRET }}
-
-      - name: Build and Push API
-        run: |
-          az acr build \
-            --registry ${{ steps.acr.outputs.name }} \
-            --image equity-research-api:${{ github.sha }} \
-            --image equity-research-api:latest \
-            --file Dockerfile.api \
-            .
-
-      - name: Build and Push Bot
-        run: |
-          az acr build \
-            --registry ${{ steps.acr.outputs.name }} \
-            --image equity-research-telegram-bot:${{ github.sha }} \
-            --image equity-research-telegram-bot:latest \
-            --file Dockerfile.bot \
-            .
-
-      - name: Update API Container
-        run: |
-          az containerapp update \
-            --name equity-research-api \
-            --resource-group equity-research-rg \
-            --image ${{ steps.acr.outputs.server }}/equity-research-api:${{ github.sha }}
-
-      - name: Update Bot Container
-        run: |
-          az containerapp update \
-            --name equity-research-telegram-bot \
-            --resource-group equity-research-rg \
-            --image ${{ steps.acr.outputs.server }}/equity-research-telegram-bot:${{ github.sha }}
+      - name: Terraform Validate
+        run: terraform validate
