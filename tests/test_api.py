@@ -41,7 +41,7 @@ class TestHealthEndpoint:
 class TestQuoteEndpoint:
     """Tests for quote endpoint."""
 
-    @patch("src.tools.YFinanceTool")
+    @patch("src.tools.yfinance_tool.YFinanceTool")
     def test_get_quote_success(self, mock_tool_class, client):
         """Test successful quote retrieval."""
         mock_tool = MagicMock()
@@ -55,23 +55,21 @@ class TestQuoteEndpoint:
         mock_tool.get_quote.return_value = mock_quote
         mock_tool_class.return_value = mock_tool
 
-        with patch("src.api.main.YFinanceTool", mock_tool_class):
-            response = client.get("/quote/NVDA")
+        response = client.get("/quote/NVDA")
 
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
         assert data["data"]["symbol"] == "NVDA"
 
-    @patch("src.tools.YFinanceTool")
+    @patch("src.tools.yfinance_tool.YFinanceTool")
     def test_get_quote_not_found(self, mock_tool_class, client):
         """Test quote for invalid ticker."""
         mock_tool = MagicMock()
         mock_tool.get_quote.return_value = None
         mock_tool_class.return_value = mock_tool
 
-        with patch("src.api.main.YFinanceTool", mock_tool_class):
-            response = client.get("/quote/XXXXX")
+        response = client.get("/quote/XXXXX")
 
         assert response.status_code == 200
         data = response.json()
@@ -89,7 +87,7 @@ class TestQuoteEndpoint:
 class TestCompareEndpoint:
     """Tests for comparison endpoint."""
 
-    @patch("src.tools.YFinanceTool")
+    @patch("src.tools.yfinance_tool.YFinanceTool")
     def test_compare_stocks(self, mock_tool_class, client):
         """Test stock comparison."""
         mock_tool = MagicMock()
@@ -99,8 +97,7 @@ class TestCompareEndpoint:
         }
         mock_tool_class.return_value = mock_tool
 
-        with patch("src.api.main.YFinanceTool", mock_tool_class):
-            response = client.get("/compare/NVDA,AMD")
+        response = client.get("/compare/NVDA,AMD")
 
         assert response.status_code == 200
         data = response.json()
