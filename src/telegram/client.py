@@ -129,7 +129,7 @@ class APIClient:
             if response.status_code == 200:
                 data = response.json()
                 report_data = data.get("report")
-                
+
                 # Handle both dict (new format) and string (legacy) report
                 if isinstance(report_data, dict):
                     report_str = report_data.get("full_report", "")
@@ -140,7 +140,7 @@ class APIClient:
                 else:
                     report_str = None
                     sources = []
-                
+
                 return AnalyzeResponse(
                     query=query,
                     report=report_str,

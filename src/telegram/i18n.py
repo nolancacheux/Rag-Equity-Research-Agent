@@ -9,11 +9,11 @@ MESSAGES: dict[str, dict[str, str]] = {
         # Onboarding
         "choose_language": "🌍 Welcome! Choose your language:",
         "language_set": "✅ Language set to English!",
-        
+
         # Main menu
         "welcome": "🏠 *Welcome!* What would you like to do?",
         "welcome_back": "🏠 *Welcome back!* What would you like to do?",
-        
+
         # Analyze
         "analyze_prompt": (
             "🔍 *What would you like to analyze?*\n\n"
@@ -27,7 +27,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "analyze_running": "⏳ *Running analysis...*\n\nThis may take 30-60 seconds.",
         "analyze_error": "❌ Analysis failed. Please try again.",
         "analyze_another": "🔄 Analyze another",
-        
+
         # Quote
         "quote_prompt": (
             "💹 *Which stock do you want to check?*\n\n"
@@ -36,7 +36,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         ),
         "quote_error": "❌ Could not fetch quote for {ticker}",
         "quote_another": "💹 Another quote",
-        
+
         # Compare
         "compare_prompt": (
             "📈 *Which stocks do you want to compare?*\n\n"
@@ -47,15 +47,15 @@ MESSAGES: dict[str, dict[str, str]] = {
         ),
         "compare_error": "❌ Could not compare stocks",
         "compare_another": "📈 Compare others",
-        
+
         # Settings
         "settings": "⚙️ *Settings*",
         "change_language": "🌍 Change language",
-        
+
         # Navigation
         "back_menu": "🏠 Main menu",
         "help": "❓ Help",
-        
+
         # Help
         "help_text": (
             "🤖 *Equity Research Agent*\n\n"
@@ -69,7 +69,7 @@ MESSAGES: dict[str, dict[str, str]] = {
             "• Or: \"Compare Apple and Microsoft\"\n\n"
             "🌍 Change language in Settings"
         ),
-        
+
         # Natural language patterns
         "understood_analyze": "🔍 Got it! Analyzing...",
         "understood_quote": "💹 Fetching quote for {ticker}...",
@@ -79,16 +79,16 @@ MESSAGES: dict[str, dict[str, str]] = {
             "Try using the menu buttons or be more specific!"
         ),
     },
-    
+
     "fr": {
         # Onboarding
         "choose_language": "🌍 Bienvenue ! Choisissez votre langue :",
         "language_set": "✅ Langue définie sur Français !",
-        
+
         # Main menu
         "welcome": "🏠 *Bienvenue !* Que souhaitez-vous faire ?",
         "welcome_back": "🏠 *Re-bonjour !* Que souhaitez-vous faire ?",
-        
+
         # Analyze
         "analyze_prompt": (
             "🔍 *Que voulez-vous analyser ?*\n\n"
@@ -102,7 +102,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "analyze_running": "⏳ *Analyse en cours...*\n\nCela peut prendre 30-60 secondes.",
         "analyze_error": "❌ L'analyse a échoué. Réessayez.",
         "analyze_another": "🔄 Autre analyse",
-        
+
         # Quote
         "quote_prompt": (
             "💹 *Quelle action voulez-vous consulter ?*\n\n"
@@ -111,7 +111,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         ),
         "quote_error": "❌ Impossible de récupérer {ticker}",
         "quote_another": "💹 Autre cotation",
-        
+
         # Compare
         "compare_prompt": (
             "📈 *Quelles actions comparer ?*\n\n"
@@ -122,15 +122,15 @@ MESSAGES: dict[str, dict[str, str]] = {
         ),
         "compare_error": "❌ Impossible de comparer",
         "compare_another": "📈 Autre comparaison",
-        
+
         # Settings
         "settings": "⚙️ *Paramètres*",
         "change_language": "🌍 Changer de langue",
-        
+
         # Navigation
         "back_menu": "🏠 Menu principal",
         "help": "❓ Aide",
-        
+
         # Help
         "help_text": (
             "🤖 *Agent de Recherche Financière*\n\n"
@@ -144,7 +144,7 @@ MESSAGES: dict[str, dict[str, str]] = {
             "• Ou : \"Compare Apple et Microsoft\"\n\n"
             "🌍 Changez la langue dans Paramètres"
         ),
-        
+
         # Natural language patterns
         "understood_analyze": "🔍 Compris ! Analyse en cours...",
         "understood_quote": "💹 Récupération de {ticker}...",
@@ -159,12 +159,12 @@ MESSAGES: dict[str, dict[str, str]] = {
 
 def get_text(key: str, lang: Language = "en", **kwargs: str) -> str:
     """Get translated text.
-    
+
     Args:
         key: Message key
         lang: Language code
         **kwargs: Format arguments
-        
+
     Returns:
         Translated and formatted string
     """
