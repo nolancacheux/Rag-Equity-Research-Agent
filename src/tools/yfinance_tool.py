@@ -47,8 +47,8 @@ class StockQuote:
             "pe_ratio": self.pe_ratio,
             "forward_pe": self.forward_pe,
             "dividend_yield": self.dividend_yield,
-            "52_week_high": self.fifty_two_week_high,
-            "52_week_low": self.fifty_two_week_low,
+            "fifty_two_week_high": self.fifty_two_week_high,
+            "fifty_two_week_low": self.fifty_two_week_low,
             "market_state": self.market_state,
             "timestamp": self.timestamp.isoformat(),
         }
