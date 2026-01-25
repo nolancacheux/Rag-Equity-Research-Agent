@@ -1,24 +1,51 @@
 """Pytest configuration and fixtures."""
 
+import os
 import pytest
 from unittest.mock import MagicMock, patch
 
 
+# Set test environment variables before any imports
+os.environ.setdefault("GROQ_API_KEY", "test-groq-key-for-testing")
+os.environ.setdefault("SEC_USER_AGENT", "TestAgent test@example.com")
+
+
+def _create_mock_settings():
+    """Create a mock settings object."""
+    settings = MagicMock()
+    settings.openai_api_key = None
+    settings.groq_api_key = MagicMock()
+    settings.groq_api_key.get_secret_value.return_value = "test-groq-key"
+    settings.qdrant_url = "http://localhost:6333"
+    settings.qdrant_api_key = None
+    settings.redis_url = "redis://localhost:6379"
+    settings.cache_ttl_seconds = 3600
+    settings.yfinance_cache_ttl = 300
+    settings.sec_user_agent = "Test Agent test@test.com"
+    settings.app_env = "development"
+    settings.is_production = False
+    settings.use_azure_openai = False
+    settings.use_groq = True
+    return settings
+
+
+@pytest.fixture(autouse=True)
+def auto_mock_settings():
+    """Automatically mock get_settings for all tests to avoid validation errors."""
+    settings = _create_mock_settings()
+
+    with patch("src.config.settings.get_settings", return_value=settings), \
+         patch("src.config.get_settings", return_value=settings), \
+         patch("src.tools.yfinance_tool.get_settings", return_value=settings), \
+         patch("src.tools.sec_edgar_tool.get_settings", return_value=settings):
+        yield settings
+
+
 @pytest.fixture
 def mock_settings():
-    """Mock application settings."""
+    """Mock application settings (explicit fixture for tests that need the object)."""
     with patch("src.config.settings.get_settings") as mock:
-        settings = MagicMock()
-        settings.openai_api_key.get_secret_value.return_value = "test-key"
-        settings.qdrant_url = "http://localhost:6333"
-        settings.qdrant_api_key = None
-        settings.redis_url = "redis://localhost:6379"
-        settings.cache_ttl_seconds = 3600
-        settings.yfinance_cache_ttl = 300
-        settings.sec_user_agent = "Test Agent test@test.com"
-        settings.app_env = "development"
-        settings.is_production = False
-        settings.use_azure_openai = False
+        settings = _create_mock_settings()
         mock.return_value = settings
         yield settings
 
