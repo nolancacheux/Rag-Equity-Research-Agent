@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import structlog
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -12,6 +12,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from src.agents import run_research
+from src.api.middleware.auth import verify_api_key
 from src.config import get_settings
 
 logger = structlog.get_logger()
@@ -124,7 +125,7 @@ async def health_check() -> HealthResponse:
     )
 
 
-@app.post("/analyze", response_model=AnalyzeResponse)
+@app.post("/analyze", response_model=AnalyzeResponse, dependencies=[Depends(verify_api_key)])
 @limiter.limit("10/minute")
 async def analyze(request: Request, analysis_request: AnalyzeRequest) -> AnalyzeResponse:
     """Run equity research analysis.
@@ -157,7 +158,7 @@ async def analyze(request: Request, analysis_request: AnalyzeRequest) -> Analyze
         raise HTTPException(status_code=500, detail=detail) from None
 
 
-@app.get("/quote/{ticker}", response_model=QuoteResponse)
+@app.get("/quote/{ticker}", response_model=QuoteResponse, dependencies=[Depends(verify_api_key)])
 @limiter.limit("30/minute")
 async def get_quote(request: Request, ticker: str) -> QuoteResponse:
     """Get real-time stock quote.
@@ -193,7 +194,7 @@ async def get_quote(request: Request, ticker: str) -> QuoteResponse:
         )
 
 
-@app.get("/compare/{tickers}")
+@app.get("/compare/{tickers}", dependencies=[Depends(verify_api_key)])
 @limiter.limit("20/minute")
 async def compare_stocks(request: Request, tickers: str) -> dict[str, Any]:
     """Compare P/E ratios for multiple stocks.

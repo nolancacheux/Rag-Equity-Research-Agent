@@ -107,10 +107,10 @@ def run_bot(
 
     # Get API URL from env if not provided
     if not api_base_url:
-        api_base_url = os.environ.get(
-            "API_BASE_URL",
-            "https://equity-research-agent.thankfulhill-01e4fbbb.swedencentral.azurecontainerapps.io",
-        )
+        api_base_url = os.environ.get("API_BASE_URL")
+        if not api_base_url:
+            logger.error("API_BASE_URL not set")
+            sys.exit(1)
 
     logger.info(f"Starting bot with API URL: {api_base_url}")
 

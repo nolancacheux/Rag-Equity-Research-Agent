@@ -1,57 +1,61 @@
 # Documentation
 
-Documentation technique du projet Equity Research Agent.
+Technical documentation for the Equity Research Agent project.
 
 ## Index
 
 | Document | Description |
 |----------|-------------|
-| [azure-deployment.md](./azure-deployment.md) | Deployment Azure (Container Apps, OpenAI) |
+| [azure-deployment.md](./azure-deployment.md) | Azure Deployment (Container Apps, OpenAI) |
 | [terraform/](../terraform/README.md) | Infrastructure as Code (recommended) |
-| [qdrant-vector-database.md](./qdrant-vector-database.md) | Base de données vectorielle pour le RAG |
-| [langgraph-orchestration.md](./langgraph-orchestration.md) | Orchestration des agents avec LangGraph |
-| [redis-caching.md](./redis-caching.md) | Caching Redis pour les API calls |
-| [embeddings-rag.md](./embeddings-rag.md) | Pipeline RAG et modèle d'embeddings |
-| [fastapi-backend.md](./fastapi-backend.md) | API REST FastAPI |
-| [docker-setup.md](./docker-setup.md) | Configuration Docker Compose |
-| [financial-data-tools.md](./financial-data-tools.md) | Sources de données (yfinance, SEC, DuckDuckGo) |
+| [qdrant-vector-database.md](./qdrant-vector-database.md) | Vector database for RAG |
+| [langgraph-orchestration.md](./langgraph-orchestration.md) | Agent orchestration with LangGraph |
+| [redis-caching.md](./redis-caching.md) | Redis caching for API calls |
+| [embeddings-rag.md](./embeddings-rag.md) | RAG pipeline and embedding model |
+| [fastapi-backend.md](./fastapi-backend.md) | FastAPI REST API |
+| [docker-setup.md](./docker-setup.md) | Docker Compose configuration |
+| [financial-data-tools.md](./financial-data-tools.md) | Data sources (yfinance, SEC, DuckDuckGo) |
+| [telegram-bot.md](./telegram-bot.md) | Telegram bot interface |
+| [ci-cd-setup.md](./ci-cd-setup.md) | CI/CD with GitHub Actions |
 
-## Structure du projet
+## Project Structure
 
 ```
 equity-research-agent/
 ├── src/
-│   ├── agents/          # Agents LangGraph
+│   ├── agents/          # LangGraph agents
 │   ├── api/             # FastAPI endpoints
-│   ├── config/          # Configuration Pydantic
+│   ├── config/          # Pydantic configuration
 │   ├── rag/             # RAG pipeline (embeddings, chunking, vector store)
+│   ├── telegram/        # Telegram bot
 │   ├── tools/           # Data fetching tools
 │   └── utils/           # Utilities (cache, rate limiter)
 ├── terraform/           # Infrastructure as Code (Azure)
-├── tests/               # Tests unitaires
-├── docs/                # Cette documentation
-├── docker-compose.yml   # Orchestration services
-├── Dockerfile           # Image de l'app
+├── tests/               # Unit tests
+├── docs/                # This documentation
+├── docker-compose.yml   # Services orchestration
+├── Dockerfile.api       # API image
+├── Dockerfile.bot       # Telegram bot image
 └── pyproject.toml       # Dependencies & config
 ```
 
 ## Quick Start
 
 ```bash
-# 1. Configurer les variables d'environnement
+# 1. Configure environment variables
 cp .env.example .env
-# Editer .env avec votre OPENAI_API_KEY
+# Edit .env with your API keys (at minimum: GROQ_API_KEY or OPENAI_API_KEY)
 
-# 2. Lancer les services
+# 2. Start services
 docker-compose up -d
 
-# 3. Tester l'API
+# 3. Test the API
 curl http://localhost:8000/health
 ```
 
-## Contribution
+## Contributing
 
-Lors de l'ajout d'un nouveau composant :
-1. Créer la documentation dans `docs/`
-2. Mettre à jour cet index
-3. Documenter le "pourquoi" (choix techniques) autant que le "comment"
+When adding a new component:
+1. Create documentation in `docs/`
+2. Update this index
+3. Document the "why" (technical choices) as much as the "how"

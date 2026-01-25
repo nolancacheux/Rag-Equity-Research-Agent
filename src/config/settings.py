@@ -78,6 +78,9 @@ class Settings(BaseSettings):
     telegram_bot_token: SecretStr | None = None
     api_base_url: str = "http://localhost:8000"
 
+    # API Security
+    api_secret_key: SecretStr | None = None  # If set, requires X-API-Key header
+
     # yfinance settings
     yfinance_cache_ttl: int = 300  # 5 minutes for market data
 

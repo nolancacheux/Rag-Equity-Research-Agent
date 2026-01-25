@@ -10,14 +10,14 @@ AI-powered financial analysis agent that acts as an autonomous Quantitative Anal
 
 ## Live Demo
 
-**API:** https://equity-research-agent.thankfulhill-01e4fbbb.swedencentral.azurecontainerapps.io
+**API:** https://<your-app>.azurecontainerapps.io
 
 ```bash
 # Health check
-curl https://equity-research-agent.thankfulhill-01e4fbbb.swedencentral.azurecontainerapps.io/health
+curl https://<your-app>.azurecontainerapps.io/health
 
 # Get NVIDIA quote
-curl https://equity-research-agent.thankfulhill-01e4fbbb.swedencentral.azurecontainerapps.io/quote/NVDA
+curl https://<your-app>.azurecontainerapps.io/quote/NVDA
 ```
 
 ## What It Does
