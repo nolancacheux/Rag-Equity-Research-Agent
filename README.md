@@ -6,6 +6,19 @@ AI-powered financial analysis agent that acts as an autonomous Quantitative Anal
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![CI](https://github.com/nolancacheux/equity-research-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/nolancacheux/equity-research-agent/actions/workflows/ci.yml)
+[![Deploy](https://github.com/nolancacheux/equity-research-agent/actions/workflows/deploy.yml/badge.svg)](https://github.com/nolancacheux/equity-research-agent/actions/workflows/deploy.yml)
+
+## Live Demo
+
+**API:** https://equity-research-agent.thankfulhill-01e4fbbb.swedencentral.azurecontainerapps.io
+
+```bash
+# Health check
+curl https://equity-research-agent.thankfulhill-01e4fbbb.swedencentral.azurecontainerapps.io/health
+
+# Get NVIDIA quote
+curl https://equity-research-agent.thankfulhill-01e4fbbb.swedencentral.azurecontainerapps.io/quote/NVDA
+```
 
 ## What It Does
 
