@@ -10,7 +10,8 @@ from src.telegram.i18n import Language
 logger = logging.getLogger(__name__)
 
 # Simple file-based storage (no Redis dependency for bot)
-STORAGE_FILE = Path("/tmp/telegram_bot_users.json")
+# Using /tmp is intentional for ephemeral container storage
+STORAGE_FILE = Path("/tmp/telegram_bot_users.json")  # nosec B108
 
 
 class UserPreferences:
