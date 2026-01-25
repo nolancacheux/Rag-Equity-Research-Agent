@@ -107,6 +107,38 @@ AZURE_OPENAI_DEPLOYMENT=gpt-4o-mini
 OPENAI_API_KEY=sk-...
 ```
 
+## Telegram Bot
+
+Interact with the agent directly from Telegram!
+
+### Setup
+
+1. Create a bot with [@BotFather](https://t.me/BotFather) on Telegram
+2. Copy the bot token to your `.env`:
+   ```bash
+   TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+   API_BASE_URL=http://localhost:8000
+   ```
+3. Start the API (if not running):
+   ```bash
+   docker compose up -d
+   ```
+4. Run the bot:
+   ```bash
+   python run_telegram_bot.py
+   ```
+
+### Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `/quote <TICKER>` | Get real-time stock quote | `/quote NVDA` |
+| `/compare <T1,T2,...>` | Compare multiple stocks | `/compare NVDA,AMD,INTC` |
+| `/analyze <query>` | Run full AI analysis | `/analyze Analyze NVIDIA vs AMD` |
+| `/help` | Show available commands | `/help` |
+
+Short aliases: `/q` (quote), `/c` (compare), `/a` (analyze)
+
 ## API Endpoints
 
 | Endpoint | Method | Description |
@@ -153,13 +185,20 @@ equity-research-agent/
 │   ├── api/             # FastAPI application
 │   ├── config/          # Pydantic settings
 │   ├── rag/             # Vector store and embeddings
+│   ├── telegram/        # Telegram bot
+│   │   ├── bot.py       # Entry point
+│   │   ├── handlers.py  # Command handlers
+│   │   ├── client.py    # API client
+│   │   └── formatters.py
 │   ├── tools/           # Data integrations
 │   └── utils/           # Cache, rate limiting
-├── tests/               # Unit tests (98% coverage)
+├── tests/               # Unit tests (89% coverage)
 ├── docs/                # Technical documentation
-├── infra/               # Azure Bicep templates
-├── docker-compose.yml   # Local development
-├── Dockerfile           # Production image
+├── terraform/           # Azure infrastructure as code
+├── scripts/             # Deployment scripts
+├── docker-compose.yml   # Local development (API + Bot)
+├── Dockerfile.api       # API container
+├── Dockerfile.bot       # Telegram bot container
 └── pyproject.toml
 ```
 
@@ -181,14 +220,30 @@ mypy src/
 
 ## Azure Deployment
 
+### Prerequisites
+
+- Azure CLI (`az login`)
+- Terraform 1.5+
+- Telegram bot token from @BotFather
+
 ### One-Command Deploy
 
 ```bash
-# Set credentials
-export AZURE_OPENAI_API_KEY=your-key
+# Set required secrets
+export TELEGRAM_BOT_TOKEN=your_bot_token
 
-# Deploy to Azure Container Apps
-./infra/deploy.sh
+# Full deployment (infrastructure + containers)
+./scripts/deploy.sh full
+```
+
+### Step-by-Step Deploy
+
+```bash
+./scripts/deploy.sh init    # Initialize Terraform
+./scripts/deploy.sh plan    # Review infrastructure changes
+./scripts/deploy.sh apply   # Create Azure resources
+./scripts/deploy.sh build   # Build & push Docker images
+./scripts/deploy.sh update  # Update container apps
 ```
 
 ### Manual Deploy
@@ -199,6 +254,7 @@ See [docs/azure-deployment.md](docs/azure-deployment.md) for detailed instructio
 
 | Document | Description |
 |----------|-------------|
+| [docs/telegram-bot.md](docs/telegram-bot.md) | Telegram bot setup & commands |
 | [docs/azure-deployment.md](docs/azure-deployment.md) | Azure setup guide |
 | [docs/langgraph-orchestration.md](docs/langgraph-orchestration.md) | Agent workflow |
 | [docs/qdrant-vector-database.md](docs/qdrant-vector-database.md) | RAG setup |
