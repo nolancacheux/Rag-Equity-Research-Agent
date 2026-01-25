@@ -31,6 +31,17 @@ src/
 └── utils/            # Utilities
     ├── cache.py      # Redis caching
     └── rate_limiter.py # Rate limiting
+
+terraform/            # Infrastructure as Code
+├── versions.tf       # Provider config
+├── variables.tf      # Input variables
+├── outputs.tf        # Output values
+├── resource_group.tf # Azure RG
+├── key_vault.tf      # Secrets (Key Vault)
+├── openai.tf         # Azure OpenAI
+├── container_registry.tf # ACR
+├── container_apps.tf # Container Apps
+└── qdrant.tf         # Qdrant instance
 ```
 
 ## Key Technologies
@@ -45,15 +56,28 @@ src/
 | Data | yfinance, SEC EDGAR | Financial data |
 | Hosting | Azure Container Apps | Serverless containers |
 
+## Infrastructure
+
+**Deployment**: Terraform (recommended) or Azure CLI
+
+```bash
+# Deploy with Terraform
+cd terraform/
+terraform init && terraform apply
+
+# Or manual (see docs/azure-deployment.md)
+```
+
 ## Azure Resources
 
 | Resource | Name | Region |
 |----------|------|--------|
-| Resource Group | equity-research-rg | - |
+| Resource Group | equity-research-rg | Sweden Central |
 | Container Apps | equity-research-agent | Sweden Central |
 | Container Registry | cae661ada46dacr | Sweden Central |
-| Azure OpenAI | equity-research-openai-se | Sweden Central |
-| Qdrant | qdrant-vector-db | Sweden Central |
+| Azure OpenAI | equity-research-openai | Sweden Central |
+| Key Vault | equity-research-kv-* | Sweden Central |
+| Qdrant | equity-research-qdrant | Sweden Central |
 
 ## Development Commands
 
