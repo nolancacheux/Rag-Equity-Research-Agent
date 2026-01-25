@@ -68,8 +68,22 @@ class APIClient:
         try:
             response = await self.client.get(f"{self.base_url}/quote/{ticker.upper()}")
             if response.status_code == 200:
-                data = response.json()
-                return QuoteResponse(ticker=ticker.upper(), **data)
+                json_data = response.json()
+                # API returns {"success": true, "data": {...}, "error": null}
+                if json_data.get("success") and json_data.get("data"):
+                    data = json_data["data"]
+                    return QuoteResponse(
+                        ticker=data.get("symbol", ticker.upper()),
+                        price=data.get("price"),
+                        change_percent=data.get("change_percent"),
+                        market_cap=data.get("market_cap"),
+                        pe_ratio=data.get("pe_ratio"),
+                        volume=data.get("volume"),
+                    )
+                return QuoteResponse(
+                    ticker=ticker.upper(),
+                    error=json_data.get("error") or "Unknown error",
+                )
             return QuoteResponse(ticker=ticker.upper(), error=f"API error: {response.status_code}")
         except httpx.RequestError as e:
             return QuoteResponse(ticker=ticker.upper(), error=f"Connection error: {e}")
