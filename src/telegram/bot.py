@@ -5,18 +5,28 @@ import logging
 import os
 import sys
 
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram import Update
+from telegram.ext import (
+    Application,
+    CallbackQueryHandler,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+)
 
 from src.telegram.client import APIClient
 from src.telegram.handlers import (
     analyze_command,
+    callback_handler,
     compare_command,
     help_command,
+    menu_command,
+    message_handler,
     quote_command,
     set_api_client,
     start_command,
 )
-from telegram import Update
 
 # Configure logging
 logging.basicConfig(
@@ -27,17 +37,12 @@ logger = logging.getLogger(__name__)
 
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle errors in the bot.
-
-    Args:
-        update: Update that caused the error.
-        context: Callback context with error info.
-    """
+    """Handle errors in the bot."""
     logger.error("Exception while handling an update:", exc_info=context.error)
 
     if isinstance(update, Update) and update.message:
         await update.message.reply_text(
-            "An error occurred while processing your request. Please try again later."
+            "❌ An error occurred. Please try again or use /start to restart."
         )
 
 
@@ -58,17 +63,27 @@ def create_application(token: str, api_base_url: str | None = None) -> Applicati
     # Build application
     application = Application.builder().token(token).build()
 
-    # Add command handlers
+    # Command handlers
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("menu", menu_command))
     application.add_handler(CommandHandler("quote", quote_command))
-    application.add_handler(CommandHandler("q", quote_command))  # Alias
+    application.add_handler(CommandHandler("q", quote_command))
     application.add_handler(CommandHandler("compare", compare_command))
-    application.add_handler(CommandHandler("c", compare_command))  # Alias
+    application.add_handler(CommandHandler("c", compare_command))
     application.add_handler(CommandHandler("analyze", analyze_command))
-    application.add_handler(CommandHandler("a", analyze_command))  # Alias
+    application.add_handler(CommandHandler("a", analyze_command))
 
-    # Add error handler
+    # Callback query handler (for inline buttons)
+    application.add_handler(CallbackQueryHandler(callback_handler))
+
+    # Message handler (for free text)
+    application.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND,
+        message_handler,
+    ))
+
+    # Error handler
     application.add_error_handler(error_handler)
 
     return application
@@ -81,64 +96,31 @@ def run_bot(
     """Run the Telegram bot.
 
     Args:
-        token: Telegram bot token. If not provided, reads from TELEGRAM_BOT_TOKEN env var.
-        api_base_url: API base URL. If not provided, reads from API_BASE_URL or defaults to localhost.
+        token: Telegram bot token. If not provided, uses TELEGRAM_BOT_TOKEN env var.
+        api_base_url: Optional API base URL override.
     """
-    # Get token
-    bot_token = token or os.getenv("TELEGRAM_BOT_TOKEN")
-    if not bot_token:
+    token = token or os.environ.get("TELEGRAM_BOT_TOKEN")
+    if not token:
         logger.error("TELEGRAM_BOT_TOKEN not set")
         sys.exit(1)
 
-    # Get API URL
-    api_url = api_base_url or os.getenv("API_BASE_URL", "http://localhost:8000")
+    # Get API URL from env if not provided
+    if not api_base_url:
+        api_base_url = os.environ.get(
+            "API_BASE_URL",
+            "https://equity-research-agent.thankfulhill-01e4fbbb.swedencentral.azurecontainerapps.io",
+        )
 
-    logger.info(f"Starting bot with API URL: {api_url}")
+    logger.info(f"Starting bot with API URL: {api_base_url}")
 
-    # Create and run application
-    application = create_application(bot_token, api_url)
-
-    # Run with polling
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    app = create_application(token, api_base_url)
+    app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 
-async def run_bot_async(
-    token: str | None = None,
-    api_base_url: str | None = None,
-) -> None:
-    """Run the Telegram bot asynchronously.
-
-    Args:
-        token: Telegram bot token.
-        api_base_url: API base URL.
-    """
-    bot_token = token or os.getenv("TELEGRAM_BOT_TOKEN")
-    if not bot_token:
-        logger.error("TELEGRAM_BOT_TOKEN not set")
-        return
-
-    api_url = api_base_url or os.getenv("API_BASE_URL", "http://localhost:8000")
-
-    logger.info(f"Starting bot (async) with API URL: {api_url}")
-
-    application = create_application(bot_token, api_url)
-
-    # Initialize and start
-    await application.initialize()
-    await application.start()
-    await application.updater.start_polling()  # type: ignore[union-attr]
-
-    # Keep running until stopped
-    try:
-        while True:
-            await asyncio.sleep(3600)
-    except asyncio.CancelledError:
-        pass
-    finally:
-        await application.updater.stop()  # type: ignore[union-attr]
-        await application.stop()
-        await application.shutdown()
+def main() -> None:
+    """Main entry point."""
+    run_bot()
 
 
 if __name__ == "__main__":
-    run_bot()
+    main()
