@@ -1,44 +1,50 @@
 # FastAPI Backend
 
-## Why FastAPI?
+## Overview
 
-FastAPI is the web framework for exposing the financial research API.
-
-### Advantages
-
-| Criteria | FastAPI | Flask | Django |
-|----------|---------|-------|--------|
-| **Performance** | Native async | Sync | Sync |
-| **Typing** | Native Pydantic | Manual | Manual |
-| **OpenAPI** | Auto-generated | Manual | DRF |
-| **Validation** | Automatic | Manual | Serializers |
-
-### Reasons for Choice
-
-1. **Native async**: Perfect for I/O-bound operations (API calls, DB)
-2. **Pydantic**: Automatic validation + serialization
-3. **OpenAPI**: Auto-generated Swagger documentation
-4. **Performance**: One of the fastest Python frameworks
+FastAPI powers all REST endpoints for the Equity Research Agent, including core analysis, advanced tools, and watchlist management.
 
 ## Architecture
 
 ```
 src/api/
-├── main.py              # API endpoints
+├── main.py              # All API endpoints
 ├── metrics.py           # Prometheus metrics
 └── middleware/
     └── auth.py          # API key authentication
 ```
 
-## Endpoints
+## All Endpoints
+
+### Core Endpoints
 
 | Endpoint | Method | Auth | Rate Limit | Description |
 |----------|--------|------|------------|-------------|
 | `/health` | GET | No | - | Health check |
 | `/metrics` | GET | No | - | Prometheus metrics |
-| `/analyze` | POST | **Yes** | 10/min | Run research analysis |
-| `/quote/{ticker}` | GET | **Yes** | 30/min | Real-time stock quote |
-| `/compare/{tickers}` | GET | **Yes** | 20/min | Compare P/E ratios |
+| `/analyze` | POST | Yes | 10/min | Full research analysis |
+| `/quote/{ticker}` | GET | Yes | 30/min | Real-time stock quote |
+| `/compare/{tickers}` | GET | Yes | 20/min | Compare stocks |
+
+### Tool Endpoints
+
+| Endpoint | Method | Auth | Rate Limit | Description |
+|----------|--------|------|------------|-------------|
+| `/dcf/{ticker}` | GET | Yes | 10/min | DCF fair value |
+| `/risk/{ticker}` | GET | Yes | 10/min | Risk score (1-10) |
+| `/peers/{ticker}` | GET | Yes | 10/min | Peer comparison |
+| `/reddit/{ticker}` | GET | Yes | 15/min | Reddit sentiment |
+| `/earnings/{ticker}` | GET | Yes | 10/min | Earnings call analysis |
+| `/calendar` | GET | Yes | 10/min | Earnings calendar |
+| `/history/{ticker}` | GET | Yes | 20/min | Historical analysis |
+
+### Watchlist Endpoints
+
+| Endpoint | Method | Auth | Rate Limit | Description |
+|----------|--------|------|------------|-------------|
+| `/watchlist/{user_id}` | GET | Yes | 30/min | Get user watchlist |
+| `/watchlist/{user_id}/add` | POST | Yes | 30/min | Add to watchlist |
+| `/watchlist/{user_id}/alert` | POST | Yes | 20/min | Create price alert |
 
 ## Authentication
 
@@ -52,178 +58,239 @@ curl -H "X-API-Key: your-secret-key" https://your-api/quote/NVDA
 openssl rand -hex 32
 ```
 
-### Implementation
-
-```python
-# src/api/middleware/auth.py
-async def verify_api_key(request: Request) -> None:
-    api_key = os.environ.get("API_SECRET_KEY")
-    if not api_key:
-        return  # Auth disabled in dev
-    
-    request_key = request.headers.get("X-API-Key")
-    if request_key != api_key:
-        raise HTTPException(401, "Invalid API key")
-```
+If `API_SECRET_KEY` is not set, authentication is disabled (dev mode).
 
 ## Endpoint Details
 
-### GET /health
-
-Health check for monitoring (no auth required).
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "version": "0.1.0",
-  "environment": "production"
-}
-```
-
-### GET /metrics
-
-Prometheus metrics endpoint (no auth required).
-
-**Response:** Prometheus text format
-```
-# HELP http_requests_total Total HTTP requests
-http_requests_total{method="GET",endpoint="/health",status="200"} 5.0
-# HELP analysis_duration_seconds Analysis duration
-analysis_duration_seconds_sum 45.2
-```
-
 ### POST /analyze
 
-Run a financial research analysis.
+Full research analysis with optional feature flags.
 
 **Request:**
 ```json
 {
-  "query": "Analyze NVDA and check their 10-K for China supply chain risks",
+  "query": "Analyze NVDA and check their 10-K for China risks",
   "tickers": ["NVDA"]
 }
 ```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `query` | string | Research query (10-1000 chars) |
-| `tickers` | string[] | Optional, max 5 (auto-detected if not provided) |
 
 **Response:**
 ```json
 {
   "success": true,
   "report": {
-    "title": "...",
-    "full_report": "...",
-    "executive_summary": "..."
+    "title": "Equity Research: NVDA",
+    "full_report": "# Equity Research...",
+    "executive_summary": "...",
+    "data_sources": ["Yahoo Finance", "SEC EDGAR", "DuckDuckGo News"]
   },
-  "market_data": {
-    "NVDA": {...}
-  },
+  "market_data": {"NVDA": {...}},
   "errors": []
 }
 ```
 
-### GET /quote/{ticker}
+### GET /dcf/{ticker}
 
-Get real-time quote for a stock.
+Calculate fair value using DCF model.
 
-**Example:** `GET /quote/NVDA`
+**Example:** `GET /dcf/NVDA`
 
 **Response:**
 ```json
 {
   "success": true,
   "data": {
-    "symbol": "NVDA",
-    "price": 875.50,
-    "pe_ratio": 65.2,
-    "market_cap": 2150000000000,
-    "volume": 45000000,
-    "change_percent": 2.5
+    "ticker": "NVDA",
+    "current_price": 142.50,
+    "fair_value": 165.20,
+    "upside_percent": 15.9,
+    "fcf_current": 29500000000,
+    "growth_rate": 0.15,
+    "discount_rate": 0.10,
+    "summary": "## DCF Valuation: NVDA\n..."
   }
 }
 ```
 
-### GET /compare/{tickers}
+### GET /risk/{ticker}
 
-Compare P/E ratios for multiple stocks.
+Risk assessment from 10-K filing.
 
-**Example:** `GET /compare/NVDA,AMD,INTC`
+**Example:** `GET /risk/NVDA`
 
 **Response:**
 ```json
 {
   "success": true,
-  "comparison": [
-    {"ticker": "NVDA", "pe_ratio": 65.2, "price": 875.50},
-    {"ticker": "AMD", "pe_ratio": 45.8, "price": 178.20},
-    {"ticker": "INTC", "pe_ratio": 22.1, "price": 42.30}
-  ]
+  "data": {
+    "ticker": "NVDA",
+    "overall_score": 6,
+    "risk_breakdown": {
+      "market": 3,
+      "operational": 4,
+      "financial": 2
+    },
+    "top_risks": [
+      {"category": "geopolitical", "description": "China export controls...", "score": 4}
+    ],
+    "summary": "## Risk Assessment: NVDA\n..."
+  }
 }
 ```
+
+### GET /peers/{ticker}
+
+Compare with industry peers.
+
+**Example:** `GET /peers/NVDA`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "ticker": "NVDA",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors",
+    "peers": ["AMD", "INTC", "QCOM", "AVGO"],
+    "metrics": {
+      "PE Ratio": {"NVDA": 65.2, "AMD": 45.8, "INTC": 22.1},
+      "Market Cap": {"NVDA": 3500000000000, "AMD": 280000000000}
+    },
+    "ranking": {"PE Ratio": 4, "Market Cap": 1},
+    "strengths": ["Best Market Cap among peers"],
+    "weaknesses": ["Lowest PE Ratio among peers"],
+    "summary": "## Peer Comparison: NVDA\n..."
+  }
+}
+```
+
+### GET /reddit/{ticker}
+
+Reddit sentiment analysis.
+
+**Example:** `GET /reddit/NVDA`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "ticker": "NVDA",
+    "sentiment_score": 0.35,
+    "sentiment_label": "bullish",
+    "total_mentions": 156,
+    "bullish_ratio": 0.68,
+    "trending_topics": ["AI", "earnings", "datacenter"],
+    "top_discussions": [
+      {"title": "NVDA earnings tomorrow!", "subreddit": "wallstreetbets", "sentiment": "bullish"}
+    ],
+    "summary": "## Reddit Sentiment: NVDA\n..."
+  }
+}
+```
+
+### GET /calendar
+
+Earnings calendar.
+
+**Example:** `GET /calendar?tickers=NVDA,AAPL`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "this_week": [
+      {"ticker": "NVDA", "date": "2026-01-28", "days": 2}
+    ],
+    "watchlist": [...],
+    "major": [...],
+    "summary": "## Earnings Calendar\n..."
+  }
+}
+```
+
+### GET /history/{ticker}
+
+Historical analysis.
+
+**Example:** `GET /history/NVDA?analysis=earnings`
+
+**Response:**
+```json
+{
+  "success": true,
+  "type": "earnings_reactions",
+  "data": {
+    "ticker": "NVDA",
+    "avg_move": 8.5,
+    "beat_rate": 0.875,
+    "reactions": [
+      {"quarter": "Q3 2025", "change": 12.3},
+      {"quarter": "Q2 2025", "change": -5.2}
+    ],
+    "summary": "## Earnings Reaction Pattern: NVDA\n..."
+  }
+}
+```
+
+### GET /watchlist/{user_id}
+
+Get user's watchlist and alerts.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "tickers": ["NVDA", "AAPL", "TSLA"],
+    "items": [
+      {"ticker": "NVDA", "added": "2026-01-25", "notes": "AI play"}
+    ],
+    "alerts": [
+      {"id": "abc123", "ticker": "NVDA", "type": "price_above", "threshold": 150}
+    ]
+  }
+}
+```
+
+### POST /watchlist/{user_id}/add
+
+Add to watchlist.
+
+**Example:** `POST /watchlist/123/add?ticker=NVDA&notes=AI%20play`
+
+### POST /watchlist/{user_id}/alert
+
+Create price alert.
+
+**Example:** `POST /watchlist/123/alert?ticker=NVDA&alert_type=price_above&threshold=150`
+
+**Alert types:** `price_above`, `price_below`, `pe_above`, `pe_below`
 
 ## Rate Limiting
 
 Implemented with `slowapi`:
 
 ```python
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
-limiter = Limiter(key_func=get_remote_address)
-
 @app.post("/analyze")
 @limiter.limit("10/minute")
 async def analyze(request: Request, ...):
     ...
 ```
 
-> **Note:** The first parameter must be `Request` for rate limiting to work.
-
-## Pydantic Validation
-
-Requests are automatically validated:
-
-```python
-from pydantic import BaseModel, Field
-
-class AnalyzeRequest(BaseModel):
-    query: str = Field(..., min_length=10, max_length=1000)
-    tickers: list[str] | None = Field(default=None, max_length=5)
-```
-
-## CORS
-
-- **Dev:** `allow_origins=["*"]`
-- **Prod:** CORS disabled (API-only, Telegram bot is internal)
-
-## Running the Server
-
-### Development
+## Running
 
 ```bash
-uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
-```
+# Development
+uvicorn src.api.main:app --reload
 
-### Production (Docker)
-
-```bash
+# Production
 docker compose up -d
 ```
 
-## API Documentation
+## API Docs
 
-Auto-generated Swagger UI available at:
 - **Swagger:** http://localhost:8000/docs
 - **ReDoc:** http://localhost:8000/redoc
-
-## Resources
-
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [Pydantic](https://docs.pydantic.dev/)
-- [Uvicorn](https://www.uvicorn.org/)
-- [slowapi](https://github.com/laurentS/slowapi)
-- [prometheus-client](https://github.com/prometheus/client_python)

@@ -2,91 +2,137 @@
 
 ## Project Overview
 
-**Equity Research Agent** - AI-powered financial analysis using LangGraph, RAG, and real-time market data.
+**Equity Research Agent** - AI-powered financial analysis using LangGraph, RAG, and real-time market data. Features DCF valuation, risk scoring, peer comparison, Reddit sentiment, earnings calendar, and more.
 
-- **Production URL**: Configured via `API_BASE_URL` env var
-- **Auth**: API key required for protected endpoints (`X-API-Key` header)
-- **LLM Providers**: Groq (free), Azure OpenAI, OpenAI
+- **Tech**: LangGraph + FastAPI + Telegram Bot
+- **Data**: All free (Yahoo Finance, SEC EDGAR, Reddit, DuckDuckGo)
+- **LLM**: Groq free tier (Llama 3.3 70B) or Azure OpenAI / OpenAI
 
 ## Architecture
 
 ```
 src/
-├── agents/           # LangGraph agents
-│   ├── graph.py          # Main orchestration graph
-│   ├── market_data.py    # yfinance integration
-│   ├── document_reader.py # SEC filing RAG
-│   ├── news_sentiment.py  # News analysis
-│   └── synthesizer.py     # Report generation
-├── api/              # FastAPI endpoints
-│   ├── main.py           # REST API
-│   ├── metrics.py        # Prometheus metrics
-│   └── middleware/
-│       └── auth.py       # API key authentication
-├── config/           # Pydantic settings
-│   └── settings.py       # Environment config
-├── rag/              # RAG pipeline
-│   ├── embeddings.py     # Azure OpenAI embeddings
-│   ├── chunking.py       # Document chunking
-│   └── vector_store.py   # Qdrant integration
-├── telegram/         # Telegram bot
-│   ├── bot.py            # Bot setup
-│   ├── handlers.py       # Command handlers
-│   ├── client.py         # API client
-│   ├── formatters.py     # Message formatting
-│   ├── keyboards.py      # Inline keyboards
-│   └── i18n.py           # Translations (EN/FR)
-├── tools/            # Data sources
-│   ├── yfinance_tool.py  # Market data
-│   ├── sec_edgar_tool.py # SEC filings
-│   └── search_tool.py    # DuckDuckGo
-└── utils/            # Utilities
-    ├── cache.py          # Redis caching
-    └── rate_limiter.py   # Rate limiting
+├── agents/              # LangGraph agents
+│   ├── graph.py             # Main orchestration (parallel analysis)
+│   ├── market_data.py       # Yahoo Finance data
+│   ├── document_reader.py   # SEC filing RAG + hybrid search + reranking
+│   ├── news_sentiment.py    # News analysis
+│   ├── earnings_agent.py    # Earnings call transcripts
+│   ├── reddit_agent.py      # Reddit sentiment (WSB, stocks)
+│   ├── peer_agent.py        # Peer comparison
+│   ├── risk_agent.py        # 10-K risk scoring
+│   └── synthesizer.py       # Report generation
+├── services/            # Business logic
+│   ├── watchlist.py         # Watchlist & alerts
+│   ├── dcf_valuation.py     # DCF fair value calculator
+│   ├── earnings_calendar.py # Earnings dates tracker
+│   ├── historical_analysis.py # Price/earnings history
+│   ├── peer_comparison.py   # Peer metrics comparison
+│   └── risk_scoring.py      # 10-K risk factor analysis
+├── tools/               # Data fetchers
+│   ├── yfinance_tool.py     # Market data
+│   ├── sec_edgar_tool.py    # SEC filings
+│   ├── search_tool.py       # DuckDuckGo news
+│   ├── earnings_call_tool.py # Earnings transcripts
+│   └── reddit_sentiment_tool.py # Reddit API
+├── rag/                 # RAG pipeline
+│   ├── hybrid_search.py     # BM25 + dense + RRF fusion
+│   ├── reranker.py          # Keyword + LLM reranking
+│   ├── vector_store.py      # Qdrant integration
+│   ├── embeddings.py        # Azure OpenAI embeddings
+│   └── chunking.py          # Document chunking
+├── api/                 # FastAPI endpoints
+│   ├── main.py              # All REST endpoints
+│   ├── metrics.py           # Prometheus metrics
+│   └── middleware/auth.py   # API key authentication
+├── telegram/            # Telegram bot
+│   ├── bot.py               # Bot setup & command registration
+│   ├── handlers.py          # Core command handlers
+│   ├── handlers_v2.py       # New feature handlers (DCF, Risk, etc.)
+│   ├── keyboards.py         # Inline button menus
+│   ├── i18n.py              # Translations (EN/FR)
+│   ├── client.py            # API client
+│   └── formatters.py        # Message formatting
+├── config/              # Settings
+│   └── settings.py          # Pydantic settings
+└── utils/               # Utilities
+    └── cache.py             # Redis caching
 
-terraform/            # Infrastructure as Code (Azure)
-tests/                # Unit tests
-docs/                 # Technical documentation
+terraform/               # Azure IaC
+tests/                   # Unit tests (98% coverage)
+docs/                    # Documentation
 ```
 
-## Key Technologies
+## Features Summary
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Orchestration | LangGraph | Agent workflow |
-| LLM | Groq / Azure OpenAI / OpenAI | Analysis and synthesis |
-| Embeddings | Azure OpenAI (ada-002) | 1536-dim vectors |
-| Vector DB | Qdrant | Semantic search |
-| API | FastAPI | REST endpoints |
-| Bot | python-telegram-bot | Telegram interface |
-| Data | yfinance, SEC EDGAR | Financial data |
-| Cache | Redis | Response caching |
-| Monitoring | Prometheus | Metrics |
-| Infra | Terraform, Azure Container Apps | Deployment |
+| Category | Features |
+|----------|----------|
+| **Core** | Analyze, Quote, Compare |
+| **Tools** | DCF Valuation, Risk Score, Peer Comparison, Reddit Sentiment, Earnings Calendar, Historical Analysis |
+| **Watchlist** | Track stocks, Price alerts, P/E alerts |
+| **RAG** | Hybrid search (BM25+dense), Reranking, Multi-source |
 
 ## API Endpoints
 
-| Endpoint | Method | Auth | Rate Limit | Description |
-|----------|--------|------|------------|-------------|
-| `/health` | GET | No | - | Health check |
-| `/metrics` | GET | No | - | Prometheus metrics |
-| `/analyze` | POST | **Yes** | 10/min | Run research analysis |
-| `/quote/{ticker}` | GET | **Yes** | 30/min | Real-time stock quote |
-| `/compare/{tickers}` | GET | **Yes** | 20/min | Compare P/E ratios |
+### Core
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/health` | GET | No | Health check |
+| `/metrics` | GET | No | Prometheus metrics |
+| `/analyze` | POST | Yes | Full research analysis |
+| `/quote/{ticker}` | GET | Yes | Stock quote |
+| `/compare/{tickers}` | GET | Yes | Compare stocks |
 
-### Authentication
+### Advanced Tools
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/dcf/{ticker}` | GET | DCF fair value |
+| `/risk/{ticker}` | GET | Risk score (1-10) |
+| `/peers/{ticker}` | GET | Peer comparison |
+| `/reddit/{ticker}` | GET | Reddit sentiment |
+| `/earnings/{ticker}` | GET | Earnings call analysis |
+| `/calendar` | GET | Earnings calendar |
+| `/history/{ticker}` | GET | Historical analysis |
 
-Protected endpoints require `X-API-Key` header:
-```bash
-curl -H "X-API-Key: your-secret-key" https://your-api/quote/NVDA
-```
+### Watchlist
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/watchlist/{user_id}` | GET | Get watchlist |
+| `/watchlist/{user_id}/add` | POST | Add to watchlist |
+| `/watchlist/{user_id}/alert` | POST | Create alert |
 
-Set via `API_SECRET_KEY` env var. If not set, auth is disabled (dev mode).
+## Telegram Commands
+
+### Core
+| Command | Alias | Description |
+|---------|-------|-------------|
+| `/start` | - | Welcome & language |
+| `/menu` | - | Main menu |
+| `/help` | - | Feature overview |
+| `/analyze` | `/a` | Deep analysis |
+| `/quote` | `/q` | Stock quote |
+| `/compare` | `/c` | Compare stocks |
+
+### Tools
+| Command | Alias | Description |
+|---------|-------|-------------|
+| `/dcf` | `/valuation` | DCF fair value |
+| `/risk` | - | Risk score |
+| `/peers` | - | Peer comparison |
+| `/reddit` | `/wsb` | Reddit sentiment |
+| `/calendar` | `/earnings` | Earnings calendar |
+| `/history` | `/hist` | Historical analysis |
+
+### Watchlist
+| Command | Description |
+|---------|-------------|
+| `/watchlist` | View watchlist |
+| `/watchlist add NVDA` | Add stock |
+| `/alert NVDA above 150` | Price alert |
 
 ## Environment Variables
 
-### Required (at least one LLM)
-
+### LLM (at least one required)
 ```bash
 # Option 1: Groq (FREE - recommended)
 GROQ_API_KEY=gsk_...
@@ -95,126 +141,77 @@ GROQ_API_KEY=gsk_...
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
 AZURE_OPENAI_API_KEY=your-key
 AZURE_OPENAI_DEPLOYMENT=gpt-4o-mini
-AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-ada-002
 
 # Option 3: OpenAI
 OPENAI_API_KEY=sk-...
 ```
 
 ### Infrastructure
-
 ```bash
 QDRANT_URL=http://localhost:6333
 REDIS_URL=redis://localhost:6379
 SEC_USER_AGENT=YourApp your-email@example.com
 ```
 
-### API Security (Production)
-
+### Security
 ```bash
-# Generate with: openssl rand -hex 32
-API_SECRET_KEY=your-secret-key-here
+API_SECRET_KEY=your-secret-key  # openssl rand -hex 32
 ```
 
-### Telegram Bot
-
+### Telegram
 ```bash
-TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
-API_BASE_URL=https://your-api.azurecontainerapps.io
+TELEGRAM_BOT_TOKEN=123456789:ABCdefGHI...
+API_BASE_URL=http://localhost:8000
 ```
 
-### Monitoring (optional)
+## Development
 
 ```bash
-LANGCHAIN_API_KEY=your-langsmith-key
-LANGCHAIN_TRACING_V2=true
-```
-
-## Development Commands
-
-```bash
-# Install dependencies
+# Install
 pip install -e ".[dev]"
 
-# Run tests with coverage
+# Test
 pytest --cov=src --cov-report=term-missing
 
-# Lint & format
-ruff check src/ --fix
-ruff format src/
+# Lint
+ruff check src/ --fix && ruff format src/
 
-# Type check
-mypy src/
-
-# Run API locally
+# Run API
 uvicorn src.api.main:app --reload
 
 # Run Telegram bot
-python run_telegram_bot.py
+python -m src.telegram.bot
 
-# Start all services (Docker)
+# Docker
 docker compose up -d
 ```
 
 ## Code Standards
 
-- **Typing**: Full type hints with mypy strict mode
-- **Formatting**: Ruff (line length 100)
-- **Testing**: pytest with 98% coverage minimum
-- **Commits**: Conventional commits (feat/fix/docs/test/chore)
-- **Security**: No hardcoded secrets, all via env vars
+- **Typing**: Full type hints, mypy strict
+- **Formatting**: Ruff (100 char lines)
+- **Testing**: pytest, 98% coverage minimum
+- **Commits**: Conventional commits
+- **Security**: No hardcoded secrets
 
-## Deployment
+## Key Files to Know
 
-### Azure Container Apps (Production)
+| File | Purpose |
+|------|---------|
+| `src/agents/graph.py` | LangGraph orchestration, parallel analysis |
+| `src/api/main.py` | All API endpoints |
+| `src/telegram/bot.py` | Bot setup, command registration |
+| `src/telegram/keyboards.py` | All inline button menus |
+| `src/telegram/i18n.py` | All UI text (EN/FR) |
+| `src/services/*.py` | Business logic for each feature |
 
-Deployed via Terraform + GitHub Actions CI/CD.
+## Adding New Features
 
-**Infrastructure:**
-- Azure Container Apps (serverless, auto-scale)
-- Azure Container Registry (ACR)
-- Azure OpenAI (embeddings + LLM)
-- Qdrant (managed)
-- Key Vault (secrets)
-
-### CI/CD Pipeline
-
-GitHub Actions (`.github/workflows/`):
-1. **ci.yml**: Lint, test, security scan
-2. **deploy.yml**: Build → Push to ACR → Deploy to Container Apps
-
-Triggered on push to `main`.
-
-### Terraform
-
-```bash
-cd terraform
-terraform init
-terraform plan -var="telegram_bot_token=XXX" -var="sec_user_agent=XXX"
-terraform apply
-```
-
-## Monitoring
-
-### Prometheus Metrics (`/metrics`)
-
-| Metric | Type | Description |
-|--------|------|-------------|
-| `http_requests_total` | Counter | Requests by method/endpoint/status |
-| `http_request_duration_seconds` | Histogram | Request latency |
-| `analysis_requests_total` | Counter | Analysis success/error |
-| `analysis_duration_seconds` | Histogram | Analysis duration |
-| `quote_requests_total` | Counter | Quotes by ticker |
-| `errors_total` | Counter | Errors by type |
-
-### LangSmith Tracing
-
-Enable with `LANGCHAIN_TRACING_V2=true` to trace all LLM calls.
-
-## Notes
-
-- SEC EDGAR requires valid User-Agent with contact email
-- yfinance has rate limits (~2000 req/hour)
-- Groq free tier: llama-3.3-70b-versatile
-- Azure OpenAI embeddings: 1536 dimensions (ada-002)
-- Telegram bot supports EN/FR languages
+1. **Service**: Create `src/services/my_feature.py`
+2. **Agent** (optional): Create `src/agents/my_agent.py`
+3. **API**: Add endpoint in `src/api/main.py`
+4. **Telegram**: Add handler in `src/telegram/handlers_v2.py`
+5. **Keyboard**: Add button in `src/telegram/keyboards.py`
+6. **i18n**: Add translations in `src/telegram/i18n.py`
+7. **Docs**: Update `docs/features.md` and `README.md`
+8. **Tests**: Add tests in `tests/`
