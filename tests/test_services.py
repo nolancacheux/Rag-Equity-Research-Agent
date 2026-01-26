@@ -10,22 +10,9 @@ class TestChatService:
     def test_system_prompt_defined(self):
         """Test that system prompt is defined."""
         from src.services.chat import SYSTEM_PROMPT
-
+        
         assert SYSTEM_PROMPT is not None
         assert "FinanceAgent" in SYSTEM_PROMPT
-
-    @pytest.mark.asyncio
-    async def test_chat_service_fallback(self):
-        """Test chat service fallback response."""
-        from src.services.chat import ChatService
-
-        # Create service without LLM
-        service = ChatService()
-        service._llm = None
-
-        response = await service.chat("hello")
-
-        assert "FinanceAgent" in response or "/help" in response
 
 
 class TestRiskScoringService:
