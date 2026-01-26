@@ -226,25 +226,25 @@ async def risk_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             top_risks = result.get("top_risks", [])
             summary = result.get("summary", "")
 
-            msg = f"**Risk Assessment: {ticker}**\n\n"
-            msg += f"Overall Score: **{score}/10**\n\n"
+            msg = f"Risk Assessment: {ticker}\n\n"
+            msg += f"Overall Score: {score}/10\n\n"
 
             if breakdown:
-                msg += "**Breakdown:**\n"
+                msg += "Breakdown:\n"
                 for category, value in breakdown.items():
-                    msg += f"  • {escape_markdown(category.title())}: {value}/10\n"
+                    msg += f"  - {category.title()}: {value}/10\n"
                 msg += "\n"
 
             if top_risks:
-                msg += "**Top Risks:**\n"
+                msg += "Top Risks:\n"
                 for risk in top_risks[:3]:
-                    msg += f"  • {escape_markdown(str(risk))}\n"
+                    msg += f"  - {str(risk)[:200]}\n"
                 msg += "\n"
 
             if summary:
-                msg += f"_{escape_markdown(summary)}_"
+                msg += f"\n{summary[:500]}"
 
-            await update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
+            await update.message.reply_text(msg)
         else:
             await update.message.reply_text(f"Could not assess risk for {ticker}")
 
