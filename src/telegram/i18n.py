@@ -57,15 +57,69 @@ MESSAGES: dict[str, dict[str, str]] = {
         "help_text": (
             "🤖 *Equity Research Agent*\n\n"
             "I'm an AI-powered financial analyst that can:\n\n"
-            "📊 *Analyze* - Deep analysis of stocks with SEC filings, news, and market data\n"
-            "💹 *Quote* - Real-time stock prices and key metrics\n"
-            "📈 *Compare* - Side-by-side comparison of multiple stocks\n\n"
-            "💡 *Tips:*\n"
-            "• You can also just type naturally - I understand context!\n"
-            '• Try: "What\'s happening with NVIDIA?"\n'
-            '• Or: "Compare Apple and Microsoft"\n\n'
-            "🌍 Change language in Settings"
+            "*Core Features:*\n"
+            "📊 *Analyze* - Deep analysis with SEC filings, news, market data\n"
+            "💹 *Quote* - Real-time prices and key metrics\n"
+            "📈 *Compare* - Side-by-side stock comparison\n\n"
+            "*Advanced Tools:*\n"
+            "💰 *DCF Valuation* - Calculate fair value\n"
+            "⚠️ *Risk Score* - 10-K risk analysis (1-10)\n"
+            "👥 *Peer Comparison* - Compare vs competitors\n"
+            "🔴 *Reddit Sentiment* - WSB/stocks sentiment\n"
+            "📅 *Earnings Calendar* - Upcoming earnings dates\n"
+            "📜 *History* - Price history & earnings reactions\n\n"
+            "*Watchlist:*\n"
+            "📋 Track stocks with `/watchlist`\n"
+            "🔔 Set alerts with `/alert NVDA above 150`\n\n"
+            "💡 Type naturally or use commands!"
         ),
+        # Tools menu
+        "tools_menu": (
+            "🛠️ *Advanced Tools*\n\n"
+            "Choose a tool below or use commands:\n"
+            "• `/dcf NVDA` - Fair value calculation\n"
+            "• `/risk NVDA` - Risk score from 10-K\n"
+            "• `/peers NVDA` - Peer comparison\n"
+            "• `/reddit NVDA` - Reddit sentiment\n"
+            "• `/calendar` - Earnings calendar\n"
+            "• `/history NVDA` - Price history"
+        ),
+        "tools_menu_fr": (
+            "🛠️ *Outils Avancés*\n\n"
+            "Choisissez un outil ou utilisez les commandes :\n"
+            "• `/dcf NVDA` - Calcul de fair value\n"
+            "• `/risk NVDA` - Score de risque du 10-K\n"
+            "• `/peers NVDA` - Comparaison avec peers\n"
+            "• `/reddit NVDA` - Sentiment Reddit\n"
+            "• `/calendar` - Calendrier earnings\n"
+            "• `/history NVDA` - Historique des prix"
+        ),
+        # DCF
+        "dcf_prompt": "💰 *DCF Valuation*\n\nEnter a ticker: `/dcf NVDA`",
+        # Risk
+        "risk_prompt": "⚠️ *Risk Score*\n\nEnter a ticker: `/risk NVDA`",
+        # Peers
+        "peers_prompt": "👥 *Peer Comparison*\n\nEnter a ticker: `/peers NVDA`",
+        # Reddit
+        "reddit_prompt": "🔴 *Reddit Sentiment*\n\nEnter a ticker: `/reddit NVDA`",
+        # Calendar
+        "calendar_prompt": "📅 *Earnings Calendar*\n\nShowing upcoming earnings for your watchlist and major stocks.",
+        # History
+        "history_prompt": "📜 *Historical Analysis*\n\nEnter: `/history NVDA` or `/history NVDA earnings`",
+        # Watchlist
+        "watchlist_empty": "📋 *Your Watchlist*\n\nEmpty! Add stocks with:\n`/watchlist add NVDA`",
+        "watchlist_add_prompt": "➕ *Add to Watchlist*\n\nSend a ticker: `NVDA`",
+        "watchlist_added": "✅ Added *{ticker}* to watchlist!",
+        "watchlist_removed": "✅ Removed *{ticker}* from watchlist!",
+        # Alerts
+        "alerts_prompt": (
+            "🔔 *Price Alerts*\n\n"
+            "Set an alert:\n"
+            "`/alert NVDA above 150`\n"
+            "`/alert TSLA below 200`\n"
+            "`/alert AAPL pe_above 30`"
+        ),
+        "alert_created": "🔔 Alert set: *{ticker}* {type} ${threshold}",
         # Natural language patterns
         "understood_analyze": "🔍 Got it! Analyzing...",
         "understood_quote": "💹 Fetching quote for {ticker}...",
@@ -126,16 +180,59 @@ MESSAGES: dict[str, dict[str, str]] = {
         # Help
         "help_text": (
             "🤖 *Agent de Recherche Financière*\n\n"
-            "Je suis un analyste financier IA capable de :\n\n"
-            "📊 *Analyser* - Analyse approfondie avec SEC filings, news et données de marché\n"
-            "💹 *Cotation* - Prix en temps réel et métriques clés\n"
-            "📈 *Comparer* - Comparaison côte à côte de plusieurs actions\n\n"
-            "💡 *Astuces :*\n"
-            "• Vous pouvez aussi écrire naturellement - je comprends le contexte !\n"
-            '• Essayez : "Que se passe-t-il avec NVIDIA ?"\n'
-            '• Ou : "Compare Apple et Microsoft"\n\n'
-            "🌍 Changez la langue dans Paramètres"
+            "*Fonctions principales :*\n"
+            "📊 *Analyser* - Analyse avec SEC filings, news, données marché\n"
+            "💹 *Cotation* - Prix temps réel et métriques\n"
+            "📈 *Comparer* - Comparaison côte à côte\n\n"
+            "*Outils avancés :*\n"
+            "💰 *Valorisation DCF* - Calcul fair value\n"
+            "⚠️ *Score Risque* - Analyse 10-K (1-10)\n"
+            "👥 *Peers* - Comparaison concurrents\n"
+            "🔴 *Sentiment Reddit* - WSB/stocks\n"
+            "📅 *Calendrier Earnings* - Prochains earnings\n"
+            "📜 *Historique* - Prix et réactions earnings\n\n"
+            "*Watchlist :*\n"
+            "📋 Suivre avec `/watchlist`\n"
+            "🔔 Alertes avec `/alert NVDA above 150`\n\n"
+            "💡 Écrivez naturellement ou utilisez les commandes !"
         ),
+        # Tools menu
+        "tools_menu": (
+            "🛠️ *Outils Avancés*\n\n"
+            "Choisissez un outil ou commande :\n"
+            "• `/dcf NVDA` - Calcul fair value\n"
+            "• `/risk NVDA` - Score risque 10-K\n"
+            "• `/peers NVDA` - Comparaison peers\n"
+            "• `/reddit NVDA` - Sentiment Reddit\n"
+            "• `/calendar` - Calendrier earnings\n"
+            "• `/history NVDA` - Historique prix"
+        ),
+        # DCF
+        "dcf_prompt": "💰 *Valorisation DCF*\n\nEntrez un ticker : `/dcf NVDA`",
+        # Risk
+        "risk_prompt": "⚠️ *Score Risque*\n\nEntrez un ticker : `/risk NVDA`",
+        # Peers
+        "peers_prompt": "👥 *Comparaison Peers*\n\nEntrez un ticker : `/peers NVDA`",
+        # Reddit
+        "reddit_prompt": "🔴 *Sentiment Reddit*\n\nEntrez un ticker : `/reddit NVDA`",
+        # Calendar
+        "calendar_prompt": "📅 *Calendrier Earnings*\n\nAffiche les prochains earnings de votre watchlist.",
+        # History
+        "history_prompt": "📜 *Analyse Historique*\n\nEntrez : `/history NVDA` ou `/history NVDA earnings`",
+        # Watchlist
+        "watchlist_empty": "📋 *Votre Watchlist*\n\nVide ! Ajoutez avec :\n`/watchlist add NVDA`",
+        "watchlist_add_prompt": "➕ *Ajouter à la Watchlist*\n\nEnvoyez un ticker : `NVDA`",
+        "watchlist_added": "✅ *{ticker}* ajouté à la watchlist !",
+        "watchlist_removed": "✅ *{ticker}* retiré de la watchlist !",
+        # Alerts
+        "alerts_prompt": (
+            "🔔 *Alertes Prix*\n\n"
+            "Créer une alerte :\n"
+            "`/alert NVDA above 150`\n"
+            "`/alert TSLA below 200`\n"
+            "`/alert AAPL pe_above 30`"
+        ),
+        "alert_created": "🔔 Alerte créée : *{ticker}* {type} ${threshold}",
         # Natural language patterns
         "understood_analyze": "🔍 Compris ! Analyse en cours...",
         "understood_quote": "💹 Récupération de {ticker}...",
