@@ -274,7 +274,9 @@ class RiskScoringService:
             company_name = ticker
             pass  # Company name fallback
 
-        if not settings.groq_api_key:
+        # Check for any LLM provider
+        has_llm = settings.groq_api_key or settings.use_azure_openai
+        if not has_llm:
             return RiskScore(
                 ticker=ticker,
                 overall_score=5,
@@ -283,16 +285,27 @@ class RiskScoringService:
                 operational_risk=5,
                 financial_risk=5,
                 summary=f"Risk assessment unavailable for {ticker} (no LLM configured)",
-                recommendations=["Configure Groq API key for risk analysis"],
+                recommendations=["Configure Groq or Azure OpenAI API key for risk analysis"],
             )
 
         # Use LLM for quick risk assessment
-        llm = ChatGroq(
-            api_key=settings.groq_api_key,
-            model="llama-3.1-8b-instant",
-            temperature=0.3,
-            max_tokens=500,
-        )
+        if settings.groq_api_key:
+            llm = ChatGroq(
+                api_key=settings.groq_api_key,
+                model="llama-3.1-8b-instant",
+                temperature=0.3,
+                max_tokens=500,
+            )
+        else:
+            from langchain_openai import AzureChatOpenAI
+            llm = AzureChatOpenAI(
+                azure_endpoint=settings.azure_openai_endpoint,
+                api_key=settings.azure_openai_api_key.get_secret_value(),
+                api_version=settings.openai_api_version,
+                azure_deployment=settings.azure_openai_deployment,
+                temperature=0.3,
+                max_tokens=500,
+            )
 
         prompt = f"""Analyze the investment risks for {company_name} ({ticker}).
 
