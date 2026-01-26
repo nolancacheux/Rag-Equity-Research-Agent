@@ -53,15 +53,36 @@ The agent will:
 
 ## Features
 
-| Feature | Description |
-|---------|-------------|
+### Data Sources (All Free)
+| Source | Description |
+|--------|-------------|
 | **Real Market Data** | Live prices, financials, ratios via yfinance |
 | **SEC 10-K Analysis** | Automatic download and RAG search on annual reports |
-| **News Sentiment** | Real-time news search with DuckDuckGo |
-| **Zero-Cost LLM Option** | Groq free tier supported (Llama 3.3 70B) |
-| **Production-Ready** | Caching, rate limiting, security hardening |
-| **Observable** | Full tracing with LangSmith |
-| **Cloud-Native** | Docker and Azure Container Apps ready |
+| **Earnings Call Transcripts** | Fetch from Motley Fool + search aggregation |
+| **Reddit Sentiment** | r/wallstreetbets, r/stocks sentiment analysis |
+| **News Search** | Real-time news via DuckDuckGo |
+
+### Advanced RAG
+| Feature | Description |
+|---------|-------------|
+| **Hybrid Search** | BM25 sparse + dense embeddings with RRF fusion |
+| **Reranking** | Keyword boost + optional LLM reranking |
+| **Multi-source** | Query across SEC filings, earnings calls, news |
+
+### Analysis Tools
+| Tool | Description |
+|------|-------------|
+| **Peer Comparison** | Auto-compare with industry peers (P/E percentile) |
+| **Risk Scoring** | 1-10 risk score from 10-K analysis (7 categories) |
+| **Watchlist & Alerts** | Track stocks, set price/P/E alerts |
+
+### Infrastructure
+| Feature | Description |
+|---------|-------------|
+| **Zero-Cost LLM** | Groq free tier (Llama 3.3 70B) |
+| **Prometheus Metrics** | /metrics endpoint for monitoring |
+| **API Authentication** | X-API-Key header protection |
+| **Production-Ready** | Rate limiting, caching, security hardening |
 
 ## Tech Stack
 
