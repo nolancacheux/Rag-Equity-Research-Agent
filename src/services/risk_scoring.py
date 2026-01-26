@@ -298,6 +298,7 @@ class RiskScoringService:
             )
         else:
             from langchain_openai import AzureChatOpenAI
+
             llm = AzureChatOpenAI(
                 azure_endpoint=settings.azure_openai_endpoint,
                 api_key=settings.azure_openai_api_key.get_secret_value(),
