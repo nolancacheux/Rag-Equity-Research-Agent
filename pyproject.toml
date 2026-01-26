@@ -1,5 +1,5 @@
 [project]
-name = "equity-research-agent"
+name = "Rag-Equity-Research-Agent"
 version = "0.1.0"
 description = "Real-Time Equity Research Agent - AI-powered financial analysis with LangGraph"
 readme = "README.md"
@@ -69,8 +69,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/nolancacheux/equity-research-agent"
-Repository = "https://github.com/nolancacheux/equity-research-agent"
+Homepage = "https://github.com/nolancacheux/Rag-Equity-Research-Agent"
+Repository = "https://github.com/nolancacheux/Rag-Equity-Research-Agent"
 
 [build-system]
 requires = ["hatchling"]

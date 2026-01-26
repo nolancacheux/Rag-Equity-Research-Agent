@@ -4,7 +4,7 @@
     <strong>AI-powered autonomous quantitative analyst</strong>
   </p>
   <p align="center">
-    <a href="https://github.com/nolancacheux/equity-research-agent/actions/workflows/ci.yml"><img src="https://github.com/nolancacheux/equity-research-agent/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+    <a href="https://github.com/nolancacheux/Rag-Equity-Research-Agent/actions/workflows/ci.yml"><img src="https://github.com/nolancacheux/Rag-Equity-Research-Agent/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
     <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python 3.11+"></a>
     <a href="https://github.com/astral-sh/uv"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json" alt="uv"></a>
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
@@ -286,8 +286,8 @@ The agent autonomously:
 
 ```bash
 # Clone repository
-git clone https://github.com/nolancacheux/equity-research-agent.git
-cd equity-research-agent
+git clone https://github.com/nolancacheux/Rag-Equity-Research-Agent.git
+cd Rag-Equity-Research-Agent
 
 # Install dependencies with uv
 uv venv && source .venv/bin/activate
@@ -471,7 +471,7 @@ terraform apply
 <summary><b>📁 Directory Layout</b></summary>
 
 ```
-equity-research-agent/
+Rag-Equity-Research-Agent/
 ├── src/
 │   ├── agents/           # LangGraph agents
 │   │   ├── graph.py      # Main orchestration
