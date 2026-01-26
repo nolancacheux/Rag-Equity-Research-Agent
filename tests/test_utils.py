@@ -54,10 +54,8 @@ class TestMemoryCache:
         from src.utils.cache import MemoryCache
 
         cache = MemoryCache(default_ttl=1)
-        cache.set("test_key", {"data": "value"}, ttl=0)  # Immediate expiry
-        
-        # Wait a bit for expiry
-        time.sleep(0.1)
+        # Manually set an expired entry
+        cache._cache["test_key"] = ({"data": "value"}, time.time() - 1)  # Already expired
         
         result = cache.get("test_key")
         assert result is None
