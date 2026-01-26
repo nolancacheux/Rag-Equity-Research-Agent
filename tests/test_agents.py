@@ -985,7 +985,7 @@ class TestGraph:
         state = {"document_queries": []}
         result = should_analyze_documents(state)
 
-        assert result == "news_sentiment"
+        assert result == "parallel_analysis"
 
     @patch("src.agents.graph.StateGraph")
     def test_create_research_graph(self, mock_graph_class):
