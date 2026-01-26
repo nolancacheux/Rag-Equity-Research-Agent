@@ -337,41 +337,29 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     # Detect ticker patterns (1-5 uppercase letters)
     tickers = re.findall(r"\b([A-Z]{1,5})\b", text.upper())
     common_words = {
-        "A",
-        "I",
-        "AM",
-        "PM",
-        "VS",
-        "AND",
-        "OR",
-        "THE",
-        "FOR",
-        "WITH",
-        "IT",
-        "IS",
-        "TO",
-        "OF",
+        # Articles and prepositions
+        "A", "AN", "THE", "OF", "TO", "IN", "ON", "AT", "BY", "FOR", "WITH", "AS",
+        # Pronouns
+        "I", "ME", "MY", "YOU", "YOUR", "HE", "SHE", "IT", "WE", "US", "THEY",
+        # Common verbs
+        "AM", "IS", "ARE", "WAS", "BE", "DO", "DID", "HAS", "HAD", "CAN", "MAY", "GET",
+        # Conjunctions
+        "AND", "OR", "BUT", "IF", "SO", "YET", "NOR",
+        # Question words
+        "HOW", "WHY", "WHO", "WHAT", "WHEN", "WHERE", "WHICH",
+        # Common words
+        "VS", "PM", "NOT", "ALL", "ANY", "ONE", "TWO", "NEW", "OLD", "BIG", "OUT",
         # Greetings and common phrases
-        "HI",
-        "HELLO",
-        "HEY",
-        "SALUT",
-        "BONJOUR",
-        "COUCOU",
-        "BYE",
-        "MERCI",
-        "THANKS",
-        "HELP",
-        "MENU",
-        "START",
-        "OK",
-        "YES",
-        "NO",
-        "OUI",
-        "NON",
-        "QUOI",
-        "WHAT",
-        "TEST",
+        "HI", "HELLO", "HEY", "SALUT", "BONJOUR", "COUCOU", "BYE", "GOOD", "BAD",
+        "MERCI", "THANKS", "THANK", "HELP", "MENU", "START", "STOP", "END",
+        "OK", "YES", "NO", "OUI", "NON", "QUOI", "BIEN", "MAL", "CA", "VA",
+        "TEST", "JUST", "VERY", "MORE", "LESS", "NOW", "THEN", "HERE", "THERE",
+        # French common words
+        "LE", "LA", "LES", "UN", "UNE", "DES", "DE", "DU", "AU", "AUX",
+        "EST", "SONT", "ETRE", "AVOIR", "FAIT", "FAIRE", "QUEL", "QUE", "QUI",
+        "MON", "TON", "SON", "MES", "TES", "SES", "NOUS", "VOUS", "ILS", "ELLE",
+        "AVEC", "SANS", "POUR", "DANS", "SUR", "SOUS", "ENTRE", "VERS",
+        "COMMENT", "POURQUOI", "QUAND", "OU", "COMBIEN",
     }
     tickers = [t for t in tickers if t not in common_words]
 
