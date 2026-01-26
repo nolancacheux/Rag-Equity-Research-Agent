@@ -139,3 +139,24 @@ variable "telegram_bot_token" {
   type        = string
   sensitive   = true
 }
+
+variable "api_secret_key" {
+  description = "API authentication key (generate with: openssl rand -hex 32)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "groq_api_key" {
+  description = "Groq API key for free LLM (alternative to Azure OpenAI)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "langchain_api_key" {
+  description = "LangSmith API key for tracing (optional)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

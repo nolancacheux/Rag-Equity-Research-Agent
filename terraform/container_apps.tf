@@ -49,6 +49,21 @@ resource "azurerm_container_app" "api" {
     value = azurerm_cognitive_account.openai.primary_access_key
   }
 
+  secret {
+    name  = "api-secret-key"
+    value = var.api_secret_key
+  }
+
+  secret {
+    name  = "groq-api-key"
+    value = var.groq_api_key
+  }
+
+  secret {
+    name  = "langchain-api-key"
+    value = var.langchain_api_key
+  }
+
   # Ingress
   ingress {
     external_enabled = true
@@ -107,6 +122,35 @@ resource "azurerm_container_app" "api" {
         value = var.environment
       }
 
+      # API Security
+      env {
+        name        = "API_SECRET_KEY"
+        secret_name = "api-secret-key"
+      }
+
+      # Optional: Groq (free LLM alternative)
+      env {
+        name        = "GROQ_API_KEY"
+        secret_name = "groq-api-key"
+      }
+
+      # Optional: LangSmith tracing
+      env {
+        name        = "LANGCHAIN_API_KEY"
+        secret_name = "langchain-api-key"
+      }
+
+      env {
+        name  = "LANGCHAIN_TRACING_V2"
+        value = var.langchain_api_key != "" ? "true" : "false"
+      }
+
+      # SEC EDGAR
+      env {
+        name  = "SEC_USER_AGENT"
+        value = var.sec_user_agent
+      }
+
       # Probes
       liveness_probe {
         transport = "HTTP"
@@ -156,6 +200,11 @@ resource "azurerm_container_app" "telegram_bot" {
   secret {
     name  = "telegram-bot-token"
     value = var.telegram_bot_token
+  }
+
+  secret {
+    name  = "api-secret-key"
+    value = var.api_secret_key
   }
 
   # No ingress - bot uses outbound polling only

@@ -37,9 +37,30 @@ container_app_memory       = "1Gi"
 container_app_min_replicas = 0    # Scale to zero
 container_app_max_replicas = 3
 
+# Telegram bot resources
+telegram_bot_cpu    = 0.25
+telegram_bot_memory = "0.5Gi"
+
 # Qdrant resources
 qdrant_cpu    = 1
 qdrant_memory = 2
 
-# Secrets (sensitive - better to use TF_VAR_* env vars)
-# sec_user_agent = "your-email@example.com"
+# -----------------------------------------------------------------------------
+# Secrets (sensitive - use TF_VAR_* env vars in CI/CD)
+# -----------------------------------------------------------------------------
+
+# Required
+# telegram_bot_token = "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+
+# SEC EDGAR (required for 10-K analysis)
+# sec_user_agent = "YourApp your-email@example.com"
+
+# API Security (recommended for production)
+# Generate with: openssl rand -hex 32
+# api_secret_key = "your-64-char-hex-key"
+
+# Optional: Groq (free LLM alternative to Azure OpenAI)
+# groq_api_key = "gsk_..."
+
+# Optional: LangSmith tracing
+# langchain_api_key = "ls__..."
