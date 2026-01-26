@@ -8,9 +8,11 @@ from src.rag.reranker import (
     LLMReranker,
     create_reranker,
 )
+from src.rag.vector_store import QdrantStore
 
 __all__ = [
     "DocumentChunker",
+    "QdrantStore",
     "HybridSearcher",
     "BM25",
     "create_hybrid_searcher",
