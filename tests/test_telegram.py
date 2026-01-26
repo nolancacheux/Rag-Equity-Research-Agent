@@ -1,5 +1,8 @@
 """Tests for Telegram bot module."""
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from src.telegram.client import AnalyzeResponse, CompareResponse, QuoteResponse
 from src.telegram.formatters import (
@@ -215,3 +218,216 @@ class TestAnalyzeResponse:
         response = AnalyzeResponse(query="Test", error="Failed")
         assert response.error == "Failed"
         assert response.report is None
+
+
+class TestAPIClient:
+    """Test APIClient class."""
+
+    def test_init(self):
+        """Test APIClient initialization."""
+        from src.telegram.client import APIClient
+
+        client = APIClient(base_url="http://localhost:8000")
+        assert client.base_url == "http://localhost:8000"
+
+    @pytest.mark.asyncio
+    async def test_get_quote(self):
+        """Test getting a quote."""
+        from src.telegram.client import APIClient
+
+        with patch("src.telegram.client.httpx.AsyncClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "success": True,
+                "data": {
+                    "ticker": "AAPL",
+                    "price": 150.0,
+                    "change_percent": 1.5,
+                    "market_cap": 2500000000000,
+                    "pe_ratio": 25.0,
+                    "volume": 50000000,
+                },
+            }
+            mock_client.get.return_value = mock_response
+            mock_client_class.return_value.__aenter__.return_value = mock_client
+
+            client = APIClient(base_url="http://localhost:8000")
+            client.client = mock_client
+
+            result = await client.get_quote("AAPL")
+            assert result.ticker == "AAPL"
+
+    @pytest.mark.asyncio
+    async def test_get_quote_error(self):
+        """Test getting a quote with error."""
+        from src.telegram.client import APIClient
+
+        with patch("src.telegram.client.httpx.AsyncClient") as mock_client_class:
+            mock_client = AsyncMock()
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            mock_response.json.return_value = {"error": "Not found"}
+            mock_client.get.return_value = mock_response
+            mock_client_class.return_value.__aenter__.return_value = mock_client
+
+            client = APIClient(base_url="http://localhost:8000")
+            client.client = mock_client
+
+            result = await client.get_quote("INVALID")
+            assert result.error is not None
+
+
+class TestHandlersV2:
+    """Test handlers_v2 module."""
+
+    def test_escape_markdown(self):
+        """Test markdown escaping."""
+        from src.telegram.handlers_v2 import escape_markdown
+
+        text = "Hello *world* [test]"
+        escaped = escape_markdown(text)
+
+        assert "\\*" in escaped
+        assert "\\[" in escaped
+
+    def test_set_api_client_v2(self):
+        """Test setting API client."""
+        from src.telegram.client import APIClient
+        from src.telegram.handlers_v2 import set_api_client_v2
+
+        client = APIClient(base_url="http://localhost:8000")
+        set_api_client_v2(client)
+
+        from src.telegram import handlers_v2
+
+        assert handlers_v2.api_client is client
+
+    @pytest.mark.asyncio
+    async def test_dcf_command_no_args(self):
+        """Test DCF command without arguments."""
+        from src.telegram.client import APIClient
+        from src.telegram.handlers_v2 import dcf_command, set_api_client_v2
+
+        # Setup mock client
+        mock_client = APIClient(base_url="http://localhost:8000")
+        set_api_client_v2(mock_client)
+
+        # Create mock update and context
+        mock_update = MagicMock()
+        mock_update.message = MagicMock()
+        mock_update.message.reply_text = AsyncMock()
+        mock_update.effective_user = MagicMock()
+        mock_update.effective_user.id = 12345
+
+        mock_context = MagicMock()
+        mock_context.args = []
+
+        await dcf_command(mock_update, mock_context)
+
+        mock_update.message.reply_text.assert_called_once()
+        call_args = mock_update.message.reply_text.call_args[0][0]
+        assert "DCF" in call_args
+
+    @pytest.mark.asyncio
+    async def test_calendar_command(self):
+        """Test calendar command."""
+        from src.telegram.handlers_v2 import calendar_command, set_api_client_v2
+
+        # Setup mock API client
+        mock_api_client = MagicMock()
+        mock_api_client.client = AsyncMock()
+        mock_api_client.base_url = "http://localhost:8000"
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "success": True,
+            "data": {"summary": "No upcoming earnings"},
+        }
+        mock_api_client.client.get.return_value = mock_response
+
+        set_api_client_v2(mock_api_client)
+
+        # Create mock update and context
+        mock_update = MagicMock()
+        mock_update.message = MagicMock()
+        mock_update.message.reply_text = AsyncMock()
+        mock_update.message.chat = MagicMock()
+        mock_update.message.chat.send_action = AsyncMock()
+        mock_update.effective_user = MagicMock()
+        mock_update.effective_user.id = 12345
+
+        mock_context = MagicMock()
+
+        await calendar_command(mock_update, mock_context)
+
+        mock_update.message.reply_text.assert_called()
+
+
+class TestTelegramStorage:
+    """Test Telegram storage module."""
+
+    def test_init(self):
+        """Test storage initialization."""
+        import tempfile
+
+        from src.telegram.storage import FileStorage
+
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
+            storage = FileStorage(storage_path=f.name)
+            assert storage is not None
+
+    def test_save_and_load(self):
+        """Test saving and loading data."""
+        import tempfile
+
+        from src.telegram.storage import FileStorage
+
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
+            storage = FileStorage(storage_path=f.name)
+
+            storage.set("test_key", "test_value")
+            value = storage.get("test_key")
+
+            assert value == "test_value"
+
+    def test_get_nonexistent(self):
+        """Test getting nonexistent key."""
+        import tempfile
+
+        from src.telegram.storage import FileStorage
+
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
+            storage = FileStorage(storage_path=f.name)
+
+            value = storage.get("nonexistent", default="default_value")
+            assert value == "default_value"
+
+
+class TestI18n:
+    """Test i18n module."""
+
+    def test_get_text_english(self):
+        """Test getting English text."""
+        from src.telegram.i18n import get_text
+
+        text = get_text("welcome", "en")
+        assert text is not None
+        assert len(text) > 0
+
+    def test_get_text_french(self):
+        """Test getting French text."""
+        from src.telegram.i18n import get_text
+
+        text = get_text("welcome", "fr")
+        assert text is not None
+
+    def test_get_text_fallback(self):
+        """Test fallback to English."""
+        from src.telegram.i18n import get_text
+
+        text = get_text("welcome", "unknown_lang")
+        # Should fallback to English
+        assert text is not None
