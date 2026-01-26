@@ -267,6 +267,173 @@ async def compare_stocks(request: Request, tickers: str) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=detail) from None
 
 
+# =============================================================================
+# New Feature Endpoints
+# =============================================================================
+
+
+@app.get("/peers/{ticker}", dependencies=[Depends(verify_api_key)])
+@limiter.limit("10/minute")
+async def get_peer_comparison(request: Request, ticker: str) -> dict[str, Any]:
+    """Get peer comparison analysis for a stock.
+    
+    Compares the ticker with industry peers on key metrics.
+    """
+    from src.agents.peer_agent import PeerComparisonAgent
+
+    ticker = ticker.upper()
+    if not ticker.isalpha() or len(ticker) > 5:
+        raise HTTPException(status_code=400, detail="Invalid ticker format")
+
+    try:
+        agent = PeerComparisonAgent()
+        result = await agent.compare_peers(ticker)
+
+        REQUESTS_TOTAL.labels(method="GET", endpoint="/peers", status="200").inc()
+        return {
+            "success": True,
+            "data": {
+                "ticker": result.ticker,
+                "sector": result.sector,
+                "industry": result.industry,
+                "peers": result.peers,
+                "metrics": result.metrics_comparison,
+                "ranking": result.ranking,
+                "strengths": result.strengths,
+                "weaknesses": result.weaknesses,
+                "summary": result.summary,
+            },
+            "errors": result.errors,
+        }
+
+    except Exception as e:
+        logger.error("peer_comparison_failed", ticker=ticker, error=str(e))
+        ERRORS_TOTAL.labels(type="peers", endpoint="/peers").inc()
+        REQUESTS_TOTAL.labels(method="GET", endpoint="/peers", status="500").inc()
+        detail = str(e) if not settings.is_production else "Peer comparison failed"
+        raise HTTPException(status_code=500, detail=detail) from None
+
+
+@app.get("/risk/{ticker}", dependencies=[Depends(verify_api_key)])
+@limiter.limit("10/minute")
+async def get_risk_assessment(request: Request, ticker: str) -> dict[str, Any]:
+    """Get risk assessment from 10-K filing.
+    
+    Analyzes risk factors and provides a risk score (1-10).
+    """
+    from src.agents.risk_agent import RiskScoringAgent
+
+    ticker = ticker.upper()
+    if not ticker.isalpha() or len(ticker) > 5:
+        raise HTTPException(status_code=400, detail="Invalid ticker format")
+
+    try:
+        agent = RiskScoringAgent()
+        result = await agent.assess_risk(ticker)
+
+        REQUESTS_TOTAL.labels(method="GET", endpoint="/risk", status="200").inc()
+        return {
+            "success": True,
+            "data": {
+                "ticker": result.ticker,
+                "overall_score": result.overall_score,
+                "risk_breakdown": result.risk_breakdown,
+                "top_risks": result.top_risks,
+                "risk_factors_count": result.risk_factors_count,
+                "summary": result.summary,
+            },
+            "errors": result.errors,
+        }
+
+    except Exception as e:
+        logger.error("risk_assessment_failed", ticker=ticker, error=str(e))
+        ERRORS_TOTAL.labels(type="risk", endpoint="/risk").inc()
+        REQUESTS_TOTAL.labels(method="GET", endpoint="/risk", status="500").inc()
+        detail = str(e) if not settings.is_production else "Risk assessment failed"
+        raise HTTPException(status_code=500, detail=detail) from None
+
+
+@app.get("/reddit/{ticker}", dependencies=[Depends(verify_api_key)])
+@limiter.limit("15/minute")
+async def get_reddit_sentiment(request: Request, ticker: str) -> dict[str, Any]:
+    """Get Reddit sentiment analysis for a stock.
+    
+    Analyzes mentions from r/wallstreetbets, r/stocks, r/investing.
+    """
+    from src.agents.reddit_agent import RedditSentimentAgent
+
+    ticker = ticker.upper()
+    if not ticker.isalpha() or len(ticker) > 5:
+        raise HTTPException(status_code=400, detail="Invalid ticker format")
+
+    try:
+        agent = RedditSentimentAgent()
+        result = await agent.analyze_sentiment(ticker)
+
+        REQUESTS_TOTAL.labels(method="GET", endpoint="/reddit", status="200").inc()
+        return {
+            "success": True,
+            "data": {
+                "ticker": result.ticker,
+                "sentiment_score": result.sentiment_score,
+                "sentiment_label": result.sentiment_label,
+                "total_mentions": result.total_mentions,
+                "bullish_ratio": result.bullish_ratio,
+                "trending_topics": result.trending_topics,
+                "top_discussions": result.top_discussions,
+                "summary": result.summary,
+            },
+            "errors": result.errors,
+        }
+
+    except Exception as e:
+        logger.error("reddit_sentiment_failed", ticker=ticker, error=str(e))
+        ERRORS_TOTAL.labels(type="reddit", endpoint="/reddit").inc()
+        REQUESTS_TOTAL.labels(method="GET", endpoint="/reddit", status="500").inc()
+        detail = str(e) if not settings.is_production else "Reddit sentiment failed"
+        raise HTTPException(status_code=500, detail=detail) from None
+
+
+@app.get("/earnings/{ticker}", dependencies=[Depends(verify_api_key)])
+@limiter.limit("10/minute")
+async def get_earnings_analysis(request: Request, ticker: str) -> dict[str, Any]:
+    """Get earnings call analysis for a stock.
+    
+    Fetches and analyzes the latest earnings call transcript.
+    """
+    from src.agents.earnings_agent import EarningsAgent
+
+    ticker = ticker.upper()
+    if not ticker.isalpha() or len(ticker) > 5:
+        raise HTTPException(status_code=400, detail="Invalid ticker format")
+
+    try:
+        agent = EarningsAgent()
+        result = await agent.analyze_earnings(ticker)
+
+        REQUESTS_TOTAL.labels(method="GET", endpoint="/earnings", status="200").inc()
+        return {
+            "success": True,
+            "data": {
+                "ticker": result.ticker,
+                "quarter": result.quarter,
+                "year": result.year,
+                "key_points": result.key_points,
+                "guidance": result.guidance,
+                "sentiment": result.sentiment,
+                "summary": result.summary,
+            },
+            "errors": result.errors,
+        }
+
+    except Exception as e:
+        logger.error("earnings_analysis_failed", ticker=ticker, error=str(e))
+        ERRORS_TOTAL.labels(type="earnings", endpoint="/earnings").inc()
+        REQUESTS_TOTAL.labels(method="GET", endpoint="/earnings", status="500").inc()
+        detail = str(e) if not settings.is_production else "Earnings analysis failed"
+        raise HTTPException(status_code=500, detail=detail) from None
+
+
 if __name__ == "__main__":  # pragma: no cover
     import uvicorn
 
