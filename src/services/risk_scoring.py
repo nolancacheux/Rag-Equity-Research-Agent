@@ -301,7 +301,7 @@ class RiskScoringService:
             llm = AzureChatOpenAI(
                 azure_endpoint=settings.azure_openai_endpoint,
                 api_key=settings.azure_openai_api_key.get_secret_value(),
-                api_version=settings.openai_api_version,
+                api_version=settings.azure_openai_api_version,
                 azure_deployment=settings.azure_openai_deployment,
                 temperature=0.3,
                 max_tokens=500,
