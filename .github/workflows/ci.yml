@@ -56,7 +56,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           source .venv/bin/activate
-          pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=50
+          pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=53
         env:
           GROQ_API_KEY: "test-key-for-ci"
 
