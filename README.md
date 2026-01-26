@@ -24,6 +24,14 @@
 
 An autonomous AI agent that performs professional-grade equity research by aggregating and analyzing multiple data sources in real-time. Built with **LangGraph** for orchestration, **hybrid RAG** for document analysis, and deployed on **Azure Container Apps**.
 
+<p align="center">
+  <img src="demo/demonstration.gif" alt="Demo" width="600">
+</p>
+
+<p align="center">
+  <img src="demo/dashboard-azure.png" alt="Azure Dashboard" width="800">
+</p>
+
 ### What It Does
 
 ```
