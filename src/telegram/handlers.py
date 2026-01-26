@@ -393,17 +393,26 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await handle_compare_tickers(update, tickers[:5], lang)
         return
 
-    # Check for single ticker (quote)
+    # Check for single ticker (quote) - validate first
     if len(tickers) == 1 and len(text.split()) <= 3:
-        await handle_quote(update, tickers[0], lang)
-        return
+        # Validate ticker exists before treating as stock symbol
+        ticker = tickers[0]
+        if api_client:
+            response = await api_client.get_quote(ticker)
+            if response.error:
+                # Invalid ticker - show menu instead of error
+                await show_main_menu(update, lang)
+                return
+            # Valid ticker - show quote with data we already have
+            await update.message.reply_text(
+                format_quote(response),
+                reply_markup=after_quote_keyboard(lang),
+                parse_mode=ParseMode.MARKDOWN,
+            )
+            return
 
-    # Fallback - conversational response
-    from src.services.chat import get_chat_service
-
-    chat_service = get_chat_service()
-    response = await chat_service.chat(text)
-    await update.message.reply_text(response)
+    # No valid tickers found - show menu
+    await show_main_menu(update, lang)
 
 
 # =============================================================================
