@@ -20,6 +20,7 @@ RUN pip install --no-cache-dir \
     langchain>=0.3.0 \
     langgraph>=0.2.0 \
     langchain-openai>=0.2.0 \
+    langchain-groq>=0.2.0 \
     langsmith>=0.1.0 \
     yfinance>=0.2.40 \
     qdrant-client>=1.9.0 \
