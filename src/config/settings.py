@@ -63,8 +63,7 @@ class Settings(BaseSettings):
     qdrant_api_key: SecretStr | None = None
     qdrant_collection: str = "sec_filings"
 
-    # Redis
-    redis_url: str = "redis://localhost:6379"
+    # Cache
     cache_ttl_seconds: int = 3600  # 1 hour default
 
     # Companies House (UK)
