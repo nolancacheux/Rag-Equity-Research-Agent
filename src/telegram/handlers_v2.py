@@ -1,14 +1,11 @@
 """New feature handlers for Telegram bot."""
 
-import re
-
-from telegram import Update
 from telegram.constants import ChatAction, ParseMode
 from telegram.ext import ContextTypes
 
 from src.telegram.client import APIClient
 from src.telegram.handlers import get_user_lang
-from src.telegram.keyboards import back_menu_keyboard
+from telegram import Update
 
 # Shared client reference
 api_client: APIClient | None = None
@@ -30,7 +27,7 @@ async def dcf_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     if not update.message or not update.effective_user or not api_client:
         return
 
-    lang = get_user_lang(update.effective_user.id)
+    get_user_lang(update.effective_user.id)
 
     if not context.args:
         await update.message.reply_text(
@@ -76,7 +73,7 @@ async def calendar_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         # Get user's watchlist tickers
         user_id = str(update.effective_user.id)
         watchlist_resp = await api_client.client.get(f"{api_client.base_url}/watchlist/{user_id}")
-        
+
         tickers_param = ""
         if watchlist_resp.status_code == 200:
             wl_data = watchlist_resp.json()
@@ -319,7 +316,7 @@ async def show_watchlist(update: Update, user_id: str) -> None:
 
             lines = ["📋 **Your Watchlist**\n"]
             for item in items[:15]:
-                notes = f" - {item['notes']}" if item.get('notes') else ""
+                notes = f" - {item['notes']}" if item.get("notes") else ""
                 lines.append(f"• **{item['ticker']}**{notes}")
 
             if alerts:
@@ -353,7 +350,9 @@ async def add_to_watchlist(update: Update, user_id: str, ticker: str, notes: str
         data = response.json()
 
         if data.get("success"):
-            await update.message.reply_text(f"✅ Added **{ticker}** to watchlist", parse_mode=ParseMode.MARKDOWN)
+            await update.message.reply_text(
+                f"✅ Added **{ticker}** to watchlist", parse_mode=ParseMode.MARKDOWN
+            )
         else:
             await update.message.reply_text(f"Could not add {ticker}")
 
@@ -367,7 +366,9 @@ async def remove_from_watchlist(update: Update, user_id: str, ticker: str) -> No
         return
 
     # Note: API endpoint for remove would need to be added
-    await update.message.reply_text(f"✅ Removed **{ticker}** from watchlist", parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text(
+        f"✅ Removed **{ticker}** from watchlist", parse_mode=ParseMode.MARKDOWN
+    )
 
 
 # =============================================================================
@@ -395,7 +396,7 @@ async def alert_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     user_id = str(update.effective_user.id)
     ticker = context.args[0].upper()
     alert_type_str = context.args[1].lower()
-    
+
     try:
         threshold = float(context.args[2])
     except ValueError:
@@ -409,7 +410,7 @@ async def alert_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         "pe_above": "pe_above",
         "pe_below": "pe_below",
     }
-    
+
     alert_type = type_map.get(alert_type_str)
     if not alert_type:
         await update.message.reply_text(f"Unknown alert type: {alert_type_str}")

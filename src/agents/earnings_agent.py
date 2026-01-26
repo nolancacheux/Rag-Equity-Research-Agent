@@ -97,7 +97,7 @@ class EarningsAgent:
     def _extract_key_points(self, transcript: str) -> list[str]:
         """Extract key points from transcript."""
         key_points = []
-        
+
         # Look for common patterns
         patterns = [
             r"(?:revenue|sales)\s+(?:grew|increased|up)\s+(\d+%?[^.]*)",
@@ -106,48 +106,66 @@ class EarningsAgent:
             r"(?:we expect|we anticipate|we project)[^.]+\.",
             r"(?:margin|margins)\s+(?:expanded|improved|grew)[^.]+\.",
         ]
-        
+
         import re
+
         for pattern in patterns:
             matches = re.findall(pattern, transcript.lower(), re.IGNORECASE)
             for match in matches[:2]:  # Limit per pattern
                 if isinstance(match, str) and len(match) > 10:
                     key_points.append(match.strip().capitalize())
-        
+
         return key_points[:5]  # Top 5 key points
 
     def _extract_guidance(self, transcript: str) -> str | None:
         """Extract forward guidance from transcript."""
         import re
-        
+
         guidance_patterns = [
             r"(?:for (?:the )?(?:full )?year|FY\d+)[,\s]+we (?:expect|anticipate|project)[^.]+\.",
             r"(?:guidance|outlook)\s*(?:for|is)[^.]+\.",
             r"we (?:are raising|are maintaining|are lowering)[^.]+guidance[^.]+\.",
         ]
-        
+
         for pattern in guidance_patterns:
             match = re.search(pattern, transcript, re.IGNORECASE)
             if match:
                 return match.group(0).strip()
-        
+
         return None
 
     def _analyze_sentiment(self, transcript: str) -> str:
         """Analyze overall sentiment of the call."""
         positive_words = {
-            "strong", "growth", "exceeded", "beat", "optimistic", "confident",
-            "record", "momentum", "excited", "pleased", "outstanding",
+            "strong",
+            "growth",
+            "exceeded",
+            "beat",
+            "optimistic",
+            "confident",
+            "record",
+            "momentum",
+            "excited",
+            "pleased",
+            "outstanding",
         }
         negative_words = {
-            "challenging", "headwinds", "decline", "missed", "weakness",
-            "cautious", "uncertain", "concern", "pressure", "difficult",
+            "challenging",
+            "headwinds",
+            "decline",
+            "missed",
+            "weakness",
+            "cautious",
+            "uncertain",
+            "concern",
+            "pressure",
+            "difficult",
         }
-        
+
         transcript_lower = transcript.lower()
         positive_count = sum(1 for word in positive_words if word in transcript_lower)
         negative_count = sum(1 for word in negative_words if word in transcript_lower)
-        
+
         if positive_count > negative_count * 1.5:
             return "positive"
         elif negative_count > positive_count * 1.5:
@@ -168,17 +186,17 @@ class EarningsAgent:
         lines.append(f"**Date**: {transcript.date}")
         lines.append(f"**Sentiment**: {sentiment.capitalize()}")
         lines.append("")
-        
+
         if key_points:
             lines.append("### Key Points")
             for point in key_points:
                 lines.append(f"- {point}")
             lines.append("")
-        
+
         if guidance:
             lines.append("### Forward Guidance")
             lines.append(guidance)
-        
+
         return "\n".join(lines)
 
 
@@ -205,15 +223,17 @@ async def run_earnings_agent_node(state: dict) -> dict:
 
     for ticker in tickers:
         result = await agent.analyze_earnings(ticker)
-        all_results.append({
-            "ticker": result.ticker,
-            "quarter": result.quarter,
-            "year": result.year,
-            "key_points": result.key_points,
-            "guidance": result.guidance,
-            "sentiment": result.sentiment,
-            "summary": result.summary,
-        })
+        all_results.append(
+            {
+                "ticker": result.ticker,
+                "quarter": result.quarter,
+                "year": result.year,
+                "key_points": result.key_points,
+                "guidance": result.guidance,
+                "sentiment": result.sentiment,
+                "summary": result.summary,
+            }
+        )
         all_errors.extend(result.errors)
 
     return {

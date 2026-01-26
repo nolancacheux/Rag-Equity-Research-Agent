@@ -21,14 +21,14 @@ class SearchResult:
 
 class BM25:
     """BM25 sparse retrieval implementation.
-    
+
     Okapi BM25 ranking function for keyword-based search.
     Complements dense embeddings for better recall.
     """
 
     def __init__(self, k1: float = 1.5, b: float = 0.75) -> None:
         """Initialize BM25.
-        
+
         Args:
             k1: Term frequency saturation parameter.
             b: Length normalization parameter.
@@ -50,7 +50,7 @@ class BM25:
 
     def fit(self, documents: list[str]) -> None:
         """Fit BM25 on a corpus of documents.
-        
+
         Args:
             documents: List of document texts.
         """
@@ -95,11 +95,11 @@ class BM25:
 
     def search(self, query: str, top_k: int = 10) -> list[tuple[int, float]]:
         """Search for documents matching the query.
-        
+
         Args:
             query: Search query.
             top_k: Number of results to return.
-            
+
         Returns:
             List of (doc_index, score) tuples sorted by score descending.
         """
@@ -118,13 +118,13 @@ class BM25:
 
 class HybridSearcher:
     """Combines dense embeddings with BM25 sparse search.
-    
+
     Uses Reciprocal Rank Fusion (RRF) to merge results from both methods.
     """
 
     def __init__(self, alpha: float = 0.5, rrf_k: int = 60) -> None:
         """Initialize hybrid searcher.
-        
+
         Args:
             alpha: Weight for dense search (1-alpha for sparse).
             rrf_k: RRF constant (default 60 is standard).
@@ -137,7 +137,7 @@ class HybridSearcher:
 
     def index(self, documents: list[str], metadata: list[dict] | None = None) -> None:
         """Index documents for hybrid search.
-        
+
         Args:
             documents: List of document texts.
             metadata: Optional metadata for each document.
@@ -154,19 +154,19 @@ class HybridSearcher:
         top_k: int = 10,
     ) -> list[SearchResult]:
         """Perform hybrid search combining dense and sparse results.
-        
+
         Args:
             query: Search query text.
             query_embedding: Dense embedding of the query.
             doc_embeddings: Dense embeddings of all documents.
             top_k: Number of results to return.
-            
+
         Returns:
             List of SearchResult objects with combined scores.
         """
         # Get BM25 sparse results
         sparse_results = self.bm25.search(query, top_k=top_k * 2)
-        
+
         # Calculate dense similarities
         query_vec = np.array(query_embedding)
         dense_scores = []
@@ -186,11 +186,11 @@ class HybridSearcher:
         rrf_scores: dict[int, float] = {}
 
         # Add dense scores with RRF
-        for rank, (idx, score) in enumerate(dense_results):
+        for rank, (idx, _score) in enumerate(dense_results):
             rrf_scores[idx] = rrf_scores.get(idx, 0) + self.alpha / (self.rrf_k + rank + 1)
 
         # Add sparse scores with RRF
-        for rank, (idx, score) in enumerate(sparse_results):
+        for rank, (idx, _score) in enumerate(sparse_results):
             rrf_scores[idx] = rrf_scores.get(idx, 0) + (1 - self.alpha) / (self.rrf_k + rank + 1)
 
         # Sort by combined RRF score
@@ -218,10 +218,10 @@ class HybridSearcher:
 
 def create_hybrid_searcher(alpha: float = 0.5) -> HybridSearcher:
     """Create a hybrid searcher with default settings.
-    
+
     Args:
         alpha: Weight for dense search (0.5 = equal weight).
-        
+
     Returns:
         Configured HybridSearcher instance.
     """

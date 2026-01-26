@@ -18,7 +18,7 @@ class Callback:
     COMPARE = "menu:compare"
     SETTINGS = "menu:settings"
     HELP = "menu:help"
-    
+
     # New features
     TOOLS = "menu:tools"
     WATCHLIST = "menu:watchlist"

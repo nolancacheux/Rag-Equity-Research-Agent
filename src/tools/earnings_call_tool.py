@@ -25,7 +25,7 @@ class EarningsCall:
 
 class EarningsCallTool:
     """Fetch earnings call transcripts from free sources.
-    
+
     Sources (in priority order):
     1. Seeking Alpha (public transcripts via search)
     2. Motley Fool (free transcripts)
@@ -36,22 +36,20 @@ class EarningsCallTool:
         """Initialize earnings call tool."""
         self.client = httpx.AsyncClient(
             timeout=30.0,
-            headers={
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            },
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
         )
 
     async def get_latest_transcript(self, ticker: str) -> EarningsCall | None:
         """Get the most recent earnings call transcript.
-        
+
         Args:
             ticker: Stock ticker symbol.
-            
+
         Returns:
             EarningsCall object or None if not found.
         """
         ticker = ticker.upper()
-        
+
         # Try multiple sources
         transcript = await self._fetch_from_motley_fool(ticker)
         if transcript:
@@ -71,13 +69,13 @@ class EarningsCallTool:
             # Motley Fool has free transcripts
             url = f"https://www.fool.com/earnings-call-transcripts/?q={ticker}"
             response = await self.client.get(url)
-            
+
             if response.status_code != 200:
                 return None
 
             # Parse HTML for transcript links (simplified)
             html = response.text
-            
+
             # Look for transcript content patterns
             # This is a simplified extraction - real implementation would use BeautifulSoup
             transcript_match = re.search(
@@ -85,7 +83,7 @@ class EarningsCallTool:
                 html,
                 re.DOTALL | re.IGNORECASE,
             )
-            
+
             if not transcript_match:
                 return None
 
@@ -123,16 +121,15 @@ class EarningsCallTool:
 
             ddgs = DDGS()
             query = f"{ticker} earnings call transcript Q4 2024 OR Q3 2024"
-            
+
             results = list(ddgs.text(query, max_results=5))
-            
+
             if not results:
                 return None
 
             # Combine search results as summary
             combined = "\n\n".join(
-                f"**{r.get('title', 'No title')}**\n{r.get('body', '')}"
-                for r in results
+                f"**{r.get('title', 'No title')}**\n{r.get('body', '')}" for r in results
             )
 
             # Try to extract quarter info
@@ -161,7 +158,7 @@ class EarningsCallTool:
             r"([A-Z][a-z]+\s+[A-Z][a-z]+)\s*[-–]\s*(CEO|CFO|COO|CTO|President|VP)",
             r"([A-Z][a-z]+\s+[A-Z][a-z]+),\s*(CEO|CFO|COO|CTO|President|VP)",
         ]
-        
+
         participants = set()
         for pattern in patterns:
             matches = re.findall(pattern, text)
@@ -170,15 +167,13 @@ class EarningsCallTool:
 
         return list(participants)[:10]  # Limit to 10
 
-    async def search_historical(
-        self, ticker: str, quarters: int = 4
-    ) -> list[EarningsCall]:
+    async def search_historical(self, ticker: str, quarters: int = 4) -> list[EarningsCall]:
         """Search for historical earnings calls.
-        
+
         Args:
             ticker: Stock ticker symbol.
             quarters: Number of quarters to look back.
-            
+
         Returns:
             List of EarningsCall objects.
         """
@@ -193,10 +188,10 @@ class EarningsCallTool:
 
 async def get_earnings_call(ticker: str) -> EarningsCall | None:
     """Convenience function to get latest earnings call.
-    
+
     Args:
         ticker: Stock ticker symbol.
-        
+
     Returns:
         EarningsCall or None.
     """

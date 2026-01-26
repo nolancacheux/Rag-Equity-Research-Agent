@@ -14,45 +14,36 @@ PEER_GROUPS = {
     "AMD": ["NVDA", "INTC", "QCOM", "AVGO", "TSM"],
     "INTC": ["NVDA", "AMD", "QCOM", "AVGO", "TSM"],
     "TSM": ["NVDA", "AMD", "INTC", "ASML", "AVGO"],
-    
     # Big Tech
     "AAPL": ["MSFT", "GOOGL", "AMZN", "META"],
     "MSFT": ["AAPL", "GOOGL", "AMZN", "META", "ORCL"],
     "GOOGL": ["AAPL", "MSFT", "AMZN", "META"],
     "AMZN": ["MSFT", "GOOGL", "AAPL", "META", "WMT"],
     "META": ["GOOGL", "SNAP", "PINS", "AAPL", "MSFT"],
-    
     # EV & Auto
     "TSLA": ["RIVN", "LCID", "F", "GM", "NIO"],
     "RIVN": ["TSLA", "LCID", "F", "GM"],
     "F": ["GM", "TSLA", "TM", "STLA"],
     "GM": ["F", "TSLA", "TM", "STLA"],
-    
     # Financials
     "JPM": ["BAC", "WFC", "C", "GS", "MS"],
     "BAC": ["JPM", "WFC", "C", "GS"],
     "GS": ["MS", "JPM", "BAC", "C"],
-    
     # Streaming & Entertainment
     "NFLX": ["DIS", "WBD", "PARA", "CMCSA"],
     "DIS": ["NFLX", "WBD", "PARA", "CMCSA"],
-    
     # E-commerce
     "SHOP": ["WIX", "BIGC", "AMZN", "EBAY"],
     "EBAY": ["AMZN", "ETSY", "SHOP"],
-    
     # Cloud
     "CRM": ["NOW", "WDAY", "ORCL", "SAP"],
     "SNOW": ["DDOG", "MDB", "CRM", "PLTR"],
-    
     # Pharma
     "PFE": ["JNJ", "MRK", "ABBV", "LLY"],
     "JNJ": ["PFE", "MRK", "ABBV", "UNH"],
-    
     # Airlines
     "DAL": ["UAL", "AAL", "LUV", "JBLU"],
     "UAL": ["DAL", "AAL", "LUV"],
-    
     # Retail
     "WMT": ["TGT", "COST", "AMZN", "HD"],
     "TGT": ["WMT", "COST", "HD", "LOW"],
@@ -95,15 +86,16 @@ class PeerComparisonService:
         """Lazy load yfinance tool."""
         if self._yfinance_tool is None:
             from src.tools.yfinance_tool import YFinanceTool
+
             self._yfinance_tool = YFinanceTool()
         return self._yfinance_tool
 
     def get_peers(self, ticker: str) -> list[str]:
         """Get peer tickers for a given stock.
-        
+
         Args:
             ticker: Stock ticker symbol.
-            
+
         Returns:
             List of peer ticker symbols.
         """
@@ -112,16 +104,16 @@ class PeerComparisonService:
 
     async def compare_with_peers(self, ticker: str) -> PeerComparison:
         """Compare a stock with its peers.
-        
+
         Args:
             ticker: Stock ticker symbol.
-            
+
         Returns:
             PeerComparison with metrics and analysis.
         """
         ticker = ticker.upper()
         tool = self._get_yfinance_tool()
-        
+
         # Get peers
         peer_tickers = self.get_peers(ticker)
         if not peer_tickers:
@@ -142,7 +134,7 @@ class PeerComparisonService:
         # Fetch metrics for peers
         peer_metrics = []
         pe_values = []
-        
+
         if ticker_metrics.pe_ratio:
             pe_values.append(ticker_metrics.pe_ratio)
 
@@ -195,7 +187,7 @@ class PeerComparisonService:
     def _detect_industry(self, ticker: str) -> str:
         """Detect industry from peer groupings."""
         ticker = ticker.upper()
-        
+
         # Check which group contains this ticker
         for group_ticker, peers in PEER_GROUPS.items():
             if ticker == group_ticker or ticker in peers:
@@ -230,9 +222,13 @@ class PeerComparisonService:
         if ticker_metrics.pe_ratio:
             if pe_percentile is not None:
                 if pe_percentile > 75:
-                    lines.append(f"P/E of {ticker_metrics.pe_ratio:.1f} is HIGH vs peers (top {100-pe_percentile:.0f}%)")
+                    lines.append(
+                        f"P/E of {ticker_metrics.pe_ratio:.1f} is HIGH vs peers (top {100 - pe_percentile:.0f}%)"
+                    )
                 elif pe_percentile < 25:
-                    lines.append(f"P/E of {ticker_metrics.pe_ratio:.1f} is LOW vs peers (bottom {pe_percentile:.0f}%)")
+                    lines.append(
+                        f"P/E of {ticker_metrics.pe_ratio:.1f} is LOW vs peers (bottom {pe_percentile:.0f}%)"
+                    )
                 else:
                     lines.append(f"P/E of {ticker_metrics.pe_ratio:.1f} is AVERAGE vs peers")
 
@@ -245,7 +241,11 @@ class PeerComparisonService:
 
             # Market cap comparison
             if ticker_metrics.market_cap:
-                larger = sum(1 for p in peer_metrics if p.market_cap and p.market_cap > ticker_metrics.market_cap)
+                larger = sum(
+                    1
+                    for p in peer_metrics
+                    if p.market_cap and p.market_cap > ticker_metrics.market_cap
+                )
                 total = sum(1 for p in peer_metrics if p.market_cap)
                 if total > 0:
                     lines.append(f"Market cap rank: #{larger + 1} of {total + 1} peers")

@@ -85,27 +85,27 @@ class PeerComparisonAgent:
 
         # Build peer list and metrics comparison
         peer_tickers = [p.ticker for p in result.peers]
-        
+
         # Build metrics comparison dict
         metrics_comparison = {
             "PE Ratio": {},
             "Market Cap": {},
             "Price": {},
         }
-        
+
         # Add ticker metrics
         if result.ticker_metrics:
             tm = result.ticker_metrics
             metrics_comparison["PE Ratio"][ticker] = tm.pe_ratio
             metrics_comparison["Market Cap"][ticker] = tm.market_cap
             metrics_comparison["Price"][ticker] = tm.price
-        
+
         # Add peer metrics
         for peer in result.peers:
             metrics_comparison["PE Ratio"][peer.ticker] = peer.pe_ratio
             metrics_comparison["Market Cap"][peer.ticker] = peer.market_cap
             metrics_comparison["Price"][peer.ticker] = peer.price
-        
+
         # Calculate rankings
         ranking = {}
         for metric_name, values in metrics_comparison.items():
@@ -123,7 +123,7 @@ class PeerComparisonAgent:
         strengths = []
         weaknesses = []
         num_companies = len(peer_tickers) + 1
-        
+
         for metric, rank in ranking.items():
             if rank == 1:
                 strengths.append(f"Best {metric} among peers")
@@ -135,8 +135,10 @@ class PeerComparisonAgent:
                 weaknesses.append(f"Below average {metric}")
 
         # Use result summary or generate one
-        summary = result.summary if result.summary else self._generate_summary(
-            ticker, result, strengths, weaknesses
+        summary = (
+            result.summary
+            if result.summary
+            else self._generate_summary(ticker, result, strengths, weaknesses)
         )
 
         return PeerAnalysis(
@@ -161,12 +163,12 @@ class PeerComparisonAgent:
     ) -> str:
         """Generate comparison summary."""
         peer_tickers = [p.ticker for p in result.peers] if result.peers else []
-        
+
         lines = [f"## Peer Comparison: {ticker}"]
         lines.append(f"**Industry**: {result.industry or 'N/A'}")
         lines.append(f"**Peers**: {', '.join(peer_tickers)}")
         lines.append("")
-        
+
         # Key metrics
         if result.ticker_metrics:
             lines.append("### Key Metrics")
@@ -174,26 +176,26 @@ class PeerComparisonAgent:
             if tm.pe_ratio:
                 lines.append(f"- **P/E Ratio**: {tm.pe_ratio:.2f}")
             if tm.market_cap:
-                lines.append(f"- **Market Cap**: ${tm.market_cap/1e9:.1f}B")
+                lines.append(f"- **Market Cap**: ${tm.market_cap / 1e9:.1f}B")
             if tm.price:
                 lines.append(f"- **Price**: ${tm.price:.2f}")
             lines.append("")
-        
+
         if result.pe_percentile is not None:
             lines.append(f"**PE Percentile**: {result.pe_percentile:.0f}% (vs peers)")
             lines.append("")
-        
+
         if strengths:
             lines.append("### Strengths")
             for s in strengths[:3]:
                 lines.append(f"- {s}")
             lines.append("")
-        
+
         if weaknesses:
             lines.append("### Weaknesses")
             for w in weaknesses[:3]:
                 lines.append(f"- {w}")
-        
+
         return "\n".join(lines)
 
 
@@ -221,17 +223,19 @@ async def run_peer_agent_node(state: dict) -> dict:
     # Only analyze first ticker to avoid too many API calls
     ticker = tickers[0]
     result = await agent.compare_peers(ticker)
-    all_results.append({
-        "ticker": result.ticker,
-        "sector": result.sector,
-        "industry": result.industry,
-        "peers": result.peers,
-        "metrics": result.metrics_comparison,
-        "ranking": result.ranking,
-        "strengths": result.strengths,
-        "weaknesses": result.weaknesses,
-        "summary": result.summary,
-    })
+    all_results.append(
+        {
+            "ticker": result.ticker,
+            "sector": result.sector,
+            "industry": result.industry,
+            "peers": result.peers,
+            "metrics": result.metrics_comparison,
+            "ranking": result.ranking,
+            "strengths": result.strengths,
+            "weaknesses": result.weaknesses,
+            "summary": result.summary,
+        }
+    )
     all_errors.extend(result.errors)
 
     return {

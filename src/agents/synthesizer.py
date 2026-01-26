@@ -143,7 +143,9 @@ class SynthesizerAgent:
                 if earnings.get("summary"):
                     sections.append(earnings["summary"])
                 else:
-                    sections.append(f"## {earnings.get('ticker', 'Unknown')} - {earnings.get('quarter', '')} {earnings.get('year', '')}")
+                    sections.append(
+                        f"## {earnings.get('ticker', 'Unknown')} - {earnings.get('quarter', '')} {earnings.get('year', '')}"
+                    )
                     sections.append(f"**Sentiment**: {earnings.get('sentiment', 'N/A')}")
                     if earnings.get("key_points"):
                         sections.append("**Key Points**:")
@@ -160,7 +162,9 @@ class SynthesizerAgent:
                     sections.append(reddit["summary"])
                 else:
                     sections.append(f"## {reddit.get('ticker', 'Unknown')}")
-                    sections.append(f"**Sentiment**: {reddit.get('sentiment_label', 'N/A')} ({reddit.get('sentiment_score', 0):+.2f})")
+                    sections.append(
+                        f"**Sentiment**: {reddit.get('sentiment_label', 'N/A')} ({reddit.get('sentiment_score', 0):+.2f})"
+                    )
                     sections.append(f"**Mentions**: {reddit.get('total_mentions', 0)}")
                     if reddit.get("trending_topics"):
                         sections.append(f"**Trending**: {', '.join(reddit['trending_topics'][:5])}")
@@ -188,12 +192,16 @@ class SynthesizerAgent:
                     sections.append(risk["summary"])
                 else:
                     sections.append(f"## {risk.get('ticker', 'Unknown')}")
-                    sections.append(f"**Overall Risk Score**: {risk.get('overall_score', 'N/A')}/10")
+                    sections.append(
+                        f"**Overall Risk Score**: {risk.get('overall_score', 'N/A')}/10"
+                    )
                     sections.append(f"**Risk Factors**: {risk.get('risk_factors_count', 0)}")
                     if risk.get("top_risks"):
                         sections.append("**Top Risks**:")
                         for r in risk["top_risks"][:3]:
-                            sections.append(f"- [{r.get('category', 'N/A')}] {r.get('description', '')[:100]}...")
+                            sections.append(
+                                f"- [{r.get('category', 'N/A')}] {r.get('description', '')[:100]}..."
+                            )
 
         # News Section
         if news_analysis:
@@ -238,8 +246,14 @@ class SynthesizerAgent:
 
         # Format context
         context = self._format_context(
-            query, market_data, document_analysis, news_analysis,
-            earnings_analysis, reddit_sentiment, peer_analysis, risk_assessment
+            query,
+            market_data,
+            document_analysis,
+            news_analysis,
+            earnings_analysis,
+            reddit_sentiment,
+            peer_analysis,
+            risk_assessment,
         )
 
         # Build prompt

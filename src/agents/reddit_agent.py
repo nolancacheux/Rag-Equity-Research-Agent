@@ -130,24 +130,26 @@ class RedditSentimentAgent:
     ) -> str:
         """Generate analysis summary."""
         emoji = {"bullish": "🟢", "bearish": "🔴", "neutral": "⚪"}.get(sentiment_label, "⚪")
-        
+
         lines = [f"## Reddit Sentiment: {ticker} {emoji}"]
         lines.append(f"**Overall**: {sentiment_label.capitalize()} ({result.sentiment_score:+.2f})")
         lines.append(f"**Mentions**: {result.total_posts} posts")
         lines.append(f"**Bullish/Bearish**: {result.bullish_count}/{result.bearish_count}")
         lines.append(f"**Bullish Ratio**: {bullish_ratio:.0%}")
         lines.append("")
-        
+
         if result.trending_keywords:
             lines.append("### Trending Topics")
             lines.append(", ".join(result.trending_keywords[:5]))
             lines.append("")
-        
+
         if top_discussions:
             lines.append("### Top Discussions")
             for disc in top_discussions[:3]:
-                lines.append(f"- [{disc['subreddit']}] {disc['title'][:60]}... ({disc['sentiment']})")
-        
+                lines.append(
+                    f"- [{disc['subreddit']}] {disc['title'][:60]}... ({disc['sentiment']})"
+                )
+
         return "\n".join(lines)
 
 
@@ -174,16 +176,18 @@ async def run_reddit_agent_node(state: dict) -> dict:
 
     for ticker in tickers:
         result = await agent.analyze_sentiment(ticker)
-        all_results.append({
-            "ticker": result.ticker,
-            "sentiment_score": result.sentiment_score,
-            "sentiment_label": result.sentiment_label,
-            "total_mentions": result.total_mentions,
-            "bullish_ratio": result.bullish_ratio,
-            "trending_topics": result.trending_topics,
-            "top_discussions": result.top_discussions,
-            "summary": result.summary,
-        })
+        all_results.append(
+            {
+                "ticker": result.ticker,
+                "sentiment_score": result.sentiment_score,
+                "sentiment_label": result.sentiment_label,
+                "total_mentions": result.total_mentions,
+                "bullish_ratio": result.bullish_ratio,
+                "trending_topics": result.trending_topics,
+                "top_discussions": result.top_discussions,
+                "summary": result.summary,
+            }
+        )
         all_errors.extend(result.errors)
 
     return {

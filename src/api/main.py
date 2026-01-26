@@ -276,7 +276,7 @@ async def compare_stocks(request: Request, tickers: str) -> dict[str, Any]:
 @limiter.limit("10/minute")
 async def get_peer_comparison(request: Request, ticker: str) -> dict[str, Any]:
     """Get peer comparison analysis for a stock.
-    
+
     Compares the ticker with industry peers on key metrics.
     """
     from src.agents.peer_agent import PeerComparisonAgent
@@ -318,7 +318,7 @@ async def get_peer_comparison(request: Request, ticker: str) -> dict[str, Any]:
 @limiter.limit("10/minute")
 async def get_risk_assessment(request: Request, ticker: str) -> dict[str, Any]:
     """Get risk assessment from 10-K filing.
-    
+
     Analyzes risk factors and provides a risk score (1-10).
     """
     from src.agents.risk_agent import RiskScoringAgent
@@ -357,7 +357,7 @@ async def get_risk_assessment(request: Request, ticker: str) -> dict[str, Any]:
 @limiter.limit("15/minute")
 async def get_reddit_sentiment(request: Request, ticker: str) -> dict[str, Any]:
     """Get Reddit sentiment analysis for a stock.
-    
+
     Analyzes mentions from r/wallstreetbets, r/stocks, r/investing.
     """
     from src.agents.reddit_agent import RedditSentimentAgent
@@ -398,7 +398,7 @@ async def get_reddit_sentiment(request: Request, ticker: str) -> dict[str, Any]:
 @limiter.limit("10/minute")
 async def get_earnings_analysis(request: Request, ticker: str) -> dict[str, Any]:
     """Get earnings call analysis for a stock.
-    
+
     Fetches and analyzes the latest earnings call transcript.
     """
     from src.agents.earnings_agent import EarningsAgent
@@ -438,7 +438,7 @@ async def get_earnings_analysis(request: Request, ticker: str) -> dict[str, Any]
 @limiter.limit("10/minute")
 async def get_dcf_valuation(request: Request, ticker: str) -> dict[str, Any]:
     """Get DCF fair value calculation for a stock.
-    
+
     Calculates intrinsic value using discounted cash flow model.
     """
     from src.services.dcf_valuation import DCFValuationService
@@ -476,7 +476,7 @@ async def get_dcf_valuation(request: Request, ticker: str) -> dict[str, Any]:
 @limiter.limit("10/minute")
 async def get_earnings_calendar(request: Request, tickers: str | None = None) -> dict[str, Any]:
     """Get earnings calendar for watchlist and major stocks.
-    
+
     Args:
         tickers: Optional comma-separated list of tickers to track.
     """
@@ -496,7 +496,12 @@ async def get_earnings_calendar(request: Request, tickers: str | None = None) ->
                     for e in result.this_week
                 ],
                 "watchlist": [
-                    {"ticker": e.ticker, "date": e.earnings_date, "days": e.days_until, "eps_est": e.eps_estimate}
+                    {
+                        "ticker": e.ticker,
+                        "date": e.earnings_date,
+                        "days": e.days_until,
+                        "eps_est": e.eps_estimate,
+                    }
                     for e in result.watchlist_events
                 ],
                 "major": [
@@ -522,7 +527,7 @@ async def get_historical_analysis(
     period: str = "1y",
 ) -> dict[str, Any]:
     """Get historical analysis for a stock.
-    
+
     Args:
         ticker: Stock ticker symbol.
         analysis: Type of analysis (price, earnings).
@@ -598,7 +603,12 @@ async def get_user_watchlist(request: Request, user_id: str) -> dict[str, Any]:
                     for item in items
                 ],
                 "alerts": [
-                    {"id": a.id, "ticker": a.ticker, "type": a.alert_type.value, "threshold": a.threshold}
+                    {
+                        "id": a.id,
+                        "ticker": a.ticker,
+                        "type": a.alert_type.value,
+                        "threshold": a.threshold,
+                    }
                     for a in alerts
                 ],
             },
@@ -648,7 +658,7 @@ async def create_alert(
     threshold: float,
 ) -> dict[str, Any]:
     """Create a price alert."""
-    from src.services.watchlist import WatchlistService, AlertType
+    from src.services.watchlist import AlertType, WatchlistService
 
     ticker = ticker.upper()
 
@@ -657,7 +667,9 @@ async def create_alert(
         try:
             atype = AlertType(alert_type)
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid alert type: {alert_type}")
+            raise HTTPException(
+                status_code=400, detail=f"Invalid alert type: {alert_type}"
+            ) from None
 
         service = WatchlistService()
         alert = service.create_alert(user_id, ticker, atype, threshold)

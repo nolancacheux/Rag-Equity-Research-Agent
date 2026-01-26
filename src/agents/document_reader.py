@@ -44,7 +44,7 @@ class DocumentReaderAgent:
 
     def __init__(self, use_hybrid: bool = True, use_reranker: bool = True) -> None:
         """Initialize document reader agent.
-        
+
         Args:
             use_hybrid: Enable hybrid search (BM25 + dense vectors).
             use_reranker: Enable keyword reranking for improved relevance.
@@ -61,7 +61,7 @@ class DocumentReaderAgent:
         self._use_reranker = use_reranker
         self._temp_dir = Path(tempfile.gettempdir()) / "equity_research_docs"
         self._temp_dir.mkdir(exist_ok=True)
-        
+
         # Cache for hybrid search index
         self._indexed_documents: dict[str, list[str]] = {}
         self._indexed_metadata: dict[str, list[dict]] = {}

@@ -2,7 +2,6 @@
 
 import re
 from dataclasses import dataclass
-from datetime import datetime
 
 import httpx
 import structlog
@@ -40,44 +39,69 @@ class RedditSentiment:
 
 class RedditSentimentTool:
     """Analyze Reddit sentiment for stocks.
-    
+
     Uses Reddit's public JSON API (no auth needed for read-only).
     Focuses on r/wallstreetbets, r/stocks, r/investing.
     """
 
     SUBREDDITS = ["wallstreetbets", "stocks", "investing", "options", "stockmarket"]
-    
+
     # Sentiment keywords
     BULLISH_WORDS = {
-        "buy", "long", "calls", "moon", "rocket", "bullish", "undervalued",
-        "growth", "beat", "upgrade", "breakout", "squeeze", "tendies",
-        "diamond hands", "to the moon", "yolo", "all in", "loading up",
+        "buy",
+        "long",
+        "calls",
+        "moon",
+        "rocket",
+        "bullish",
+        "undervalued",
+        "growth",
+        "beat",
+        "upgrade",
+        "breakout",
+        "squeeze",
+        "tendies",
+        "diamond hands",
+        "to the moon",
+        "yolo",
+        "all in",
+        "loading up",
     }
-    
+
     BEARISH_WORDS = {
-        "sell", "short", "puts", "crash", "bearish", "overvalued",
-        "decline", "miss", "downgrade", "breakdown", "dump", "tanking",
-        "paper hands", "bag holder", "red", "loss", "bleeding",
+        "sell",
+        "short",
+        "puts",
+        "crash",
+        "bearish",
+        "overvalued",
+        "decline",
+        "miss",
+        "downgrade",
+        "breakdown",
+        "dump",
+        "tanking",
+        "paper hands",
+        "bag holder",
+        "red",
+        "loss",
+        "bleeding",
     }
 
     def __init__(self) -> None:
         """Initialize Reddit sentiment tool."""
         self.client = httpx.AsyncClient(
             timeout=15.0,
-            headers={
-                "User-Agent": "EquityResearchAgent/1.0 (Financial Research Bot)"
-            },
+            headers={"User-Agent": "EquityResearchAgent/1.0 (Financial Research Bot)"},
         )
 
-    async def analyze_sentiment(
-        self, ticker: str, limit: int = 50
-    ) -> RedditSentiment:
+    async def analyze_sentiment(self, ticker: str, limit: int = 50) -> RedditSentiment:
         """Analyze Reddit sentiment for a ticker.
-        
+
         Args:
             ticker: Stock ticker symbol.
             limit: Max posts to analyze per subreddit.
-            
+
         Returns:
             RedditSentiment with aggregated analysis.
         """
@@ -86,7 +110,9 @@ class RedditSentimentTool:
 
         # Search each subreddit
         for subreddit in self.SUBREDDITS:
-            posts = await self._search_subreddit(subreddit, ticker, limit=limit // len(self.SUBREDDITS))
+            posts = await self._search_subreddit(
+                subreddit, ticker, limit=limit // len(self.SUBREDDITS)
+            )
             all_posts.extend(posts)
 
         # Analyze sentiment
@@ -134,9 +160,11 @@ class RedditSentimentTool:
             }
 
             response = await self.client.get(url, params=params)
-            
+
             if response.status_code != 200:
-                logger.debug("reddit_search_failed", subreddit=subreddit, status=response.status_code)
+                logger.debug(
+                    "reddit_search_failed", subreddit=subreddit, status=response.status_code
+                )
                 return []
 
             data = response.json()
@@ -144,7 +172,7 @@ class RedditSentimentTool:
 
             for child in data.get("data", {}).get("children", []):
                 post_data = child.get("data", {})
-                
+
                 title = post_data.get("title", "")
                 content = post_data.get("selftext", "")
                 full_text = f"{title} {content}".lower()
@@ -174,7 +202,7 @@ class RedditSentimentTool:
     def _analyze_text_sentiment(self, text: str) -> str:
         """Analyze sentiment of text using keyword matching."""
         text_lower = text.lower()
-        
+
         bullish_score = sum(1 for word in self.BULLISH_WORDS if word in text_lower)
         bearish_score = sum(1 for word in self.BEARISH_WORDS if word in text_lower)
 
@@ -191,19 +219,81 @@ class RedditSentimentTool:
 
         # Common words to exclude
         stop_words = {
-            "the", "a", "an", "is", "are", "was", "were", "be", "been",
-            "have", "has", "had", "do", "does", "did", "will", "would",
-            "could", "should", "may", "might", "must", "and", "or", "but",
-            "if", "then", "else", "when", "where", "why", "how", "what",
-            "this", "that", "these", "those", "i", "you", "he", "she",
-            "it", "we", "they", "my", "your", "his", "her", "its", "our",
-            "their", "to", "of", "in", "for", "on", "with", "at", "by",
-            "from", "as", "into", "through", "during", "before", "after",
-            ticker.lower(), "stock", "share", "price", "market",
+            "the",
+            "a",
+            "an",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "must",
+            "and",
+            "or",
+            "but",
+            "if",
+            "then",
+            "else",
+            "when",
+            "where",
+            "why",
+            "how",
+            "what",
+            "this",
+            "that",
+            "these",
+            "those",
+            "i",
+            "you",
+            "he",
+            "she",
+            "it",
+            "we",
+            "they",
+            "my",
+            "your",
+            "his",
+            "her",
+            "its",
+            "our",
+            "their",
+            "to",
+            "of",
+            "in",
+            "for",
+            "on",
+            "with",
+            "at",
+            "by",
+            "from",
+            "as",
+            "into",
+            "through",
+            "during",
+            "before",
+            "after",
+            ticker.lower(),
+            "stock",
+            "share",
+            "price",
+            "market",
         }
 
         word_counts: Counter = Counter()
-        
+
         for post in posts:
             text = f"{post.title} {post.content}".lower()
             words = re.findall(r"\b[a-z]{3,}\b", text)
@@ -221,10 +311,10 @@ class RedditSentimentTool:
 
 async def get_reddit_sentiment(ticker: str) -> RedditSentiment:
     """Convenience function to get Reddit sentiment.
-    
+
     Args:
         ticker: Stock ticker symbol.
-        
+
     Returns:
         RedditSentiment analysis.
     """

@@ -27,7 +27,7 @@ class RankedResult:
 
 class KeywordReranker:
     """Simple keyword-based reranker (zero external dependencies).
-    
+
     Boosts results that contain query terms and financial keywords.
     """
 
@@ -51,16 +51,14 @@ class KeywordReranker:
         "acquisition": 1.1,
     }
 
-    def rerank(
-        self, query: str, results: list[dict], top_k: int = 10
-    ) -> list[RankedResult]:
+    def rerank(self, query: str, results: list[dict], top_k: int = 10) -> list[RankedResult]:
         """Rerank results based on keyword matching.
-        
+
         Args:
             query: Original search query.
             results: List of search results with 'content' and 'score' keys.
             top_k: Number of results to return.
-            
+
         Returns:
             Reranked results.
         """
@@ -110,14 +108,14 @@ class KeywordReranker:
 
 class LLMReranker:
     """LLM-based reranker using existing LLM configuration.
-    
+
     Asks the LLM to score relevance of each result.
     More accurate but slower and uses LLM tokens.
     """
 
     def __init__(self, llm=None) -> None:
         """Initialize LLM reranker.
-        
+
         Args:
             llm: LangChain LLM instance. If None, will create from settings.
         """
@@ -127,20 +125,19 @@ class LLMReranker:
         """Lazy load LLM."""
         if self._llm is None:
             from src.agents.synthesizer import SynthesizerAgent
+
             agent = SynthesizerAgent()
             self._llm = agent._llm
         return self._llm
 
-    async def rerank(
-        self, query: str, results: list[dict], top_k: int = 5
-    ) -> list[RankedResult]:
+    async def rerank(self, query: str, results: list[dict], top_k: int = 5) -> list[RankedResult]:
         """Rerank results using LLM scoring.
-        
+
         Args:
             query: Original search query.
             results: List of search results.
             top_k: Number of results to return.
-            
+
         Returns:
             Reranked results.
         """
@@ -149,7 +146,7 @@ class LLMReranker:
 
         # Process in batch for efficiency
         # Limit to top candidates to save tokens
-        candidates = results[:min(len(results), top_k * 2)]
+        candidates = results[: min(len(results), top_k * 2)]
 
         for result in candidates:
             content = result.get("content", "")[:500]  # Truncate for token efficiency
@@ -157,7 +154,7 @@ class LLMReranker:
 
             # Ask LLM to score relevance
             prompt = f"""Rate the relevance of this text to the query on a scale of 0-10.
-            
+
 Query: {query}
 
 Text: {content}
@@ -192,14 +189,14 @@ Respond with ONLY a number from 0-10."""
 
 class HybridReranker:
     """Combines multiple reranking strategies.
-    
+
     1. First pass: Keyword reranking (fast)
     2. Second pass: LLM reranking on top candidates (accurate)
     """
 
     def __init__(self, use_llm: bool = False) -> None:
         """Initialize hybrid reranker.
-        
+
         Args:
             use_llm: Whether to use LLM for second pass.
         """
@@ -207,16 +204,14 @@ class HybridReranker:
         self.llm_reranker = LLMReranker() if use_llm else None
         self.use_llm = use_llm
 
-    async def rerank(
-        self, query: str, results: list[dict], top_k: int = 10
-    ) -> list[RankedResult]:
+    async def rerank(self, query: str, results: list[dict], top_k: int = 10) -> list[RankedResult]:
         """Rerank using hybrid strategy.
-        
+
         Args:
             query: Original search query.
             results: List of search results.
             top_k: Number of results to return.
-            
+
         Returns:
             Reranked results.
         """
@@ -241,10 +236,10 @@ class HybridReranker:
 
 def create_reranker(use_llm: bool = False) -> HybridReranker:
     """Create a reranker instance.
-    
+
     Args:
         use_llm: Whether to use LLM for improved accuracy (costs tokens).
-        
+
     Returns:
         Configured reranker.
     """

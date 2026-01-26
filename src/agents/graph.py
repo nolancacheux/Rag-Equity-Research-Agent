@@ -32,7 +32,7 @@ class ResearchState(TypedDict, total=False):
     query: str
     tickers: list[str]
     document_queries: list[str]
-    
+
     # Feature flags (control which agents run)
     include_earnings: bool
     include_reddit: bool
@@ -43,7 +43,7 @@ class ResearchState(TypedDict, total=False):
     market_data: dict[str, Any] | None
     document_analysis: list[dict[str, Any]] | None
     news_analysis: list[dict[str, Any]] | None
-    
+
     # New agent outputs
     earnings_analysis: list[dict[str, Any]] | None
     reddit_sentiment: list[dict[str, Any]] | None
@@ -160,32 +160,32 @@ def route_after_documents(state: ResearchState) -> str:
 
 async def run_parallel_analysis(state: dict) -> dict:
     """Run earnings, reddit, peers, and risk analysis in parallel.
-    
+
     This node runs multiple analyses concurrently to speed up the pipeline.
     Only runs analyses that are enabled in state flags.
     """
     import asyncio
-    
+
     tasks = []
     task_names = []
-    
+
     # Check which analyses to run (default: all disabled for backwards compat)
     if state.get("include_earnings", False):
         tasks.append(run_earnings_agent_node(state))
         task_names.append("earnings")
-    
+
     if state.get("include_reddit", False):
         tasks.append(run_reddit_agent_node(state))
         task_names.append("reddit")
-    
+
     if state.get("include_peers", False):
         tasks.append(run_peer_agent_node(state))
         task_names.append("peers")
-    
+
     if state.get("include_risk", False):
         tasks.append(run_risk_agent_node(state))
         task_names.append("risk")
-    
+
     if not tasks:
         # No parallel tasks, just continue
         return {
@@ -194,10 +194,10 @@ async def run_parallel_analysis(state: dict) -> dict:
             "peer_analysis": None,
             "risk_assessment": None,
         }
-    
+
     # Run all tasks concurrently
     results = await asyncio.gather(*tasks, return_exceptions=True)
-    
+
     # Merge results
     merged = {
         "earnings_analysis": None,
@@ -206,12 +206,12 @@ async def run_parallel_analysis(state: dict) -> dict:
         "risk_assessment": None,
         "errors": state.get("errors", []),
     }
-    
-    for name, result in zip(task_names, results):
+
+    for name, result in zip(task_names, results, strict=False):
         if isinstance(result, Exception):
             merged["errors"].append(f"{name} analysis failed: {result}")
             continue
-        
+
         if name == "earnings":
             merged["earnings_analysis"] = result.get("earnings_analysis")
         elif name == "reddit":
@@ -220,9 +220,9 @@ async def run_parallel_analysis(state: dict) -> dict:
             merged["peer_analysis"] = result.get("peer_analysis")
         elif name == "risk":
             merged["risk_assessment"] = result.get("risk_assessment")
-        
+
         merged["errors"].extend(result.get("errors", []))
-    
+
     logger.info("parallel_analysis_complete", analyses=task_names)
     return merged
 
