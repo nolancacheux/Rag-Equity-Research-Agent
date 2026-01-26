@@ -19,21 +19,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          version: "latest"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Run Ruff linter
-        run: ruff check src/
+        run: uvx ruff check src/
 
       - name: Run Ruff formatter check
-        run: ruff format --check src/
+        run: uvx ruff format --check src/
 
   test:
     name: Test
@@ -42,18 +40,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          uv venv
+          uv pip install -e ".[dev]"
 
       - name: Run tests
-        run: pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
+        run: |
+          source .venv/bin/activate
+          pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
         env:
           GROQ_API_KEY: "test-key-for-ci"
 
@@ -69,16 +72,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install bandit
-        run: pip install bandit
+          version: "latest"
 
       - name: Run security scan
-        run: bandit -r src/ -ll
+        run: uvx bandit -r src/ -ll
 
   # ===========================================================================
   # Build Docker Images
