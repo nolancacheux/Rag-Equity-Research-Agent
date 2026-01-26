@@ -1,24 +1,10 @@
 # Real-Time Equity Research Agent
 
-AI-powered financial analysis agent that acts as an autonomous Quantitative Analyst, scanning real market data, SEC filings, and news to generate professional equity research reports.
+AI-powered financial analysis agent that acts as an autonomous Quantitative Analyst, scanning real market data, SEC filings, earnings calls, and social sentiment to generate professional equity research reports.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
-[![CI](https://github.com/nolancacheux/equity-research-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/nolancacheux/equity-research-agent/actions/workflows/ci.yml)
-[![Deploy](https://github.com/nolancacheux/equity-research-agent/actions/workflows/deploy.yml/badge.svg)](https://github.com/nolancacheux/equity-research-agent/actions/workflows/deploy.yml)
-
-## Live Demo
-
-**API:** https://<your-app>.azurecontainerapps.io
-
-```bash
-# Health check
-curl https://<your-app>.azurecontainerapps.io/health
-
-# Get NVIDIA quote
-curl https://<your-app>.azurecontainerapps.io/quote/NVDA
-```
 
 ## What It Does
 
@@ -27,40 +13,50 @@ Ask a question like:
 > "Analyze NVIDIA's current situation. Compare their P/E Ratio with AMD, and check their latest 10-K report for China-related risks."
 
 The agent will:
-1. **Fetch real-time market data** via Yahoo Finance (prices, P/E ratios, financials)
-2. **Download and analyze SEC 10-K reports** using RAG (finds the exact paragraph about China risks)
-3. **Search recent news** for market sentiment
-4. **Synthesize everything** into a professional research report with citations
-
-## Architecture
-
-```
-+-------------------------------------------------------------+
-|                      LangGraph Orchestrator                  |
-+-------------+-------------+-------------+-------------------+
-|  Market     |  Document   |    News     |   Synthesizer     |
-|  Data Agent |  Reader     |  Sentiment  |   Agent           |
-+-------------+-------------+-------------+-------------------+
-|  yfinance   |  SEC EDGAR  |  DuckDuckGo |   Groq / OpenAI   |
-|  (+ Cache)  |  + RAG      |  Search     |   (LLM)           |
-+-------------+-------------+-------------+-------------------+
-                              |
-              +---------------+---------------+
-              |               |               |
-         Qdrant          Redis          LangSmith
-       (Vector DB)      (Cache)       (Monitoring)
-```
+1. **Fetch real-time market data** via Yahoo Finance
+2. **Download and analyze SEC 10-K reports** using hybrid RAG
+3. **Analyze earnings call transcripts** for guidance and sentiment
+4. **Check Reddit sentiment** from WSB, stocks, investing
+5. **Compare with industry peers** automatically
+6. **Score risk factors** from 10-K (1-10 scale)
+7. **Calculate fair value** using DCF model
+8. **Synthesize everything** into a professional research report
 
 ## Features
+
+### Core Analysis
+| Feature | Description |
+|---------|-------------|
+| **📊 Deep Analysis** | Multi-source research with SEC filings, news, earnings calls |
+| **💹 Real-time Quotes** | Live prices, P/E, market cap, volume |
+| **📈 Stock Comparison** | Side-by-side metrics comparison |
+
+### Advanced Tools
+| Tool | Command | Description |
+|------|---------|-------------|
+| **💰 DCF Valuation** | `/dcf NVDA` | Calculate fair value using discounted cash flow |
+| **⚠️ Risk Score** | `/risk NVDA` | 10-K risk analysis with score 1-10 |
+| **👥 Peer Comparison** | `/peers NVDA` | Compare vs industry competitors |
+| **🔴 Reddit Sentiment** | `/reddit NVDA` | WSB/stocks/investing sentiment |
+| **📅 Earnings Calendar** | `/calendar` | Upcoming earnings dates |
+| **📜 Historical Analysis** | `/history NVDA` | Price history & earnings reactions |
+
+### Watchlist & Alerts
+| Feature | Command | Description |
+|---------|---------|-------------|
+| **📋 Watchlist** | `/watchlist` | Track your favorite stocks |
+| **➕ Add Stock** | `/watchlist add NVDA` | Add to watchlist |
+| **🔔 Price Alert** | `/alert NVDA above 150` | Get notified when price crosses threshold |
+| **📊 P/E Alert** | `/alert AAPL pe_above 30` | Alert on valuation metrics |
 
 ### Data Sources (All Free)
 | Source | Description |
 |--------|-------------|
-| **Real Market Data** | Live prices, financials, ratios via yfinance |
-| **SEC 10-K Analysis** | Automatic download and RAG search on annual reports |
-| **Earnings Call Transcripts** | Fetch from Motley Fool + search aggregation |
-| **Reddit Sentiment** | r/wallstreetbets, r/stocks sentiment analysis |
-| **News Search** | Real-time news via DuckDuckGo |
+| **Yahoo Finance** | Real-time prices, financials, ratios, history |
+| **SEC EDGAR** | 10-K annual reports with RAG search |
+| **Earnings Calls** | Transcripts from Motley Fool + aggregators |
+| **Reddit** | r/wallstreetbets, r/stocks, r/investing |
+| **DuckDuckGo** | Real-time financial news |
 
 ### Advanced RAG
 | Feature | Description |
@@ -69,20 +65,136 @@ The agent will:
 | **Reranking** | Keyword boost + optional LLM reranking |
 | **Multi-source** | Query across SEC filings, earnings calls, news |
 
-### Analysis Tools
-| Tool | Description |
-|------|-------------|
-| **Peer Comparison** | Auto-compare with industry peers (P/E percentile) |
-| **Risk Scoring** | 1-10 risk score from 10-K analysis (7 categories) |
-| **Watchlist & Alerts** | Track stocks, set price/P/E alerts |
+## Architecture
 
-### Infrastructure
-| Feature | Description |
-|---------|-------------|
-| **Zero-Cost LLM** | Groq free tier (Llama 3.3 70B) |
-| **Prometheus Metrics** | /metrics endpoint for monitoring |
-| **API Authentication** | X-API-Key header protection |
-| **Production-Ready** | Rate limiting, caching, security hardening |
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    LangGraph Orchestrator                        │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        ▼                   ▼                   ▼
+┌───────────────┐   ┌───────────────┐   ┌───────────────┐
+│  Market Data  │   │   Multi-RAG   │   │   Parallel    │
+│    Agent      │   │    Router     │   │   Analysis    │
+└───────────────┘   └───────┬───────┘   └───────┬───────┘
+                            │                   │
+        ┌───────────────────┼───────┐   ┌───────┼───────┐
+        ▼                   ▼       ▼   ▼       ▼       ▼
+┌─────────────┐     ┌─────────────┐   ┌─────────────┐
+│ SEC Filings │     │  Earnings   │   │   Reddit    │
+│   + RAG     │     │    Calls    │   │  Sentiment  │
+└─────────────┘     └─────────────┘   └─────────────┘
+        │                   │               │
+        └───────────────────┼───────────────┘
+                            ▼
+                    ┌───────────────┐
+                    │  Synthesizer  │
+                    │    Agent      │
+                    └───────────────┘
+```
+
+## Quick Start
+
+### 1. Clone and Setup
+
+```bash
+git clone https://github.com/nolancacheux/equity-research-agent.git
+cd equity-research-agent
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 2. Configure Environment
+
+```bash
+cp .env.example .env
+# Edit .env with your API keys
+```
+
+Required:
+- `GROQ_API_KEY` - Free at [console.groq.com](https://console.groq.com) (recommended)
+- OR `AZURE_OPENAI_*` / `OPENAI_API_KEY`
+
+Optional:
+- `QDRANT_URL` - Vector database (default: localhost:6333)
+- `REDIS_URL` - Cache (default: localhost:6379)
+- `LANGCHAIN_API_KEY` - LangSmith monitoring
+
+### 3. Run with Docker
+
+```bash
+docker-compose up -d
+```
+
+### 4. Or Run Locally
+
+```bash
+# Start dependencies
+docker-compose up -d qdrant redis
+
+# Run API
+uvicorn src.api.main:app --reload
+
+# Run Telegram bot (separate terminal)
+python -m src.telegram.bot
+```
+
+## API Endpoints
+
+### Core
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/quote/{ticker}` | GET | Stock quote |
+| `/compare/{tickers}` | GET | Compare stocks |
+| `/analyze` | POST | Full research analysis |
+
+### Advanced Tools
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/dcf/{ticker}` | GET | DCF fair value |
+| `/risk/{ticker}` | GET | Risk score from 10-K |
+| `/peers/{ticker}` | GET | Peer comparison |
+| `/reddit/{ticker}` | GET | Reddit sentiment |
+| `/earnings/{ticker}` | GET | Earnings call analysis |
+| `/calendar` | GET | Earnings calendar |
+| `/history/{ticker}` | GET | Historical analysis |
+
+### Watchlist
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/watchlist/{user_id}` | GET | Get watchlist |
+| `/watchlist/{user_id}/add` | POST | Add to watchlist |
+| `/watchlist/{user_id}/alert` | POST | Create alert |
+
+## Telegram Bot Commands
+
+### Core Commands
+- `/start` - Welcome & language selection
+- `/menu` - Main menu with buttons
+- `/help` - Feature overview
+- `/analyze <query>` - Deep analysis
+- `/quote <ticker>` or `/q` - Quick quote
+- `/compare <tickers>` or `/c` - Compare stocks
+
+### Tool Commands
+- `/dcf <ticker>` - DCF valuation
+- `/risk <ticker>` - Risk score
+- `/peers <ticker>` - Peer comparison
+- `/reddit <ticker>` or `/wsb` - Reddit sentiment
+- `/calendar` or `/earnings` - Earnings calendar
+- `/history <ticker>` - Price history
+- `/history <ticker> earnings` - Earnings reactions
+
+### Watchlist Commands
+- `/watchlist` or `/wl` - View watchlist
+- `/watchlist add <ticker>` - Add stock
+- `/watchlist remove <ticker>` - Remove stock
+- `/alert <ticker> above <price>` - Price alert
+- `/alert <ticker> below <price>` - Price alert
+- `/alert <ticker> pe_above <value>` - P/E alert
 
 ## Tech Stack
 
@@ -90,304 +202,72 @@ The agent will:
 |----------|--------------|
 | **LLM** | Groq (free), Azure OpenAI, OpenAI |
 | **Orchestration** | LangGraph, LangChain |
-| **Data Sources** | yfinance, SEC EDGAR, DuckDuckGo |
-| **RAG** | Qdrant, Azure OpenAI Embeddings |
+| **Data** | yfinance, SEC EDGAR, Reddit API |
+| **RAG** | Qdrant, Hybrid Search (BM25 + dense) |
 | **API** | FastAPI, Pydantic |
+| **Bot** | python-telegram-bot |
 | **Cache** | Redis |
-| **Infrastructure** | Docker, Azure Container Apps |
+| **Infra** | Docker, Azure Container Apps |
 | **CI/CD** | GitHub Actions |
-| **Monitoring** | LangSmith, structlog |
-
-## Quick Start
-
-### Option A: Local Development (Recommended to start)
-
-**Prerequisites:** Python 3.11+, Docker, Docker Compose
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/nolancacheux/equity-research-agent.git
-cd equity-research-agent
-
-# 2. Configure environment
-cp .env.example .env
-# Edit .env - add at least one LLM provider:
-#   GROQ_API_KEY=gsk_...        (FREE - recommended)
-#   or OPENAI_API_KEY=sk-...    (paid)
-
-# 3. Start all services (API + Qdrant + Redis)
-docker compose up -d
-
-# 4. Verify it works
-curl http://localhost:8000/health
-curl http://localhost:8000/quote/NVDA
-```
-
-**Add Telegram bot (optional):**
-```bash
-# Add to .env:
-TELEGRAM_BOT_TOKEN=your_token_from_botfather
-
-# Start the bot
-python run_telegram_bot.py
-```
-
-### Option B: Deploy to Azure
-
-**Prerequisites:** Azure CLI, Terraform 1.5+, Azure subscription
-
-```bash
-# 1. Login to Azure
-az login
-
-# 2. Create Terraform state backend (one-time)
-az group create -n terraform-state-rg -l swedencentral
-az storage account create -n tfstateequityresearch -g terraform-state-rg -l swedencentral --sku Standard_LRS
-az storage container create -n tfstate --account-name tfstateequityresearch
-
-# 3. Configure secrets
-cp terraform/terraform.tfvars.example terraform/terraform.tfvars
-# Edit terraform.tfvars with your TELEGRAM_BOT_TOKEN
-
-# 4. Deploy infrastructure + containers
-./scripts/deploy.sh full
-
-# Your API will be available at: https://<app-name>.azurecontainerapps.io
-```
-
-See [docs/ci-cd-setup.md](docs/ci-cd-setup.md) for CI/CD automation setup.
-
-### Configuration
-
-Edit `.env` with your credentials:
-
-```bash
-# LLM Provider (choose one)
-GROQ_API_KEY=gsk_...                      # FREE tier - recommended for dev
-OPENAI_API_KEY=sk-...                     # Paid
-AZURE_OPENAI_ENDPOINT=https://...         # Enterprise
-
-# Telegram Bot (optional)
-TELEGRAM_BOT_TOKEN=123456789:ABC...
-```
-
-### API Authentication (Production)
-
-For production deployments, secure your API with an API key:
-
-```bash
-# 1. Generate a secret key
-openssl rand -hex 32
-# Output: 1e6cbdd9414027a8c9d0ef3c98296d85a885ed7b8db79e7827ff555f552fc117
-
-# 2. Add to your .env file
-API_SECRET_KEY=your-generated-key-here
-
-# 3. All API calls now require the X-API-Key header
-curl -H "X-API-Key: your-key" https://your-api.azurecontainerapps.io/quote/NVDA
-```
-
-**Important:** If `API_SECRET_KEY` is set:
-- `/analyze`, `/quote`, `/compare` require `X-API-Key` header
-- `/health` remains public (for monitoring)
-- The Telegram bot automatically sends the key if `API_SECRET_KEY` is configured
-
-**Azure deployment:** Add the secret to both Container Apps:
-```bash
-# API
-az containerapp secret set --name your-api --resource-group your-rg --secrets api-secret-key="your-key"
-az containerapp update --name your-api --resource-group your-rg --set-env-vars "API_SECRET_KEY=secretref:api-secret-key"
-
-# Telegram Bot
-az containerapp secret set --name your-bot --resource-group your-rg --secrets api-secret-key="your-key"
-az containerapp update --name your-bot --resource-group your-rg --set-env-vars "API_SECRET_KEY=secretref:api-secret-key"
-```
-
-## Telegram Bot
-
-Interact with the agent directly from Telegram!
-
-### Setup
-
-1. Create a bot with [@BotFather](https://t.me/BotFather) on Telegram
-2. Copy the bot token to your `.env`:
-   ```bash
-   TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
-   API_BASE_URL=http://localhost:8000
-   ```
-3. Start the API (if not running):
-   ```bash
-   docker compose up -d
-   ```
-4. Run the bot:
-   ```bash
-   python run_telegram_bot.py
-   ```
-
-### Commands
-
-| Command | Description | Example |
-|---------|-------------|---------|
-| `/quote <TICKER>` | Get real-time stock quote | `/quote NVDA` |
-| `/compare <T1,T2,...>` | Compare multiple stocks | `/compare NVDA,AMD,INTC` |
-| `/analyze <query>` | Run full AI analysis | `/analyze Analyze NVIDIA vs AMD` |
-| `/help` | Show available commands | `/help` |
-
-Short aliases: `/q` (quote), `/c` (compare), `/a` (analyze)
-
-## API Endpoints
-
-| Endpoint | Method | Auth | Description |
-|----------|--------|------|-------------|
-| `/health` | GET | No | Health check |
-| `/metrics` | GET | No | Prometheus metrics |
-| `/analyze` | POST | Yes | Run full research analysis |
-| `/quote/{ticker}` | GET | Yes | Get real-time stock quote |
-| `/compare/{tickers}` | GET | Yes | Compare P/E ratios (comma-separated) |
-
-## Monitoring
-
-### Prometheus Metrics
-
-The `/metrics` endpoint exposes Prometheus-format metrics:
-
-```bash
-curl http://localhost:8000/metrics
-```
-
-**Available metrics:**
-| Metric | Type | Description |
-|--------|------|-------------|
-| `http_requests_total` | Counter | Total requests by method/endpoint/status |
-| `http_request_duration_seconds` | Histogram | Request latency |
-| `analysis_requests_total` | Counter | Analysis requests by status |
-| `analysis_duration_seconds` | Histogram | Analysis duration |
-| `quote_requests_total` | Counter | Quote requests by ticker/status |
-| `errors_total` | Counter | Errors by type/endpoint |
-
-**Grafana Cloud (free):** Import metrics from your Azure Container App URL.
-
-### Example: Full Analysis
-
-```bash
-curl -X POST http://localhost:8000/analyze \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "Analyze NVDA vs AMD. Check NVIDIA 10-K for China supply chain risks.",
-    "tickers": ["NVDA", "AMD"]
-  }'
-```
-
-### Example: Quick Quote
-
-```bash
-curl http://localhost:8000/quote/NVDA
-```
-
-### Example: Compare Stocks
-
-```bash
-curl http://localhost:8000/compare/NVDA,AMD,INTC
-```
 
 ## Project Structure
 
 ```
-equity-research-agent/
-├── src/
-│   ├── agents/          # LangGraph agents
-│   │   ├── graph.py     # Orchestration
-│   │   ├── market_data.py
-│   │   ├── document_reader.py
-│   │   ├── news_sentiment.py
-│   │   └── synthesizer.py
-│   ├── api/             # FastAPI application
-│   ├── config/          # Pydantic settings
-│   ├── rag/             # Vector store and embeddings
-│   ├── telegram/        # Telegram bot
-│   │   ├── bot.py       # Entry point
-│   │   ├── handlers.py  # Command handlers
-│   │   ├── client.py    # API client
-│   │   └── formatters.py
-│   ├── tools/           # Data integrations
-│   └── utils/           # Cache, rate limiting
-├── tests/               # Unit tests (89% coverage)
-├── docs/                # Technical documentation
-├── terraform/           # Azure infrastructure as code
-├── scripts/             # Deployment scripts
-├── docker-compose.yml   # Local development (API + Bot)
-├── Dockerfile.api       # API container
-├── Dockerfile.bot       # Telegram bot container
-└── pyproject.toml
+src/
+├── agents/              # LangGraph agents
+│   ├── graph.py         # Main orchestration
+│   ├── market_data.py   # Yahoo Finance agent
+│   ├── document_reader.py # SEC RAG agent
+│   ├── news_sentiment.py # News agent
+│   ├── earnings_agent.py # Earnings calls
+│   ├── reddit_agent.py  # Reddit sentiment
+│   ├── peer_agent.py    # Peer comparison
+│   ├── risk_agent.py    # Risk scoring
+│   └── synthesizer.py   # Report generation
+├── services/            # Business logic
+│   ├── watchlist.py     # Watchlist & alerts
+│   ├── dcf_valuation.py # DCF calculator
+│   ├── earnings_calendar.py # Calendar
+│   ├── historical_analysis.py # History
+│   ├── peer_comparison.py # Peers
+│   └── risk_scoring.py  # Risk scoring
+├── tools/               # Data fetchers
+│   ├── yfinance_tool.py
+│   ├── sec_edgar_tool.py
+│   ├── earnings_call_tool.py
+│   └── reddit_sentiment_tool.py
+├── rag/                 # RAG components
+│   ├── hybrid_search.py # BM25 + dense
+│   ├── reranker.py      # Result reranking
+│   ├── vector_store.py  # Qdrant
+│   └── embeddings.py
+├── api/                 # FastAPI backend
+│   └── main.py
+└── telegram/            # Telegram bot
+    ├── bot.py
+    ├── handlers.py
+    ├── handlers_v2.py   # New features
+    ├── keyboards.py     # Inline buttons
+    └── i18n.py          # Translations
 ```
 
-## Testing
+## Cost
 
-```bash
-# Install dev dependencies
-pip install -e ".[dev]"
-
-# Run tests with coverage
-pytest --cov=src
-
-# Lint
-ruff check src/
-
-# Type check
-mypy src/
-```
-
-## Deployment
-
-### Local Only
-```bash
-docker compose up -d          # Start everything
-docker compose logs -f api    # View API logs
-docker compose down           # Stop
-```
-
-### Azure (Manual)
-```bash
-./scripts/deploy.sh full      # One-command deploy
-```
-
-### CI/CD Pipeline
-
-The GitHub Actions workflow runs automatically on push/PR:
-- **Lint** → Ruff linter and formatter
-- **Test** → Pytest with 89% coverage
-- **Security** → Bandit security scan
-- **Build** → Docker images (API + Bot)
-- **Terraform** → Validate infrastructure code
-
-Deployment to Azure is **manual** via `./scripts/deploy.sh`. See [docs/ci-cd-setup.md](docs/ci-cd-setup.md) to enable auto-deploy.
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [docs/ci-cd-setup.md](docs/ci-cd-setup.md) | CI/CD pipeline with Terraform |
-| [docs/telegram-bot.md](docs/telegram-bot.md) | Telegram bot setup & commands |
-| [docs/azure-deployment.md](docs/azure-deployment.md) | Azure setup guide |
-| [docs/langgraph-orchestration.md](docs/langgraph-orchestration.md) | Agent workflow |
-| [docs/qdrant-vector-database.md](docs/qdrant-vector-database.md) | RAG setup |
-| [docs/embeddings-rag.md](docs/embeddings-rag.md) | Embeddings pipeline |
-
-## Security
-
-- Rate limiting (10 req/min for analysis, 30/min for quotes)
-- Input validation with Pydantic
-- No credentials in code (env-based config)
-- Error masking in production
-- CORS restricted in production
+**$0/month** with:
+- Groq free tier (Llama 3.3 70B)
+- Local Qdrant (or free cloud tier)
+- Local Redis
+- Yahoo Finance (free)
+- SEC EDGAR (free)
+- Reddit public API (free)
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License - see [LICENSE](LICENSE)
 
-## Author
+## Contributing
 
-**Nolan Cacheux** - AI/ML Engineer
-
-- GitHub: [@nolancacheux](https://github.com/nolancacheux)
-- LinkedIn: [nolancacheux](https://linkedin.com/in/nolancacheux)
+PRs welcome! Please:
+1. Follow existing code style (ruff)
+2. Add tests for new features
+3. Update documentation
