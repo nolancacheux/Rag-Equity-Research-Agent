@@ -98,6 +98,13 @@ async def menu_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
 
     lang = get_user_lang(update.effective_user.id)
+    await show_main_menu(update, lang)
+
+
+async def show_main_menu(update: Update, lang: Language) -> None:
+    """Show the main menu with welcome message."""
+    if not update.message:
+        return
     await update.message.reply_text(
         get_text("welcome", lang),
         reply_markup=main_menu_keyboard(lang),
@@ -344,8 +351,35 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         "IS",
         "TO",
         "OF",
+        # Greetings and common phrases
+        "HI",
+        "HELLO",
+        "HEY",
+        "SALUT",
+        "BONJOUR",
+        "COUCOU",
+        "BYE",
+        "MERCI",
+        "THANKS",
+        "HELP",
+        "MENU",
+        "START",
+        "OK",
+        "YES",
+        "NO",
+        "OUI",
+        "NON",
+        "QUOI",
+        "WHAT",
+        "TEST",
     }
     tickers = [t for t in tickers if t not in common_words]
+
+    # Handle greetings and help requests - redirect to menu
+    greetings = {"hi", "hello", "hey", "salut", "bonjour", "coucou", "help", "menu", "start", "aide"}
+    if text_lower.strip() in greetings or not tickers:
+        await show_main_menu(update, lang)
+        return
 
     # Check for analyze intent
     analyze_keywords = [
