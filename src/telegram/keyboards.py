@@ -1,7 +1,8 @@
 """Inline keyboards for Telegram bot."""
 
-from src.telegram.i18n import Language, get_text
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+from src.telegram.i18n import Language, get_text
 
 
 # Callback data constants

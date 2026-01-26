@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 
+from telegram import Update
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -36,7 +37,6 @@ from src.telegram.handlers_v2 import (
     set_api_client_v2,
     watchlist_command,
 )
-from telegram import Update
 
 # Configure logging
 logging.basicConfig(
