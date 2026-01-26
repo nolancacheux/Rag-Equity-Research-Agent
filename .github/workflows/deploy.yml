@@ -1,9 +1,17 @@
 name: Build and Deploy
 
 on:
-  push:
-    branches: [main]
+  # Manual trigger only - configure Azure secrets before running
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
 
 env:
   RESOURCE_GROUP: equity-research-rg
