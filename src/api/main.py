@@ -434,6 +434,251 @@ async def get_earnings_analysis(request: Request, ticker: str) -> dict[str, Any]
         raise HTTPException(status_code=500, detail=detail) from None
 
 
+@app.get("/dcf/{ticker}", dependencies=[Depends(verify_api_key)])
+@limiter.limit("10/minute")
+async def get_dcf_valuation(request: Request, ticker: str) -> dict[str, Any]:
+    """Get DCF fair value calculation for a stock.
+    
+    Calculates intrinsic value using discounted cash flow model.
+    """
+    from src.services.dcf_valuation import DCFValuationService
+
+    ticker = ticker.upper()
+    if not ticker.isalpha() or len(ticker) > 5:
+        raise HTTPException(status_code=400, detail="Invalid ticker format")
+
+    try:
+        service = DCFValuationService()
+        result = service.calculate_dcf(ticker)
+
+        REQUESTS_TOTAL.labels(method="GET", endpoint="/dcf", status="200").inc()
+        return {
+            "success": True,
+            "data": {
+                "ticker": result.ticker,
+                "current_price": result.current_price,
+                "fair_value": result.fair_value,
+                "upside_percent": result.upside_percent,
+                "fcf_current": result.fcf_current,
+                "growth_rate": result.growth_rate,
+                "discount_rate": result.discount_rate,
+                "summary": result.summary,
+            },
+        }
+
+    except Exception as e:
+        logger.error("dcf_valuation_failed", ticker=ticker, error=str(e))
+        ERRORS_TOTAL.labels(type="dcf", endpoint="/dcf").inc()
+        raise HTTPException(status_code=500, detail=str(e)) from None
+
+
+@app.get("/calendar", dependencies=[Depends(verify_api_key)])
+@limiter.limit("10/minute")
+async def get_earnings_calendar(request: Request, tickers: str | None = None) -> dict[str, Any]:
+    """Get earnings calendar for watchlist and major stocks.
+    
+    Args:
+        tickers: Optional comma-separated list of tickers to track.
+    """
+    from src.services.earnings_calendar import EarningsCalendarService
+
+    try:
+        watchlist = tickers.split(",") if tickers else None
+        service = EarningsCalendarService()
+        result = service.get_calendar(watchlist)
+
+        REQUESTS_TOTAL.labels(method="GET", endpoint="/calendar", status="200").inc()
+        return {
+            "success": True,
+            "data": {
+                "this_week": [
+                    {"ticker": e.ticker, "date": e.earnings_date, "days": e.days_until}
+                    for e in result.this_week
+                ],
+                "watchlist": [
+                    {"ticker": e.ticker, "date": e.earnings_date, "days": e.days_until, "eps_est": e.eps_estimate}
+                    for e in result.watchlist_events
+                ],
+                "major": [
+                    {"ticker": e.ticker, "date": e.earnings_date, "days": e.days_until}
+                    for e in result.upcoming_major
+                ],
+                "summary": result.summary,
+            },
+        }
+
+    except Exception as e:
+        logger.error("earnings_calendar_failed", error=str(e))
+        ERRORS_TOTAL.labels(type="calendar", endpoint="/calendar").inc()
+        raise HTTPException(status_code=500, detail=str(e)) from None
+
+
+@app.get("/history/{ticker}", dependencies=[Depends(verify_api_key)])
+@limiter.limit("20/minute")
+async def get_historical_analysis(
+    request: Request,
+    ticker: str,
+    analysis: str = "price",
+    period: str = "1y",
+) -> dict[str, Any]:
+    """Get historical analysis for a stock.
+    
+    Args:
+        ticker: Stock ticker symbol.
+        analysis: Type of analysis (price, earnings).
+        period: Period for price history (1mo, 3mo, 6mo, 1y, 2y).
+    """
+    from src.services.historical_analysis import HistoricalAnalysisService
+
+    ticker = ticker.upper()
+    if not ticker.isalpha() or len(ticker) > 5:
+        raise HTTPException(status_code=400, detail="Invalid ticker format")
+
+    try:
+        service = HistoricalAnalysisService()
+
+        if analysis == "earnings":
+            result = service.get_earnings_reactions(ticker)
+            REQUESTS_TOTAL.labels(method="GET", endpoint="/history", status="200").inc()
+            return {
+                "success": True,
+                "type": "earnings_reactions",
+                "data": {
+                    "ticker": result.ticker,
+                    "avg_move": result.avg_earnings_move,
+                    "beat_rate": result.beat_rate,
+                    "avg_gap": result.avg_gap,
+                    "reactions": [
+                        {"quarter": r.quarter, "change": r.change_percent}
+                        for r in result.recent_reactions
+                    ],
+                    "summary": result.summary,
+                },
+            }
+        else:
+            result = service.get_price_history(ticker, period)
+            REQUESTS_TOTAL.labels(method="GET", endpoint="/history", status="200").inc()
+            return {
+                "success": True,
+                "type": "price_history",
+                "data": {
+                    "ticker": result.ticker,
+                    "period": result.period,
+                    "total_return": result.total_return,
+                    "volatility": result.volatility,
+                    "high": result.high,
+                    "low": result.low,
+                    "summary": result.summary,
+                },
+            }
+
+    except Exception as e:
+        logger.error("historical_analysis_failed", ticker=ticker, error=str(e))
+        ERRORS_TOTAL.labels(type="history", endpoint="/history").inc()
+        raise HTTPException(status_code=500, detail=str(e)) from None
+
+
+@app.get("/watchlist/{user_id}", dependencies=[Depends(verify_api_key)])
+@limiter.limit("30/minute")
+async def get_user_watchlist(request: Request, user_id: str) -> dict[str, Any]:
+    """Get user's watchlist."""
+    from src.services.watchlist import WatchlistService
+
+    try:
+        service = WatchlistService()
+        items = service.get_watchlist(user_id)
+        alerts = service.get_user_alerts(user_id)
+
+        return {
+            "success": True,
+            "data": {
+                "tickers": [item.ticker for item in items],
+                "items": [
+                    {"ticker": item.ticker, "added": item.added_at, "notes": item.notes}
+                    for item in items
+                ],
+                "alerts": [
+                    {"id": a.id, "ticker": a.ticker, "type": a.alert_type.value, "threshold": a.threshold}
+                    for a in alerts
+                ],
+            },
+        }
+
+    except Exception as e:
+        logger.error("watchlist_fetch_failed", user_id=user_id, error=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from None
+
+
+@app.post("/watchlist/{user_id}/add", dependencies=[Depends(verify_api_key)])
+@limiter.limit("30/minute")
+async def add_to_watchlist(
+    request: Request,
+    user_id: str,
+    ticker: str,
+    notes: str | None = None,
+) -> dict[str, Any]:
+    """Add a ticker to user's watchlist."""
+    from src.services.watchlist import WatchlistService
+
+    ticker = ticker.upper()
+    if not ticker.isalpha() or len(ticker) > 5:
+        raise HTTPException(status_code=400, detail="Invalid ticker format")
+
+    try:
+        service = WatchlistService()
+        item = service.add_to_watchlist(user_id, ticker, notes)
+
+        return {
+            "success": True,
+            "data": {"ticker": item.ticker, "added": item.added_at},
+        }
+
+    except Exception as e:
+        logger.error("watchlist_add_failed", user_id=user_id, ticker=ticker, error=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from None
+
+
+@app.post("/watchlist/{user_id}/alert", dependencies=[Depends(verify_api_key)])
+@limiter.limit("20/minute")
+async def create_alert(
+    request: Request,
+    user_id: str,
+    ticker: str,
+    alert_type: str,
+    threshold: float,
+) -> dict[str, Any]:
+    """Create a price alert."""
+    from src.services.watchlist import WatchlistService, AlertType
+
+    ticker = ticker.upper()
+
+    try:
+        # Parse alert type
+        try:
+            atype = AlertType(alert_type)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid alert type: {alert_type}")
+
+        service = WatchlistService()
+        alert = service.create_alert(user_id, ticker, atype, threshold)
+
+        return {
+            "success": True,
+            "data": {
+                "id": alert.id,
+                "ticker": alert.ticker,
+                "type": alert.alert_type.value,
+                "threshold": alert.threshold,
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("alert_create_failed", user_id=user_id, ticker=ticker, error=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from None
+
+
 if __name__ == "__main__":  # pragma: no cover
     import uvicorn
 
