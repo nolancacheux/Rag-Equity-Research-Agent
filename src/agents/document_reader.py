@@ -1,4 +1,7 @@
-"""Document Reader Agent for SEC filing analysis with RAG."""
+"""Document Reader Agent for SEC filing analysis with RAG.
+
+Enhanced with hybrid search (BM25 + dense) and reranking.
+"""
 
 import tempfile
 from dataclasses import dataclass
@@ -8,6 +11,8 @@ from typing import Any
 import structlog
 
 from src.rag import DocumentChunker, QdrantStore
+from src.rag.hybrid_search import HybridSearcher
+from src.rag.reranker import KeywordReranker
 from src.tools import SECEdgarTool
 
 logger = structlog.get_logger()
@@ -32,20 +37,34 @@ class DocumentReaderAgent:
     Responsibilities:
     - Download 10-K reports from SEC EDGAR
     - Chunk documents for RAG
-    - Index in vector store
+    - Index in vector store (with BM25 hybrid search)
     - Search for relevant passages
+    - Rerank results for improved relevance
     """
 
-    def __init__(self) -> None:
-        """Initialize document reader agent."""
+    def __init__(self, use_hybrid: bool = True, use_reranker: bool = True) -> None:
+        """Initialize document reader agent.
+        
+        Args:
+            use_hybrid: Enable hybrid search (BM25 + dense vectors).
+            use_reranker: Enable keyword reranking for improved relevance.
+        """
         self._sec_tool = SECEdgarTool()
         self._chunker = DocumentChunker(
             chunk_size=1500,  # Larger chunks for financial docs
             chunk_overlap=300,
         )
         self._vector_store = QdrantStore()
+        self._hybrid_searcher = HybridSearcher(alpha=0.6) if use_hybrid else None
+        self._reranker = KeywordReranker() if use_reranker else None
+        self._use_hybrid = use_hybrid
+        self._use_reranker = use_reranker
         self._temp_dir = Path(tempfile.gettempdir()) / "equity_research_docs"
         self._temp_dir.mkdir(exist_ok=True)
+        
+        # Cache for hybrid search index
+        self._indexed_documents: dict[str, list[str]] = {}
+        self._indexed_metadata: dict[str, list[dict]] = {}
 
     def _extract_text_from_html(self, file_path: Path) -> str:
         """Extract text from SEC HTML filing."""
@@ -149,7 +168,7 @@ class DocumentReaderAgent:
         top_k: int = 5,
         auto_index: bool = True,
     ) -> DocumentSearchResult:
-        """Search within a SEC filing.
+        """Search within a SEC filing using hybrid search + reranking.
 
         Args:
             ticker: Stock ticker symbol
@@ -164,12 +183,15 @@ class DocumentReaderAgent:
         ticker = ticker.upper()
         errors = []
 
+        # Get more results initially for reranking
+        fetch_k = top_k * 3 if self._use_reranker else top_k
+
         # Try to search first
         results = self._vector_store.search_sec_filing(
             query=query,
             ticker=ticker,
             form_type=form_type,
-            top_k=top_k,
+            top_k=fetch_k,
         )
 
         # If no results and auto_index is enabled, try indexing
@@ -182,10 +204,28 @@ class DocumentReaderAgent:
                     query=query,
                     ticker=ticker,
                     form_type=form_type,
-                    top_k=top_k,
+                    top_k=fetch_k,
                 )
             else:
                 errors.append(f"Failed to index {form_type} for {ticker}")
+
+        # Apply reranking if enabled
+        if results and self._use_reranker and self._reranker:
+            logger.info("applying_reranker", ticker=ticker, query=query, initial_count=len(results))
+            reranked = self._reranker.rerank(query, results, top_k=top_k)
+            results = [
+                {
+                    "content": r.content,
+                    "score": r.final_score,
+                    "metadata": r.metadata,
+                    "rerank_boost": r.rerank_score,
+                }
+                for r in reranked
+            ]
+            logger.info("reranking_complete", final_count=len(results))
+        else:
+            # Just trim to top_k
+            results = results[:top_k]
 
         # Get filing date from results metadata
         filing_date = None
