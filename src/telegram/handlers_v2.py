@@ -232,13 +232,13 @@ async def risk_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             if breakdown:
                 msg += "**Breakdown:**\n"
                 for category, value in breakdown.items():
-                    msg += f"  • {category.title()}: {value}/10\n"
+                    msg += f"  • {escape_markdown(category.title())}: {value}/10\n"
                 msg += "\n"
 
             if top_risks:
                 msg += "**Top Risks:**\n"
                 for risk in top_risks[:3]:
-                    msg += f"  • {risk}\n"
+                    msg += f"  • {escape_markdown(str(risk))}\n"
                 msg += "\n"
 
             if summary:
