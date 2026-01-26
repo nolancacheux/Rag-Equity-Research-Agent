@@ -5,11 +5,11 @@
 The project uses Docker Compose to orchestrate multiple services:
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│     API     │────▶│   Qdrant    │     │    Redis    │     │ Telegram    │
-│  (FastAPI)  │     │  (Vectors)  │     │   (Cache)   │     │    Bot      │
-│   :8000     │     │ :6333/:6334 │     │    :6379    │     │  (polling)  │
-└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│     API     │────▶│   Qdrant    │     │ Telegram    │
+│  (FastAPI)  │     │  (Vectors)  │     │    Bot      │
+│   :8000     │     │ :6333/:6334 │     │  (polling)  │
+└─────────────┘     └─────────────┘     └─────────────┘
 ```
 
 ## Services
@@ -28,11 +28,9 @@ api:
   environment:
     - GROQ_API_KEY=${GROQ_API_KEY}
     - QDRANT_URL=http://qdrant:6333
-    - REDIS_URL=redis://redis:6379
     - API_SECRET_KEY=${API_SECRET_KEY}
   depends_on:
     - qdrant
-    - redis
 ```
 
 ### telegram-bot
@@ -64,20 +62,6 @@ qdrant:
     - "6334:6334"  # gRPC
   volumes:
     - qdrant_data:/qdrant/storage
-```
-
-### redis (Cache)
-
-Cache for API responses.
-
-```yaml
-redis:
-  image: redis:7-alpine
-  ports:
-    - "6379:6379"
-  volumes:
-    - redis_data:/data
-  command: redis-server --appendonly yes
 ```
 
 ## Commands
@@ -158,16 +142,12 @@ CMD ["python", "-m", "src.telegram.bot"]
 | Volume | Service | Contents |
 |--------|---------|----------|
 | `qdrant_data` | qdrant | Vector collections |
-| `redis_data` | redis | Persisted cache (AOF) |
 
 ### Backup Data
 
 ```bash
 # Qdrant
 docker cp equity-research-agent-qdrant-1:/qdrant/storage ./backup/qdrant
-
-# Redis
-docker cp equity-research-agent-redis-1:/data ./backup/redis
 ```
 
 ## Environment Variables
@@ -215,8 +195,16 @@ api:
   restart: unless-stopped
 ```
 
+## Caching
+
+The API uses an in-memory cache with TTL for API responses. This provides:
+- Fast response times for repeated queries
+- No external dependencies
+- Automatic cleanup of expired entries
+
+For high-traffic production deployments, consider adding Redis or Memcached.
+
 ## Resources
 
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
 - [Qdrant Docker](https://qdrant.tech/documentation/quick-start/)
-- [Redis Docker](https://hub.docker.com/_/redis)

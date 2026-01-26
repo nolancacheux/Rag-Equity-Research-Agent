@@ -1,7 +1,8 @@
 """Tests for FastAPI endpoints."""
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
 
 
 class TestHealthEndpoint:
@@ -20,6 +21,7 @@ class TestHealthEndpoint:
 
             # Import after patching
             from fastapi.testclient import TestClient
+
             from src.api.main import app
 
             with TestClient(app) as client:
@@ -44,6 +46,7 @@ class TestQuoteEndpoint:
             mock_settings.return_value = mock_settings_obj
 
             from fastapi.testclient import TestClient
+
             from src.api.main import app
 
             with TestClient(app) as client:
@@ -60,6 +63,7 @@ class TestQuoteEndpoint:
             mock_settings.return_value = mock_settings_obj
 
             from fastapi.testclient import TestClient
+
             from src.api.main import app
 
             with TestClient(app) as client:
@@ -85,6 +89,7 @@ class TestQuoteEndpoint:
             mock_settings.return_value = mock_settings_obj
 
             from fastapi.testclient import TestClient
+
             from src.api.main import app
 
             with TestClient(app) as client:
@@ -108,6 +113,7 @@ class TestQuoteEndpoint:
             mock_settings.return_value = mock_settings_obj
 
             from fastapi.testclient import TestClient
+
             from src.api.main import app
 
             with TestClient(app) as client:
@@ -135,6 +141,7 @@ class TestCompareEndpoint:
             mock_settings.return_value = mock_settings_obj
 
             from fastapi.testclient import TestClient
+
             from src.api.main import app
 
             with TestClient(app) as client:
@@ -151,6 +158,7 @@ class TestCompareEndpoint:
             mock_settings.return_value = mock_settings_obj
 
             from fastapi.testclient import TestClient
+
             from src.api.main import app
 
             with TestClient(app) as client:
@@ -174,6 +182,7 @@ class TestCompareEndpoint:
             mock_settings.return_value = mock_settings_obj
 
             from fastapi.testclient import TestClient
+
             from src.api.main import app
 
             with TestClient(app) as client:
@@ -201,6 +210,7 @@ class TestAnalyzeEndpoint:
             mock_settings.return_value = mock_settings_obj
 
             from fastapi.testclient import TestClient
+
             from src.api.main import app
 
             with TestClient(app) as client:
@@ -221,6 +231,7 @@ class TestAnalyzeEndpoint:
             mock_settings.return_value = mock_settings_obj
 
             from fastapi.testclient import TestClient
+
             from src.api.main import app
 
             with TestClient(app) as client:
@@ -257,6 +268,7 @@ class TestAnalyzeEndpoint:
             mock_settings.return_value = mock_settings_obj
 
             from fastapi.testclient import TestClient
+
             from src.api.main import app
 
             with TestClient(app) as client:
@@ -339,7 +351,7 @@ class TestLifespan:
             mock_settings_obj.is_production = False
             mock_settings.return_value = mock_settings_obj
 
-            from src.api.main import lifespan, app
+            from src.api.main import app, lifespan
 
             async with lifespan(app):
                 pass  # Just test it doesn't raise

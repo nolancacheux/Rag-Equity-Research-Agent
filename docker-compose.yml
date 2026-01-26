@@ -16,7 +16,6 @@ services:
       - AZURE_OPENAI_DEPLOYMENT=${AZURE_OPENAI_DEPLOYMENT:-}
       # Infrastructure
       - QDRANT_URL=http://qdrant:6333
-      - REDIS_URL=redis://redis:6379
       # App settings
       - APP_ENV=${APP_ENV:-development}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
@@ -27,8 +26,6 @@ services:
       - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT:-equity-research-agent}
     depends_on:
       qdrant:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
@@ -80,23 +77,5 @@ services:
       retries: 3
       start_period: 5s
 
-  # ===========================================
-  # Cache
-  # ===========================================
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    command: redis-server --appendonly yes
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
 volumes:
   qdrant_data:
-  redis_data:

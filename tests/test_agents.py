@@ -1,8 +1,8 @@
 """Tests for all agent modules."""
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
-from dataclasses import asdict
 
 
 class TestMarketDataAgent:
@@ -16,7 +16,7 @@ class TestMarketDataAgent:
         # Setup mocks
         mock_tool = MagicMock()
         mock_yfinance_class.return_value = mock_tool
-        
+
         mock_quote = MagicMock()
         mock_quote.to_dict.return_value = {
             "symbol": "NVDA",
@@ -28,7 +28,7 @@ class TestMarketDataAgent:
             "market_state": "REGULAR",
         }
         mock_tool.get_quote.return_value = mock_quote
-        
+
         mock_financials = MagicMock()
         mock_financials.to_dict.return_value = {
             "revenue": 60000000000,
@@ -140,7 +140,7 @@ class TestMarketDataAgent:
         from src.agents.market_data import MarketDataAgent
 
         agent = MarketDataAgent()
-        
+
         quotes = {
             "NVDA": {
                 "name": "NVIDIA Corporation",
@@ -181,7 +181,7 @@ class TestMarketDataNode:
     @patch("src.agents.market_data.MarketDataAgent")
     def test_run_market_data_node_success(self, mock_agent_class):
         """Test node execution with tickers."""
-        from src.agents.market_data import run_market_data_node, MarketDataResult
+        from src.agents.market_data import MarketDataResult, run_market_data_node
 
         mock_agent = MagicMock()
         mock_agent_class.return_value = mock_agent
@@ -216,11 +216,11 @@ class TestNewsSentimentAgent:
     @patch("src.agents.news_sentiment.DuckDuckGoSearchTool")
     def test_analyze_success(self, mock_search_class):
         """Test successful news analysis."""
-        from src.agents.news_sentiment import NewsSentimentAgent, NewsAnalysisResult
+        from src.agents.news_sentiment import NewsAnalysisResult, NewsSentimentAgent
 
         mock_tool = MagicMock()
         mock_search_class.return_value = mock_tool
-        
+
         mock_result = MagicMock()
         mock_result.to_dict.return_value = {
             "title": "NVIDIA Stock Surges",
@@ -291,7 +291,7 @@ class TestNewsSentimentAgent:
 
         mock_tool = MagicMock()
         mock_search_class.return_value = mock_tool
-        
+
         mock_result = MagicMock()
         mock_result.to_dict.return_value = {"title": "China Supply Chain"}
         mock_tool.search_financial_topic.return_value = [mock_result]
@@ -322,7 +322,7 @@ class TestNewsSentimentNode:
     @patch("src.agents.news_sentiment.NewsSentimentAgent")
     def test_run_news_sentiment_node_success(self, mock_agent_class):
         """Test node execution."""
-        from src.agents.news_sentiment import run_news_sentiment_node, NewsAnalysisResult
+        from src.agents.news_sentiment import NewsAnalysisResult, run_news_sentiment_node
 
         mock_agent = MagicMock()
         mock_agent_class.return_value = mock_agent
@@ -377,7 +377,7 @@ class TestDocumentReaderAgent:
         mock_qdrant_instance = MagicMock()
         mock_qdrant.return_value = mock_qdrant_instance
         mock_qdrant_instance.search_sec_filing.return_value = []
-        
+
         mock_sec_instance = MagicMock()
         mock_sec.return_value = mock_sec_instance
         mock_sec_instance.get_latest_10k.return_value = None
@@ -458,20 +458,21 @@ class TestDocumentReaderAgent:
     @patch("src.agents.document_reader.SECEdgarTool")
     def test_index_filing_text_too_short(self, mock_sec, mock_chunker, mock_qdrant):
         """Test indexing when extracted text is too short."""
-        from src.agents.document_reader import DocumentReaderAgent
         import tempfile
         from pathlib import Path
+
+        from src.agents.document_reader import DocumentReaderAgent
 
         mock_sec_instance = MagicMock()
         mock_sec.return_value = mock_sec_instance
         mock_filing = MagicMock()
         mock_sec_instance.get_latest_10k.return_value = mock_filing
-        
+
         # Create a temp file with short content
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.htm', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".htm", delete=False) as f:
             f.write("<html>short</html>")
             temp_path = Path(f.name)
-        
+
         mock_sec_instance.download_filing.return_value = temp_path
 
         agent = DocumentReaderAgent()
@@ -485,9 +486,10 @@ class TestDocumentReaderAgent:
     @patch("src.agents.document_reader.SECEdgarTool")
     def test_index_filing_success(self, mock_sec, mock_chunker, mock_qdrant):
         """Test successful indexing."""
-        from src.agents.document_reader import DocumentReaderAgent
         import tempfile
         from pathlib import Path
+
+        from src.agents.document_reader import DocumentReaderAgent
 
         mock_sec_instance = MagicMock()
         mock_sec.return_value = mock_sec_instance
@@ -497,12 +499,12 @@ class TestDocumentReaderAgent:
         mock_filing.accession_number = "001"
         mock_filing.file_url = "https://example.com"
         mock_sec_instance.get_latest_10k.return_value = mock_filing
-        
+
         # Create a temp file with enough content
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.htm', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".htm", delete=False) as f:
             f.write("<html><body>" + "Test content. " * 500 + "</body></html>")
             temp_path = Path(f.name)
-        
+
         mock_sec_instance.download_filing.return_value = temp_path
 
         mock_chunker_instance = MagicMock()
@@ -524,9 +526,10 @@ class TestDocumentReaderAgent:
     @patch("src.agents.document_reader.SECEdgarTool")
     def test_index_filing_chunking_failed(self, mock_sec, mock_chunker, mock_qdrant):
         """Test indexing when chunking fails."""
-        from src.agents.document_reader import DocumentReaderAgent
         import tempfile
         from pathlib import Path
+
+        from src.agents.document_reader import DocumentReaderAgent
 
         mock_sec_instance = MagicMock()
         mock_sec.return_value = mock_sec_instance
@@ -536,11 +539,11 @@ class TestDocumentReaderAgent:
         mock_filing.accession_number = "001"
         mock_filing.file_url = "https://example.com"
         mock_sec_instance.get_latest_10k.return_value = mock_filing
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.htm', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".htm", delete=False) as f:
             f.write("<html><body>" + "Test content. " * 500 + "</body></html>")
             temp_path = Path(f.name)
-        
+
         mock_sec_instance.download_filing.return_value = temp_path
 
         mock_chunker_instance = MagicMock()
@@ -558,16 +561,17 @@ class TestDocumentReaderAgent:
     @patch("src.agents.document_reader.SECEdgarTool")
     def test_extract_text_fallback(self, mock_sec, mock_chunker, mock_qdrant):
         """Test text extraction fallback when unstructured not available."""
-        from src.agents.document_reader import DocumentReaderAgent
         import tempfile
         from pathlib import Path
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.htm', delete=False) as f:
+        from src.agents.document_reader import DocumentReaderAgent
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".htm", delete=False) as f:
             f.write("<html><body><p>Test paragraph</p></body></html>")
             temp_path = Path(f.name)
 
         agent = DocumentReaderAgent()
-        
+
         # Just test that extraction works (will use fallback HTML parsing)
         text = agent._extract_text_from_html(temp_path)
         assert "Test paragraph" in text
@@ -579,22 +583,30 @@ class TestDocumentReaderAgent:
     @patch("src.agents.document_reader.SECEdgarTool")
     def test_extract_text_exception(self, mock_sec, mock_chunker, mock_qdrant):
         """Test text extraction when an exception occurs."""
-        from src.agents.document_reader import DocumentReaderAgent
+        import sys
         import tempfile
         from pathlib import Path
-        import sys
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.htm', delete=False) as f:
+        from src.agents.document_reader import DocumentReaderAgent
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".htm", delete=False) as f:
             f.write("<html><body><p>Test content</p></body></html>")
             temp_path = Path(f.name)
 
         agent = DocumentReaderAgent()
-        
+
         # Mock the unstructured import to raise a generic exception
         mock_module = MagicMock()
         mock_module.partition.html.partition_html.side_effect = Exception("Parse error")
-        
-        with patch.dict(sys.modules, {'unstructured': mock_module, 'unstructured.partition': mock_module.partition, 'unstructured.partition.html': mock_module.partition.html}):
+
+        with patch.dict(
+            sys.modules,
+            {
+                "unstructured": mock_module,
+                "unstructured.partition": mock_module.partition,
+                "unstructured.partition.html": mock_module.partition.html,
+            },
+        ):
             text = agent._extract_text_from_html(temp_path)
             # Should still get some text via fallback
             assert len(text) > 0
@@ -649,7 +661,7 @@ class TestDocumentReaderNode:
     @patch("src.agents.document_reader.DocumentReaderAgent")
     def test_run_document_reader_node_success(self, mock_agent_class):
         """Test node execution."""
-        from src.agents.document_reader import run_document_reader_node, DocumentSearchResult
+        from src.agents.document_reader import DocumentSearchResult, run_document_reader_node
 
         mock_agent = MagicMock()
         mock_agent_class.return_value = mock_agent
@@ -682,6 +694,7 @@ class TestSynthesizerAgent:
 
             with patch("langchain_groq.ChatGroq") as mock_groq:
                 from src.agents.synthesizer import SynthesizerAgent
+
                 agent = SynthesizerAgent()
                 mock_groq.assert_called_once()
 
@@ -698,6 +711,7 @@ class TestSynthesizerAgent:
 
             with patch("langchain_openai.AzureChatOpenAI") as mock_azure:
                 from src.agents.synthesizer import SynthesizerAgent
+
                 agent = SynthesizerAgent()
                 mock_azure.assert_called_once()
 
@@ -712,6 +726,7 @@ class TestSynthesizerAgent:
 
             with patch("langchain_openai.ChatOpenAI") as mock_openai:
                 from src.agents.synthesizer import SynthesizerAgent
+
                 agent = SynthesizerAgent()
                 mock_openai.assert_called_once()
 
@@ -739,6 +754,7 @@ class TestSynthesizerAgent:
 
             with patch("langchain_groq.ChatGroq"):
                 from src.agents.synthesizer import SynthesizerAgent
+
                 agent = SynthesizerAgent()
 
             context = agent._format_context(
@@ -761,6 +777,7 @@ class TestSynthesizerAgent:
 
             with patch("langchain_groq.ChatGroq"):
                 from src.agents.synthesizer import SynthesizerAgent
+
                 agent = SynthesizerAgent()
 
             context = agent._format_context(
@@ -782,19 +799,20 @@ class TestSynthesizerAgent:
 
             with patch("langchain_groq.ChatGroq"):
                 from src.agents.synthesizer import SynthesizerAgent
+
                 agent = SynthesizerAgent()
 
             context = agent._format_context(
                 query="Analyze NVDA",
                 market_data=None,
-                document_analysis=[{
-                    "ticker": "NVDA",
-                    "query": "China",
-                    "filing_date": "2024-01-01",
-                    "passages": [
-                        {"content": "Risk content here", "score": 0.85}
-                    ]
-                }],
+                document_analysis=[
+                    {
+                        "ticker": "NVDA",
+                        "query": "China",
+                        "filing_date": "2024-01-01",
+                        "passages": [{"content": "Risk content here", "score": 0.85}],
+                    }
+                ],
                 news_analysis=None,
             )
 
@@ -811,6 +829,7 @@ class TestSynthesizerAgent:
 
             with patch("langchain_groq.ChatGroq"):
                 from src.agents.synthesizer import SynthesizerAgent
+
                 agent = SynthesizerAgent()
 
             report = """# Report
@@ -833,6 +852,7 @@ More content here.
 
             with patch("langchain_groq.ChatGroq"):
                 from src.agents.synthesizer import SynthesizerAgent
+
                 agent = SynthesizerAgent()
 
             report = "Just some text without headers. " * 50
@@ -849,6 +869,7 @@ More content here.
 
             with patch("langchain_groq.ChatGroq"):
                 from src.agents.synthesizer import SynthesizerAgent
+
                 agent = SynthesizerAgent()
 
             report = agent._generate_fallback_report(
@@ -874,10 +895,13 @@ More content here.
                 mock_llm = MagicMock()
                 mock_groq.return_value = mock_llm
                 mock_response = MagicMock()
-                mock_response.content = "## Executive Summary\nGreat report.\n\n## Analysis\nDetails."
+                mock_response.content = (
+                    "## Executive Summary\nGreat report.\n\n## Analysis\nDetails."
+                )
                 mock_llm.invoke.return_value = mock_response
 
-                from src.agents.synthesizer import SynthesizerAgent, ResearchReport
+                from src.agents.synthesizer import ResearchReport, SynthesizerAgent
+
                 agent = SynthesizerAgent()
                 result = agent.synthesize(
                     query="Analyze NVDA",
@@ -904,6 +928,7 @@ More content here.
                 mock_llm.invoke.side_effect = Exception("LLM error")
 
                 from src.agents.synthesizer import SynthesizerAgent
+
                 agent = SynthesizerAgent()
                 result = agent.synthesize(
                     query="Analyze NVDA",
@@ -919,7 +944,7 @@ class TestSynthesizerNode:
     @patch("src.agents.synthesizer.SynthesizerAgent")
     def test_run_synthesizer_node(self, mock_agent_class):
         """Test node execution."""
-        from src.agents.synthesizer import run_synthesizer_node, ResearchReport
+        from src.agents.synthesizer import ResearchReport, run_synthesizer_node
 
         mock_agent = MagicMock()
         mock_agent_class.return_value = mock_agent
@@ -953,7 +978,11 @@ class TestGraph:
         """Test query parsing."""
         from src.agents.graph import parse_query
 
-        state = {"query": "Analyze NVDA and AMD for China risks", "tickers": [], "document_queries": []}
+        state = {
+            "query": "Analyze NVDA and AMD for China risks",
+            "tickers": [],
+            "document_queries": [],
+        }
         result = parse_query(state)
 
         assert "NVDA" in result["tickers"]
@@ -1010,11 +1039,13 @@ class TestGraph:
 
         mock_graph = MagicMock()
         mock_create_graph.return_value = mock_graph
-        mock_graph.ainvoke = AsyncMock(return_value={
-            "tickers": ["NVDA"],
-            "report": {"title": "Report"},
-            "errors": [],
-        })
+        mock_graph.ainvoke = AsyncMock(
+            return_value={
+                "tickers": ["NVDA"],
+                "report": {"title": "Report"},
+                "errors": [],
+            }
+        )
 
         result = await run_research("Analyze NVDA", ["NVDA"])
 

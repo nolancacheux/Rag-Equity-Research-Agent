@@ -1,12 +1,12 @@
 """Tests for RAG module."""
 
-import pytest
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-import numpy as np
+from unittest.mock import MagicMock, patch
 
-from src.rag.chunking import DocumentChunker, DocumentChunk
+import pytest
+
+from src.rag.chunking import DocumentChunk, DocumentChunker
 
 
 class TestDocumentChunk:
@@ -139,7 +139,7 @@ class TestDocumentChunker:
         """Test chunking a file."""
         chunker = DocumentChunker()
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("Test document content for chunking.")
             temp_path = f.name
 
@@ -198,7 +198,9 @@ Another paragraph about more specific risks."""
         # Create text that will definitely exceed chunk size
         paragraphs = []
         for i in range(10):
-            paragraphs.append(f"This is paragraph number {i} with enough content to exceed the chunk size limit and trigger overlap.")
+            paragraphs.append(
+                f"This is paragraph number {i} with enough content to exceed the chunk size limit and trigger overlap."
+            )
         text = "\n\n".join(paragraphs)
 
         chunks = chunker.chunk_text(text)

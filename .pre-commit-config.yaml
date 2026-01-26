@@ -23,5 +23,4 @@ repos:
       - id: mypy
         additional_dependencies:
           - pydantic
-          - types-redis
         args: [--ignore-missing-imports]

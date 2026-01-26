@@ -100,7 +100,7 @@ The agent autonomously:
 │  └─────────────────────────────────────────────────────────────────┘        │
 │                                                                              │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                         │
-│  │   Qdrant    │  │    Redis    │  │    Groq     │                         │
+│  │   Qdrant    │  │  In-Memory  │  │    Groq     │                         │
 │  │ Vector DB   │  │   Cache     │  │  LLM API    │                         │
 │  └─────────────┘  └─────────────┘  └─────────────┘                         │
 │                                                                              │
@@ -194,11 +194,8 @@ The agent autonomously:
 │    │  │  │  Port 8000  │  │  Polling    │  │  Port 6333  │     │  │       │
 │    │  │  └──────┬──────┘  └──────┬──────┘  └─────────────┘     │  │       │
 │    │  │         │                │                              │  │       │
-│    │  │         │    Internal    │     ┌─────────────┐         │  │       │
-│    │  │         │◄──  Network  ──┤     │    Redis    │         │  │       │
-│    │  │         │                │     │   (Cache)   │         │  │       │
-│    │  │         │                │     │  Port 6379  │         │  │       │
-│    │  │         │                │     └─────────────┘         │  │       │
+│    │  │         │    Internal    │                              │  │       │
+│    │  │         │◄──  Network  ──┤                              │  │       │
 │    │  │         │                │                              │  │       │
 │    │  └─────────┼────────────────┼──────────────────────────────┘  │       │
 │    │            │                │                                  │       │
@@ -298,7 +295,7 @@ cp .env.example .env
 
 ```bash
 # Start infrastructure
-docker-compose up -d qdrant redis
+docker-compose up -d qdrant
 
 # Start API server
 uvicorn src.api.main:app --reload --port 8000
@@ -389,7 +386,6 @@ uv run mypy src/
 | `GROQ_API_KEY` | Yes | Groq API key (free tier) |
 | `TELEGRAM_BOT_TOKEN` | Yes | Telegram bot token |
 | `QDRANT_URL` | No | Qdrant URL (default: localhost:6333) |
-| `REDIS_URL` | No | Redis URL (default: localhost:6379) |
 | `AZURE_OPENAI_*` | No | Azure OpenAI credentials (optional) |
 | `LANGCHAIN_API_KEY` | No | LangSmith tracing (optional) |
 
@@ -451,7 +447,7 @@ terraform apply
 | **Orchestration** | LangGraph, LangChain |
 | **RAG** | Qdrant, BM25, Hybrid Search, Reranking |
 | **Data Sources** | Yahoo Finance, SEC EDGAR, Reddit, DuckDuckGo |
-| **Backend** | FastAPI, Pydantic, Redis |
+| **Backend** | FastAPI, Pydantic |
 | **Bot** | python-telegram-bot |
 | **Infrastructure** | Docker, Azure Container Apps, Terraform |
 | **CI/CD** | GitHub Actions |

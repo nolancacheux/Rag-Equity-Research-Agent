@@ -1,9 +1,8 @@
 """Tests for utility modules."""
 
-import asyncio
 import time
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 
 class TestMemoryCache:
@@ -34,10 +33,10 @@ class TestMemoryCache:
         from src.utils.cache import MemoryCache
 
         cache = MemoryCache(default_ttl=3600)
-        
+
         result = cache.set("test_key", {"data": "value"})
         assert result is True
-        
+
         value = cache.get("test_key")
         assert value == {"data": "value"}
 
@@ -56,7 +55,7 @@ class TestMemoryCache:
         cache = MemoryCache(default_ttl=1)
         # Manually set an expired entry
         cache._cache["test_key"] = ({"data": "value"}, time.time() - 1)  # Already expired
-        
+
         result = cache.get("test_key")
         assert result is None
 
@@ -66,7 +65,7 @@ class TestMemoryCache:
 
         cache = MemoryCache(default_ttl=3600)
         cache.set("test_key", {"data": "value"}, ttl=7200)
-        
+
         value, expiry = cache._cache["test_key"]
         assert value == {"data": "value"}
         # Expiry should be ~7200 seconds in the future
@@ -78,7 +77,7 @@ class TestMemoryCache:
 
         cache = MemoryCache()
         cache.set("test_key", "value")
-        
+
         result = cache.delete("test_key")
         assert result is True
         assert cache.get("test_key") is None
@@ -103,13 +102,13 @@ class TestMemoryCache:
         from src.utils.cache import MemoryCache
 
         cache = MemoryCache()
-        
+
         # Add entries with different expiries
         cache._cache["expired"] = ("value", time.time() - 10)  # Already expired
         cache._cache["valid"] = ("value", time.time() + 3600)  # Still valid
-        
+
         cache._cleanup_expired()
-        
+
         assert "expired" not in cache._cache
         assert "valid" in cache._cache
 
@@ -136,7 +135,7 @@ class TestRedisBackwardsCompatibility:
 
     def test_redis_cache_alias(self):
         """Test that RedisCache is aliased to MemoryCache."""
-        from src.utils.cache import RedisCache, MemoryCache
+        from src.utils.cache import MemoryCache, RedisCache
 
         assert RedisCache is MemoryCache
 
@@ -241,7 +240,7 @@ class TestRateLimiter:
 
     def test_cleanup_old_requests(self):
         """Test that old requests are cleaned up."""
-        from src.utils.rate_limiter import RateLimiter, RateLimitState
+        from src.utils.rate_limiter import RateLimiter
 
         limiter = RateLimiter(requests_per_period=5, period_seconds=1)
 

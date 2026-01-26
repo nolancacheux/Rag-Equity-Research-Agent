@@ -1,11 +1,12 @@
 """Tests for data source tools."""
 
-import pytest
-from unittest.mock import MagicMock, patch
 from datetime import datetime
+from unittest.mock import MagicMock, patch
 
-from src.tools.yfinance_tool import YFinanceTool, StockQuote, FinancialMetrics
-from src.tools.search_tool import DuckDuckGoSearchTool, SearchResult, NewsResult
+import pytest
+
+from src.tools.search_tool import DuckDuckGoSearchTool, NewsResult, SearchResult
+from src.tools.yfinance_tool import FinancialMetrics, StockQuote, YFinanceTool
 
 
 class TestStockQuote:
@@ -485,7 +486,7 @@ class TestSECEdgarTool:
         mock_client_class.return_value = mock_client
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.text = 'CIK=0001234567&action'
+        mock_response.text = "CIK=0001234567&action"
         mock_client.get.return_value = mock_response
 
         tool = SECEdgarTool()
@@ -502,7 +503,7 @@ class TestSECEdgarTool:
         mock_client_class.return_value = mock_client
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.text = 'No CIK found'
+        mock_response.text = "No CIK found"
         mock_client.get.return_value = mock_response
 
         tool = SECEdgarTool()
@@ -566,7 +567,7 @@ class TestSECEdgarTool:
         mock_client_class.return_value = mock_client
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.text = 'No CIK'
+        mock_response.text = "No CIK"
         mock_client.get.return_value = mock_response
 
         tool = SECEdgarTool()
@@ -592,7 +593,7 @@ class TestSECEdgarTool:
                     "accessionNumber": ["0001045810-24-000001", "0001045810-24-000002"],
                     "primaryDocument": ["nvda-20240128.htm", "doc.htm"],
                 }
-            }
+            },
         }
         mock_client.get.return_value = mock_response
 
@@ -621,7 +622,7 @@ class TestSECEdgarTool:
                     "accessionNumber": ["001", "002"],
                     "primaryDocument": ["doc1.htm", "doc2.htm"],
                 }
-            }
+            },
         }
         mock_client.get.return_value = mock_response
 
@@ -633,8 +634,9 @@ class TestSECEdgarTool:
     @patch("src.tools.sec_edgar_tool.httpx.Client")
     def test_download_filing_success(self, mock_client_class):
         """Test downloading a filing."""
-        from src.tools.sec_edgar_tool import SECEdgarTool, SECFiling
         import tempfile
+
+        from src.tools.sec_edgar_tool import SECEdgarTool, SECFiling
 
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
@@ -699,7 +701,14 @@ class TestSECEdgarTool:
         mock_response1.status_code = 200
         mock_response1.json.return_value = {
             "name": "NVIDIA",
-            "filings": {"recent": {"form": [], "filingDate": [], "accessionNumber": [], "primaryDocument": []}}
+            "filings": {
+                "recent": {
+                    "form": [],
+                    "filingDate": [],
+                    "accessionNumber": [],
+                    "primaryDocument": [],
+                }
+            },
         }
 
         mock_client.get.return_value = mock_response1

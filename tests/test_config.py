@@ -1,8 +1,7 @@
 """Tests for configuration settings."""
 
-import pytest
-from unittest.mock import patch, MagicMock
 import os
+from unittest.mock import patch
 
 
 class TestSettings:
@@ -12,11 +11,16 @@ class TestSettings:
         """Test settings with Groq API key."""
         # Import fresh each time
         import importlib
+
         import src.config.settings as settings_module
-        
-        with patch.dict(os.environ, {
-            "GROQ_API_KEY": "test-groq-key",
-        }, clear=True):
+
+        with patch.dict(
+            os.environ,
+            {
+                "GROQ_API_KEY": "test-groq-key",
+            },
+            clear=True,
+        ):
             importlib.reload(settings_module)
             settings = settings_module.Settings()
 
@@ -26,12 +30,17 @@ class TestSettings:
     def test_is_production_false(self):
         """Test is_production property when not in production."""
         import importlib
+
         import src.config.settings as settings_module
-        
-        with patch.dict(os.environ, {
-            "GROQ_API_KEY": "test-key",
-            "APP_ENV": "development",
-        }, clear=True):
+
+        with patch.dict(
+            os.environ,
+            {
+                "GROQ_API_KEY": "test-key",
+                "APP_ENV": "development",
+            },
+            clear=True,
+        ):
             importlib.reload(settings_module)
             settings = settings_module.Settings()
 
@@ -40,12 +49,17 @@ class TestSettings:
     def test_is_production_true(self):
         """Test is_production property when in production."""
         import importlib
+
         import src.config.settings as settings_module
-        
-        with patch.dict(os.environ, {
-            "GROQ_API_KEY": "test-key",
-            "APP_ENV": "production",
-        }, clear=True):
+
+        with patch.dict(
+            os.environ,
+            {
+                "GROQ_API_KEY": "test-key",
+                "APP_ENV": "production",
+            },
+            clear=True,
+        ):
             importlib.reload(settings_module)
             settings = settings_module.Settings()
 
@@ -54,13 +68,18 @@ class TestSettings:
     def test_use_azure_openai_complete(self):
         """Test use_azure_openai when fully configured."""
         import importlib
+
         import src.config.settings as settings_module
-        
-        with patch.dict(os.environ, {
-            "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
-            "AZURE_OPENAI_API_KEY": "test-azure-key",
-            "AZURE_OPENAI_DEPLOYMENT": "gpt-4",
-        }, clear=True):
+
+        with patch.dict(
+            os.environ,
+            {
+                "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
+                "AZURE_OPENAI_API_KEY": "test-azure-key",
+                "AZURE_OPENAI_DEPLOYMENT": "gpt-4",
+            },
+            clear=True,
+        ):
             importlib.reload(settings_module)
             settings = settings_module.Settings()
 
@@ -69,14 +88,19 @@ class TestSettings:
     def test_use_azure_openai_incomplete(self):
         """Test use_azure_openai when only endpoint configured."""
         import importlib
+
         import src.config.settings as settings_module
-        
-        with patch.dict(os.environ, {
-            "GROQ_API_KEY": "test-key",
-            "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
-            "AZURE_OPENAI_API_KEY": "",  # Explicitly empty to override .env
-            "AZURE_OPENAI_DEPLOYMENT": "",  # Explicitly empty
-        }, clear=True):
+
+        with patch.dict(
+            os.environ,
+            {
+                "GROQ_API_KEY": "test-key",
+                "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
+                "AZURE_OPENAI_API_KEY": "",  # Explicitly empty to override .env
+                "AZURE_OPENAI_DEPLOYMENT": "",  # Explicitly empty
+            },
+            clear=True,
+        ):
             importlib.reload(settings_module)
             settings = settings_module.Settings()
 
@@ -85,11 +109,16 @@ class TestSettings:
     def test_default_values(self):
         """Test default settings values."""
         import importlib
+
         import src.config.settings as settings_module
-        
-        with patch.dict(os.environ, {
-            "GROQ_API_KEY": "test-key",
-        }, clear=True):
+
+        with patch.dict(
+            os.environ,
+            {
+                "GROQ_API_KEY": "test-key",
+            },
+            clear=True,
+        ):
             importlib.reload(settings_module)
             settings = settings_module.Settings()
 
@@ -104,15 +133,20 @@ class TestGetSettings:
     def test_get_settings_returns_settings(self):
         """Test that get_settings returns a Settings instance."""
         import importlib
+
         import src.config.settings as settings_module
-        
-        with patch.dict(os.environ, {
-            "GROQ_API_KEY": "test-key",
-        }, clear=True):
+
+        with patch.dict(
+            os.environ,
+            {
+                "GROQ_API_KEY": "test-key",
+            },
+            clear=True,
+        ):
             importlib.reload(settings_module)
             settings_module.get_settings.cache_clear()
-            
+
             settings = settings_module.get_settings()
 
             assert settings is not None
-            assert hasattr(settings, 'app_env')
+            assert hasattr(settings, "app_env")

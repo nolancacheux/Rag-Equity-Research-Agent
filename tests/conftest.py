@@ -1,9 +1,9 @@
 """Pytest configuration and fixtures."""
 
 import os
-import pytest
 from unittest.mock import MagicMock, patch
 
+import pytest
 
 # Set test environment variables before any imports
 os.environ.setdefault("GROQ_API_KEY", "test-groq-key-for-testing")
@@ -18,7 +18,6 @@ def _create_mock_settings():
     settings.groq_api_key.get_secret_value.return_value = "test-groq-key"
     settings.qdrant_url = "http://localhost:6333"
     settings.qdrant_api_key = None
-    settings.redis_url = "redis://localhost:6379"
     settings.cache_ttl_seconds = 3600
     settings.yfinance_cache_ttl = 300
     settings.sec_user_agent = "Test Agent test@test.com"
@@ -34,10 +33,12 @@ def auto_mock_settings():
     """Automatically mock get_settings for all tests to avoid validation errors."""
     settings = _create_mock_settings()
 
-    with patch("src.config.settings.get_settings", return_value=settings), \
-         patch("src.config.get_settings", return_value=settings), \
-         patch("src.tools.yfinance_tool.get_settings", return_value=settings), \
-         patch("src.tools.sec_edgar_tool.get_settings", return_value=settings):
+    with (
+        patch("src.config.settings.get_settings", return_value=settings),
+        patch("src.config.get_settings", return_value=settings),
+        patch("src.tools.yfinance_tool.get_settings", return_value=settings),
+        patch("src.tools.sec_edgar_tool.get_settings", return_value=settings),
+    ):
         yield settings
 
 
@@ -48,18 +49,6 @@ def mock_settings():
         settings = _create_mock_settings()
         mock.return_value = settings
         yield settings
-
-
-@pytest.fixture
-def mock_redis():
-    """Mock Redis client."""
-    with patch("redis.from_url") as mock:
-        client = MagicMock()
-        client.ping.return_value = True
-        client.get.return_value = None
-        client.setex.return_value = True
-        mock.return_value = client
-        yield client
 
 
 @pytest.fixture

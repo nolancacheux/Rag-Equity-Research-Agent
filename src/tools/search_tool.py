@@ -7,7 +7,7 @@ import structlog
 from duckduckgo_search import DDGS
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from src.utils.cache import RedisCache, get_cache
+from src.utils.cache import MemoryCache, get_cache
 from src.utils.rate_limiter import search_limiter
 
 logger = structlog.get_logger()
@@ -64,11 +64,11 @@ class DuckDuckGoSearchTool:
     to avoid being blocked.
     """
 
-    def __init__(self, cache: RedisCache | None = None) -> None:
+    def __init__(self, cache: MemoryCache | None = None) -> None:
         """Initialize DuckDuckGo search tool.
 
         Args:
-            cache: Optional Redis cache instance
+            cache: Optional cache instance
         """
         self._cache = cache or get_cache()
         self._ddgs = DDGS()

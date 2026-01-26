@@ -13,7 +13,6 @@ Technical documentation for the Equity Research Agent.
 | [Embeddings & RAG](embeddings-rag.md) | Hybrid search, reranking |
 | [Qdrant Vector Database](qdrant-vector-database.md) | Vector store setup |
 | [Financial Data Tools](financial-data-tools.md) | yfinance, SEC EDGAR |
-| [Redis Caching](redis-caching.md) | Cache configuration |
 | [Docker Setup](docker-setup.md) | Local development with Docker |
 | [Azure Deployment](azure-deployment.md) | Production deployment |
 | [CI/CD Setup](ci-cd-setup.md) | GitHub Actions pipelines |
@@ -89,6 +88,6 @@ Technical documentation for the Equity Research Agent.
 | Search | Hybrid (BM25 + dense + RRF) |
 | API | FastAPI |
 | Bot | python-telegram-bot |
-| Cache | Redis |
+| Cache | In-memory (with TTL) |
 | Infra | Docker, Azure Container Apps |
 | CI/CD | GitHub Actions |

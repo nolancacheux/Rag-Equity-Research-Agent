@@ -9,7 +9,7 @@ import yfinance as yf
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.config import get_settings
-from src.utils.cache import RedisCache, get_cache
+from src.utils.cache import MemoryCache, get_cache
 from src.utils.rate_limiter import yfinance_limiter
 
 logger = structlog.get_logger()
@@ -96,11 +96,11 @@ class YFinanceTool:
     Handles NaN values and API errors gracefully.
     """
 
-    def __init__(self, cache: RedisCache | None = None) -> None:
+    def __init__(self, cache: MemoryCache | None = None) -> None:
         """Initialize YFinance tool.
 
         Args:
-            cache: Optional Redis cache instance
+            cache: Optional cache instance
         """
         self._cache = cache or get_cache()
         self._settings = get_settings()

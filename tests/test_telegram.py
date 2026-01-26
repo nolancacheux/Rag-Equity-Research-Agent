@@ -1,6 +1,5 @@
 """Tests for Telegram bot module."""
 
-import pytest
 
 from src.telegram.client import AnalyzeResponse, CompareResponse, QuoteResponse
 from src.telegram.formatters import (
