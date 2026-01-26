@@ -1,7 +1,19 @@
-"""RAG module for document processing and vector search."""
+"""RAG (Retrieval Augmented Generation) pipeline."""
 
-from src.rag.chunking import DocumentChunker
-from src.rag.embeddings import EmbeddingService
-from src.rag.vector_store import QdrantStore
+from src.rag.hybrid_search import HybridSearcher, BM25, create_hybrid_searcher
+from src.rag.reranker import (
+    HybridReranker,
+    KeywordReranker,
+    LLMReranker,
+    create_reranker,
+)
 
-__all__ = ["DocumentChunker", "EmbeddingService", "QdrantStore"]
+__all__ = [
+    "HybridSearcher",
+    "BM25",
+    "create_hybrid_searcher",
+    "HybridReranker",
+    "KeywordReranker",
+    "LLMReranker",
+    "create_reranker",
+]
