@@ -403,6 +403,9 @@ uv run mypy src/
 
 ## Azure Deployment
 
+> **Note:** Deployment is triggered **manually** via GitHub Actions (workflow_dispatch).  
+> Go to **Actions → Build and Deploy → Run workflow** after configuring secrets.
+
 <details>
 <summary><b>🔐 GitHub Secrets Required</b></summary>
 
