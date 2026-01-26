@@ -99,6 +99,10 @@ class SynthesizerAgent:
         market_data: dict[str, Any] | None,
         document_analysis: list[dict[str, Any]] | None,
         news_analysis: list[dict[str, Any]] | None,
+        earnings_analysis: list[dict[str, Any]] | None = None,
+        reddit_sentiment: list[dict[str, Any]] | None = None,
+        peer_analysis: list[dict[str, Any]] | None = None,
+        risk_assessment: list[dict[str, Any]] | None = None,
     ) -> str:
         """Format all data into context for LLM."""
         sections = [f"# Research Query\n{query}\n"]
@@ -132,6 +136,65 @@ class SynthesizerAgent:
                         sections.append(f"\n**Passage {i}** (Score: {passage.get('score', 0):.2f})")
                         sections.append(f"```\n{content}\n```")
 
+        # Earnings Call Section (NEW)
+        if earnings_analysis:
+            sections.append("\n# Earnings Call Analysis")
+            for earnings in earnings_analysis:
+                if earnings.get("summary"):
+                    sections.append(earnings["summary"])
+                else:
+                    sections.append(f"## {earnings.get('ticker', 'Unknown')} - {earnings.get('quarter', '')} {earnings.get('year', '')}")
+                    sections.append(f"**Sentiment**: {earnings.get('sentiment', 'N/A')}")
+                    if earnings.get("key_points"):
+                        sections.append("**Key Points**:")
+                        for point in earnings["key_points"][:5]:
+                            sections.append(f"- {point}")
+                    if earnings.get("guidance"):
+                        sections.append(f"**Guidance**: {earnings['guidance']}")
+
+        # Reddit Sentiment Section (NEW)
+        if reddit_sentiment:
+            sections.append("\n# Social Sentiment (Reddit)")
+            for reddit in reddit_sentiment:
+                if reddit.get("summary"):
+                    sections.append(reddit["summary"])
+                else:
+                    sections.append(f"## {reddit.get('ticker', 'Unknown')}")
+                    sections.append(f"**Sentiment**: {reddit.get('sentiment_label', 'N/A')} ({reddit.get('sentiment_score', 0):+.2f})")
+                    sections.append(f"**Mentions**: {reddit.get('total_mentions', 0)}")
+                    if reddit.get("trending_topics"):
+                        sections.append(f"**Trending**: {', '.join(reddit['trending_topics'][:5])}")
+
+        # Peer Comparison Section (NEW)
+        if peer_analysis:
+            sections.append("\n# Peer Comparison")
+            for peer in peer_analysis:
+                if peer.get("summary"):
+                    sections.append(peer["summary"])
+                else:
+                    sections.append(f"## {peer.get('ticker', 'Unknown')}")
+                    sections.append(f"**Sector**: {peer.get('sector', 'N/A')}")
+                    sections.append(f"**Peers**: {', '.join(peer.get('peers', []))}")
+                    if peer.get("strengths"):
+                        sections.append("**Strengths**: " + "; ".join(peer["strengths"][:3]))
+                    if peer.get("weaknesses"):
+                        sections.append("**Weaknesses**: " + "; ".join(peer["weaknesses"][:3]))
+
+        # Risk Assessment Section (NEW)
+        if risk_assessment:
+            sections.append("\n# Risk Assessment (10-K)")
+            for risk in risk_assessment:
+                if risk.get("summary"):
+                    sections.append(risk["summary"])
+                else:
+                    sections.append(f"## {risk.get('ticker', 'Unknown')}")
+                    sections.append(f"**Overall Risk Score**: {risk.get('overall_score', 'N/A')}/10")
+                    sections.append(f"**Risk Factors**: {risk.get('risk_factors_count', 0)}")
+                    if risk.get("top_risks"):
+                        sections.append("**Top Risks**:")
+                        for r in risk["top_risks"][:3]:
+                            sections.append(f"- [{r.get('category', 'N/A')}] {r.get('description', '')[:100]}...")
+
         # News Section
         if news_analysis:
             sections.append("\n# Recent News")
@@ -148,6 +211,10 @@ class SynthesizerAgent:
         market_data: dict[str, Any] | None = None,
         document_analysis: list[dict[str, Any]] | None = None,
         news_analysis: list[dict[str, Any]] | None = None,
+        earnings_analysis: list[dict[str, Any]] | None = None,
+        reddit_sentiment: list[dict[str, Any]] | None = None,
+        peer_analysis: list[dict[str, Any]] | None = None,
+        risk_assessment: list[dict[str, Any]] | None = None,
         errors: list[str] | None = None,
     ) -> ResearchReport:
         """Synthesize all data into a research report.
@@ -158,6 +225,10 @@ class SynthesizerAgent:
             market_data: Market data from MarketDataAgent
             document_analysis: SEC filing analysis from DocumentReaderAgent
             news_analysis: News from NewsSentimentAgent
+            earnings_analysis: Earnings call analysis from EarningsAgent
+            reddit_sentiment: Reddit sentiment from RedditSentimentAgent
+            peer_analysis: Peer comparison from PeerComparisonAgent
+            risk_assessment: Risk scoring from RiskScoringAgent
             errors: Any errors encountered
 
         Returns:
@@ -166,7 +237,10 @@ class SynthesizerAgent:
         errors = errors or []
 
         # Format context
-        context = self._format_context(query, market_data, document_analysis, news_analysis)
+        context = self._format_context(
+            query, market_data, document_analysis, news_analysis,
+            earnings_analysis, reddit_sentiment, peer_analysis, risk_assessment
+        )
 
         # Build prompt
         user_prompt = f"""Based on the following research data, create a comprehensive equity research report.
@@ -181,8 +255,11 @@ Please generate:
 2. A detailed analysis covering:
    - Current market position and valuation
    - Key findings from SEC filings (if available)
+   - Earnings call highlights (if available)
+   - Social sentiment from Reddit (if available)
+   - Peer comparison insights (if available)
+   - Risk assessment from 10-K (if available)
    - Recent news and sentiment
-   - Risk factors
    - Investment considerations
 
 Format as a professional markdown report."""
@@ -219,6 +296,14 @@ Format as a professional markdown report."""
             data_sources.append("Yahoo Finance (real-time)")
         if document_analysis:
             data_sources.append("SEC EDGAR (10-K filings)")
+        if earnings_analysis:
+            data_sources.append("Earnings Call Transcripts")
+        if reddit_sentiment:
+            data_sources.append("Reddit (WSB, stocks, investing)")
+        if peer_analysis:
+            data_sources.append("Peer Comparison Analysis")
+        if risk_assessment:
+            data_sources.append("10-K Risk Factor Analysis")
         if news_analysis:
             data_sources.append("DuckDuckGo News")
 
@@ -301,6 +386,10 @@ def run_synthesizer_node(state: dict) -> dict:
     market_data = state.get("market_data")
     document_analysis = state.get("document_analysis")
     news_analysis = state.get("news_analysis")
+    earnings_analysis = state.get("earnings_analysis")
+    reddit_sentiment = state.get("reddit_sentiment")
+    peer_analysis = state.get("peer_analysis")
+    risk_assessment = state.get("risk_assessment")
     errors = state.get("errors", [])
 
     agent = SynthesizerAgent()
@@ -310,6 +399,10 @@ def run_synthesizer_node(state: dict) -> dict:
         market_data=market_data,
         document_analysis=document_analysis,
         news_analysis=news_analysis,
+        earnings_analysis=earnings_analysis,
+        reddit_sentiment=reddit_sentiment,
+        peer_analysis=peer_analysis,
+        risk_assessment=risk_assessment,
         errors=errors,
     )
 
