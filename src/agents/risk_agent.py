@@ -52,7 +52,8 @@ class RiskScoringAgent:
         errors = []
 
         try:
-            result = await self._service.score_risk(ticker)
+            # Use quick assessment (without full 10-K parsing)
+            result = self._service.quick_risk_assessment(ticker)
         except Exception as e:
             logger.error("risk_scoring_failed", ticker=ticker, error=str(e))
             return RiskAssessment(
@@ -82,17 +83,45 @@ class RiskScoringAgent:
                 errors=["No 10-K data found"],
             )
 
-        summary = self._generate_summary(ticker, result)
+        # Build risk breakdown from individual category scores
+        risk_breakdown = {
+            "market": result.market_risk,
+            "operational": result.operational_risk,
+            "financial": result.financial_risk,
+        }
+        
+        # Build top risks from risk factors
+        top_risks = [
+            {
+                "category": rf.category.value if hasattr(rf.category, 'value') else str(rf.category),
+                "description": rf.description,
+                "score": rf.severity,
+            }
+            for rf in result.risk_factors[:5]
+        ] if result.risk_factors else []
+        
+        # Group risks by category
+        risks_by_category: dict[str, list[str]] = {
+            "regulatory": [],
+            "operational": [],
+            "financial": [],
+        }
+        for rf in result.risk_factors:
+            cat = rf.category.value if hasattr(rf.category, 'value') else str(rf.category)
+            if cat in risks_by_category:
+                risks_by_category[cat].append(rf.description)
+
+        summary = result.summary if result.summary else self._generate_summary(ticker, result)
 
         return RiskAssessment(
             ticker=ticker,
             overall_score=result.overall_score,
-            risk_breakdown=result.category_scores,
-            top_risks=result.top_risks,
-            risk_factors_count=result.total_risk_factors,
-            regulatory_risks=result.risks_by_category.get("regulatory", []),
-            operational_risks=result.risks_by_category.get("operational", []),
-            financial_risks=result.risks_by_category.get("financial", []),
+            risk_breakdown=risk_breakdown,
+            top_risks=top_risks,
+            risk_factors_count=len(result.risk_factors),
+            regulatory_risks=risks_by_category.get("regulatory", []),
+            operational_risks=risks_by_category.get("operational", []),
+            financial_risks=risks_by_category.get("financial", []),
             summary=summary,
             errors=errors,
         )
@@ -112,7 +141,7 @@ class RiskScoringAgent:
         
         lines = [f"## Risk Assessment: {ticker} {emoji}"]
         lines.append(f"**Overall Risk Score**: {result.overall_score}/10")
-        lines.append(f"**Risk Factors Found**: {result.total_risk_factors}")
+        lines.append(f"**Risk Factors Found**: {len(result.risk_factors) if result.risk_factors else 0}")
         lines.append("")
         
         # Risk breakdown by category
@@ -120,17 +149,25 @@ class RiskScoringAgent:
         lines.append("| Category | Score |")
         lines.append("|----------|-------|")
         
-        for category, score in result.category_scores.items():
-            cat_emoji = self._get_risk_emoji(score)
-            lines.append(f"| {category.capitalize()} | {score}/10 {cat_emoji} |")
+        categories = {
+            "Market": result.market_risk,
+            "Operational": result.operational_risk,
+            "Financial": result.financial_risk,
+        }
+        
+        for category, score in categories.items():
+            if score > 0:
+                cat_emoji = self._get_risk_emoji(score)
+                lines.append(f"| {category} | {score}/5 {cat_emoji} |")
         
         lines.append("")
         
         # Top risks
-        if result.top_risks:
+        if result.risk_factors:
             lines.append("### Top Risk Factors")
-            for risk in result.top_risks[:5]:
-                lines.append(f"- **{risk['category'].capitalize()}**: {risk['description'][:100]}...")
+            for rf in result.risk_factors[:5]:
+                cat = rf.category.value if hasattr(rf.category, 'value') else str(rf.category)
+                lines.append(f"- **{cat.capitalize()}**: {rf.description}")
         
         lines.append("")
         
@@ -142,6 +179,13 @@ class RiskScoringAgent:
             lines.append("Moderate risk profile. Standard business risks present, monitor key areas.")
         else:
             lines.append("High risk profile. Significant risk factors identified that require attention.")
+        
+        # Add recommendations if available
+        if result.recommendations:
+            lines.append("")
+            lines.append("### Recommendations")
+            for rec in result.recommendations[:3]:
+                lines.append(f"- {rec}")
         
         return "\n".join(lines)
 

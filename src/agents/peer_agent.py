@@ -53,7 +53,7 @@ class PeerComparisonAgent:
         errors = []
 
         try:
-            result = await self._service.compare(ticker, num_peers=num_peers)
+            result = await self._service.compare_with_peers(ticker)
         except Exception as e:
             logger.error("peer_comparison_failed", ticker=ticker, error=str(e))
             return PeerAnalysis(
@@ -83,29 +83,69 @@ class PeerComparisonAgent:
                 errors=["No peers found"],
             )
 
+        # Build peer list and metrics comparison
+        peer_tickers = [p.ticker for p in result.peers]
+        
+        # Build metrics comparison dict
+        metrics_comparison = {
+            "PE Ratio": {},
+            "Market Cap": {},
+            "Price": {},
+        }
+        
+        # Add ticker metrics
+        if result.ticker_metrics:
+            tm = result.ticker_metrics
+            metrics_comparison["PE Ratio"][ticker] = tm.pe_ratio
+            metrics_comparison["Market Cap"][ticker] = tm.market_cap
+            metrics_comparison["Price"][ticker] = tm.price
+        
+        # Add peer metrics
+        for peer in result.peers:
+            metrics_comparison["PE Ratio"][peer.ticker] = peer.pe_ratio
+            metrics_comparison["Market Cap"][peer.ticker] = peer.market_cap
+            metrics_comparison["Price"][peer.ticker] = peer.price
+        
+        # Calculate rankings
+        ranking = {}
+        for metric_name, values in metrics_comparison.items():
+            valid_values = [(t, v) for t, v in values.items() if v is not None]
+            if valid_values:
+                # Sort: lower PE is better, higher market cap is better
+                reverse = metric_name != "PE Ratio"
+                sorted_values = sorted(valid_values, key=lambda x: x[1], reverse=reverse)
+                for rank, (t, _) in enumerate(sorted_values, 1):
+                    if t == ticker:
+                        ranking[metric_name] = rank
+                        break
+
         # Analyze strengths and weaknesses based on ranking
         strengths = []
         weaknesses = []
+        num_companies = len(peer_tickers) + 1
         
-        for metric, rank in result.ranking.items():
+        for metric, rank in ranking.items():
             if rank == 1:
                 strengths.append(f"Best {metric} among peers")
             elif rank <= 2:
                 strengths.append(f"Top 2 in {metric}")
-            elif rank >= len(result.peers):
+            elif rank >= num_companies:
                 weaknesses.append(f"Lowest {metric} among peers")
-            elif rank >= len(result.peers) - 1:
+            elif rank >= num_companies - 1:
                 weaknesses.append(f"Below average {metric}")
 
-        summary = self._generate_summary(ticker, result, strengths, weaknesses)
+        # Use result summary or generate one
+        summary = result.summary if result.summary else self._generate_summary(
+            ticker, result, strengths, weaknesses
+        )
 
         return PeerAnalysis(
             ticker=ticker,
-            sector=result.sector,
+            sector=result.industry,  # Use industry as sector
             industry=result.industry,
-            peers=result.peers,
-            metrics_comparison=result.metrics,
-            ranking=result.ranking,
+            peers=peer_tickers,
+            metrics_comparison=metrics_comparison,
+            ranking=ranking,
             strengths=strengths[:5],
             weaknesses=weaknesses[:5],
             summary=summary,
@@ -120,23 +160,28 @@ class PeerComparisonAgent:
         weaknesses: list[str],
     ) -> str:
         """Generate comparison summary."""
+        peer_tickers = [p.ticker for p in result.peers] if result.peers else []
+        
         lines = [f"## Peer Comparison: {ticker}"]
-        lines.append(f"**Sector**: {result.sector or 'N/A'}")
         lines.append(f"**Industry**: {result.industry or 'N/A'}")
-        lines.append(f"**Peers**: {', '.join(result.peers)}")
+        lines.append(f"**Peers**: {', '.join(peer_tickers)}")
         lines.append("")
         
-        # Key metrics table
-        lines.append("### Key Metrics")
-        lines.append("| Metric | Value | Rank |")
-        lines.append("|--------|-------|------|")
+        # Key metrics
+        if result.ticker_metrics:
+            lines.append("### Key Metrics")
+            tm = result.ticker_metrics
+            if tm.pe_ratio:
+                lines.append(f"- **P/E Ratio**: {tm.pe_ratio:.2f}")
+            if tm.market_cap:
+                lines.append(f"- **Market Cap**: ${tm.market_cap/1e9:.1f}B")
+            if tm.price:
+                lines.append(f"- **Price**: ${tm.price:.2f}")
+            lines.append("")
         
-        for metric, values in result.metrics.items():
-            ticker_value = values.get(ticker, "N/A")
-            rank = result.ranking.get(metric, "-")
-            lines.append(f"| {metric} | {ticker_value} | #{rank} |")
-        
-        lines.append("")
+        if result.pe_percentile is not None:
+            lines.append(f"**PE Percentile**: {result.pe_percentile:.0f}% (vs peers)")
+            lines.append("")
         
         if strengths:
             lines.append("### Strengths")
