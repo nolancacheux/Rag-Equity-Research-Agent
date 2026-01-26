@@ -15,10 +15,13 @@ from src.telegram.keyboards import (
     after_compare_keyboard,
     after_quote_keyboard,
     back_menu_keyboard,
+    back_tools_keyboard,
     help_keyboard,
     language_keyboard,
     main_menu_keyboard,
     settings_keyboard,
+    tools_keyboard,
+    watchlist_keyboard,
 )
 from src.telegram.storage import get_storage
 from telegram import Update
@@ -187,6 +190,95 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         await query.edit_message_text(
             get_text("choose_language"),
             reply_markup=language_keyboard(),
+        )
+        return
+
+    # New feature menus
+    if data == Callback.TOOLS:
+        await query.edit_message_text(
+            get_text("tools_menu", lang),
+            reply_markup=tools_keyboard(lang),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+
+    if data == Callback.WATCHLIST:
+        await query.edit_message_text(
+            get_text("watchlist_empty", lang),
+            reply_markup=watchlist_keyboard(lang),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+
+    if data == Callback.DCF:
+        await query.edit_message_text(
+            get_text("dcf_prompt", lang),
+            reply_markup=back_tools_keyboard(lang),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+
+    if data == Callback.RISK:
+        await query.edit_message_text(
+            get_text("risk_prompt", lang),
+            reply_markup=back_tools_keyboard(lang),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+
+    if data == Callback.PEERS:
+        await query.edit_message_text(
+            get_text("peers_prompt", lang),
+            reply_markup=back_tools_keyboard(lang),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+
+    if data == Callback.REDDIT:
+        await query.edit_message_text(
+            get_text("reddit_prompt", lang),
+            reply_markup=back_tools_keyboard(lang),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+
+    if data == Callback.CALENDAR:
+        await query.edit_message_text(
+            get_text("calendar_prompt", lang),
+            reply_markup=back_tools_keyboard(lang),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+
+    if data == Callback.HISTORY:
+        await query.edit_message_text(
+            get_text("history_prompt", lang),
+            reply_markup=back_tools_keyboard(lang),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+
+    if data == Callback.WL_ADD:
+        await query.edit_message_text(
+            get_text("watchlist_add_prompt", lang),
+            reply_markup=back_menu_keyboard(lang),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+
+    if data == Callback.WL_ALERTS:
+        await query.edit_message_text(
+            get_text("alerts_prompt", lang),
+            reply_markup=back_menu_keyboard(lang),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+
+    if data == Callback.BACK_TOOLS:
+        await query.edit_message_text(
+            get_text("tools_menu", lang),
+            reply_markup=tools_keyboard(lang),
+            parse_mode=ParseMode.MARKDOWN,
         )
         return
 
