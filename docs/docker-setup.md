@@ -1,42 +1,60 @@
 # Docker Setup
 
-## Vue d'ensemble
+## Overview
 
-Le projet utilise Docker Compose pour orchestrer 3 services :
+The project uses Docker Compose to orchestrate multiple services:
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│     App     │────▶│   Qdrant    │     │    Redis    │
-│  (FastAPI)  │     │  (Vectors)  │     │   (Cache)   │
-│   :8000     │     │ :6333/:6334 │     │    :6379    │
-└─────────────┘     └─────────────┘     └─────────────┘
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│     API     │────▶│   Qdrant    │     │    Redis    │     │ Telegram    │
+│  (FastAPI)  │     │  (Vectors)  │     │   (Cache)   │     │    Bot      │
+│   :8000     │     │ :6333/:6334 │     │    :6379    │     │  (polling)  │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
 ## Services
 
-### app (FastAPI)
+### api (FastAPI)
 
-L'application principale.
+Main application with REST API.
 
 ```yaml
-app:
+api:
   build:
     context: .
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile.api
   ports:
     - "8000:8000"
   environment:
-    - OPENAI_API_KEY=${OPENAI_API_KEY}
+    - GROQ_API_KEY=${GROQ_API_KEY}
     - QDRANT_URL=http://qdrant:6333
     - REDIS_URL=redis://redis:6379
+    - API_SECRET_KEY=${API_SECRET_KEY}
   depends_on:
     - qdrant
     - redis
 ```
 
+### telegram-bot
+
+Telegram bot service (optional).
+
+```yaml
+telegram-bot:
+  build:
+    context: .
+    dockerfile: Dockerfile.bot
+  environment:
+    - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    - API_BASE_URL=http://api:8000
+    - API_SECRET_KEY=${API_SECRET_KEY}
+  depends_on:
+    - api
+```
+
 ### qdrant (Vector Database)
 
-Base de données vectorielle pour le RAG.
+Vector database for RAG.
 
 ```yaml
 qdrant:
@@ -50,7 +68,7 @@ qdrant:
 
 ### redis (Cache)
 
-Cache pour les réponses API.
+Cache for API responses.
 
 ```yaml
 redis:
@@ -62,66 +80,87 @@ redis:
   command: redis-server --appendonly yes
 ```
 
-## Commandes
+## Commands
 
-### Démarrer tous les services
-
-```bash
-docker-compose up -d
-```
-
-### Logs
+### Start All Services
 
 ```bash
-# Tous les services
-docker-compose logs -f
-
-# Un service spécifique
-docker-compose logs -f app
+docker compose up -d
 ```
 
-### Arrêter
+### View Logs
 
 ```bash
-docker-compose down
+# All services
+docker compose logs -f
 
-# Avec suppression des volumes (reset data)
-docker-compose down -v
+# Specific service
+docker compose logs -f api
 ```
 
-### Rebuild après changement
+### Stop
 
 ```bash
-docker-compose up -d --build app
+docker compose down
+
+# With volume deletion (reset data)
+docker compose down -v
 ```
 
-## Dockerfile
+### Rebuild After Changes
+
+```bash
+docker compose up -d --build api
+```
+
+## Dockerfiles
+
+### Dockerfile.api
+
+Lightweight API image (~500MB):
 
 ```dockerfile
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install dependencies
-COPY pyproject.toml .
-RUN pip install --no-cache-dir -e .
+# Install deps (no PyTorch)
+RUN pip install --no-cache-dir \
+    langchain langgraph fastapi uvicorn ...
 
-# Copy source
 COPY src/ src/
 
-# Run
+USER appuser
 EXPOSE 8000
 CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
+### Dockerfile.bot
+
+Telegram bot image:
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir \
+    python-telegram-bot httpx pydantic ...
+
+COPY src/ src/
+
+USER appuser
+CMD ["python", "-m", "src.telegram.bot"]
+```
+
 ## Volumes
 
-| Volume | Service | Contenu |
-|--------|---------|---------|
-| `qdrant_data` | qdrant | Collections vectorielles |
-| `redis_data` | redis | Cache persisté (AOF) |
+| Volume | Service | Contents |
+|--------|---------|----------|
+| `qdrant_data` | qdrant | Vector collections |
+| `redis_data` | redis | Persisted cache (AOF) |
 
-### Backup des données
+### Backup Data
 
 ```bash
 # Qdrant
@@ -131,34 +170,37 @@ docker cp equity-research-agent-qdrant-1:/qdrant/storage ./backup/qdrant
 docker cp equity-research-agent-redis-1:/data ./backup/redis
 ```
 
-## Variables d'environnement
+## Environment Variables
 
-Créer un fichier `.env` :
+Create a `.env` file:
 
 ```env
-# Required
-OPENAI_API_KEY=sk-xxx
+# LLM Provider (at least one required)
+GROQ_API_KEY=gsk_...        # FREE
+OPENAI_API_KEY=sk-...       # Paid
 
-# Optional (LangSmith tracing)
+# API Security (production)
+API_SECRET_KEY=your-generated-key
+
+# Telegram Bot (optional)
+TELEGRAM_BOT_TOKEN=123456789:ABC...
+
+# Monitoring (optional)
 LANGCHAIN_TRACING_V2=true
 LANGCHAIN_API_KEY=ls_xxx
-LANGCHAIN_PROJECT=equity-research-agent
-
-# Optional (Qdrant Cloud)
-QDRANT_API_KEY=xxx
 ```
 
-## Production
+## Production Configuration
 
-Pour la production, ajouter :
+For production, add:
 
-1. **Health checks** dans docker-compose
+1. **Health checks** in docker-compose
 2. **Resource limits** (CPU, memory)
 3. **Restart policies**
 4. **Logging driver** (json-file, syslog, etc.)
 
 ```yaml
-app:
+api:
   ...
   deploy:
     resources:
@@ -170,9 +212,10 @@ app:
     interval: 30s
     timeout: 10s
     retries: 3
+  restart: unless-stopped
 ```
 
-## Ressources
+## Resources
 
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
 - [Qdrant Docker](https://qdrant.tech/documentation/quick-start/)

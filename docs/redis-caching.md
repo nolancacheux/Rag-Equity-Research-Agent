@@ -1,34 +1,34 @@
 # Redis Caching
 
-## Pourquoi Redis ?
+## Why Redis?
 
-Redis est utilisé pour cacher les réponses API coûteuses (yfinance, SEC EDGAR) et réduire la latence + les coûts.
+Redis is used to cache expensive API responses (yfinance, SEC EDGAR) and reduce latency + costs.
 
-### Avantages
+### Advantages
 
-1. **Performance** : Latence sub-milliseconde pour les lectures
-2. **TTL natif** : Expiration automatique des données périmées
-3. **Persistance** : AOF (Append Only File) pour récupération après crash
-4. **Production-proven** : Standard industrie pour le caching
+1. **Performance**: Sub-millisecond latency for reads
+2. **Native TTL**: Automatic expiration of stale data
+3. **Persistence**: AOF (Append Only File) for crash recovery
+4. **Production-proven**: Industry standard for caching
 
-### Ce qu'on cache
+### What We Cache
 
-| Donnée | TTL | Raison |
-|--------|-----|--------|
-| Prix temps réel | 5 min | Données marché changent vite |
-| Fondamentaux | 1h | Changent rarement |
+| Data | TTL | Reason |
+|------|-----|--------|
+| Real-time prices | 5 min | Market data changes fast |
+| Fundamentals | 1h | Rarely change |
 | SEC filings metadata | 24h | Stable |
-| News headlines | 15 min | Actualité |
+| News headlines | 15 min | Breaking news |
 
 ## Architecture
 
 ```
 src/utils/cache.py
 └── RedisCache
-    ├── get()           # Lecture avec désérialization JSON
-    ├── set()           # Écriture avec TTL
+    ├── get()           # Read with JSON deserialization
+    ├── set()           # Write with TTL
     ├── delete()        # Invalidation
-    └── _make_key()     # Génération clé SHA256
+    └── _make_key()     # SHA256 key generation
 ```
 
 ## Configuration
@@ -42,19 +42,19 @@ redis:
     - "6379:6379"
   volumes:
     - redis_data:/data
-  command: redis-server --appendonly yes  # Persistance AOF
+  command: redis-server --appendonly yes  # AOF persistence
 ```
 
-### Variables d'environnement
+### Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `REDIS_URL` | URL de connexion | `redis://localhost:6379` |
-| `CACHE_TTL_SECONDS` | TTL par défaut | `3600` (1h) |
+| `REDIS_URL` | Connection URL | `redis://localhost:6379` |
+| `CACHE_TTL_SECONDS` | Default TTL | `3600` (1h) |
 
-## Utilisation
+## Usage
 
-### Pattern de base
+### Basic Pattern
 
 ```python
 from src.utils.cache import get_cache
@@ -75,18 +75,18 @@ cache.set("market:NVDA:price", data, ttl=300)  # 5 min
 return data
 ```
 
-### Génération de clés
+### Key Generation
 
-Les clés sont générées via hash SHA256 pour éviter les collisions :
+Keys are generated via SHA256 hash to avoid collisions:
 
 ```python
 key = RedisCache._make_key("market", "NVDA", metric="price")
 # → "market:a1b2c3d4e5f6g7h8"
 ```
 
-## Gestion des erreurs
+## Error Handling
 
-Le cache est **non-bloquant** : si Redis est down, l'app continue sans cache.
+Cache is **non-blocking**: if Redis is down, the app continues without cache.
 
 ```python
 def get(self, key: str) -> Any | None:
@@ -98,20 +98,20 @@ def get(self, key: str) -> Any | None:
 
 ## Monitoring
 
-### Vérifier la connexion
+### Check Connection
 
 ```python
 cache = get_cache()
 print(cache.is_connected)  # True/False
 ```
 
-### Stats Redis (CLI)
+### Redis Stats (CLI)
 
 ```bash
 docker exec -it equity-research-agent-redis-1 redis-cli INFO stats
 ```
 
-## Ressources
+## Resources
 
 - [Redis Documentation](https://redis.io/documentation)
 - [redis-py](https://github.com/redis/redis-py)

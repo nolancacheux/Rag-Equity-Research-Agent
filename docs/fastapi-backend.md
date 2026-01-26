@@ -1,41 +1,76 @@
 # FastAPI Backend
 
-## Pourquoi FastAPI ?
+## Why FastAPI?
 
-FastAPI est le framework web pour exposer l'API de recherche financière.
+FastAPI is the web framework for exposing the financial research API.
 
-### Avantages
+### Advantages
 
-| Critère | FastAPI | Flask | Django |
-|---------|---------|-------|--------|
-| **Performance** | Async natif | Sync | Sync |
-| **Typage** | Pydantic natif | Manuel | Manuel |
-| **OpenAPI** | Auto-généré | Manuel | DRF |
-| **Validation** | Automatique | Manuel | Serializers |
+| Criteria | FastAPI | Flask | Django |
+|----------|---------|-------|--------|
+| **Performance** | Native async | Sync | Sync |
+| **Typing** | Native Pydantic | Manual | Manual |
+| **OpenAPI** | Auto-generated | Manual | DRF |
+| **Validation** | Automatic | Manual | Serializers |
 
-### Raisons du choix
+### Reasons for Choice
 
-1. **Async natif** : Parfait pour I/O-bound (API calls, DB)
-2. **Pydantic** : Validation + serialization automatiques
-3. **OpenAPI** : Documentation Swagger auto-générée
-4. **Performance** : Un des frameworks Python les plus rapides
+1. **Native async**: Perfect for I/O-bound operations (API calls, DB)
+2. **Pydantic**: Automatic validation + serialization
+3. **OpenAPI**: Auto-generated Swagger documentation
+4. **Performance**: One of the fastest Python frameworks
 
 ## Architecture
 
 ```
 src/api/
-└── main.py
-    ├── GET  /health           # Health check
-    ├── POST /analyze          # Lancer une analyse
-    ├── GET  /quote/{ticker}   # Quote temps réel
-    └── GET  /compare/{tickers}# Comparer P/E ratios
+├── main.py              # API endpoints
+├── metrics.py           # Prometheus metrics
+└── middleware/
+    └── auth.py          # API key authentication
 ```
 
 ## Endpoints
 
+| Endpoint | Method | Auth | Rate Limit | Description |
+|----------|--------|------|------------|-------------|
+| `/health` | GET | No | - | Health check |
+| `/metrics` | GET | No | - | Prometheus metrics |
+| `/analyze` | POST | **Yes** | 10/min | Run research analysis |
+| `/quote/{ticker}` | GET | **Yes** | 30/min | Real-time stock quote |
+| `/compare/{tickers}` | GET | **Yes** | 20/min | Compare P/E ratios |
+
+## Authentication
+
+Protected endpoints require `X-API-Key` header when `API_SECRET_KEY` env var is set.
+
+```bash
+# Request with auth
+curl -H "X-API-Key: your-secret-key" https://your-api/quote/NVDA
+
+# Generate a key
+openssl rand -hex 32
+```
+
+### Implementation
+
+```python
+# src/api/middleware/auth.py
+async def verify_api_key(request: Request) -> None:
+    api_key = os.environ.get("API_SECRET_KEY")
+    if not api_key:
+        return  # Auth disabled in dev
+    
+    request_key = request.headers.get("X-API-Key")
+    if request_key != api_key:
+        raise HTTPException(401, "Invalid API key")
+```
+
+## Endpoint Details
+
 ### GET /health
 
-Health check pour monitoring.
+Health check for monitoring (no auth required).
 
 **Response:**
 ```json
@@ -46,9 +81,21 @@ Health check pour monitoring.
 }
 ```
 
+### GET /metrics
+
+Prometheus metrics endpoint (no auth required).
+
+**Response:** Prometheus text format
+```
+# HELP http_requests_total Total HTTP requests
+http_requests_total{method="GET",endpoint="/health",status="200"} 5.0
+# HELP analysis_duration_seconds Analysis duration
+analysis_duration_seconds_sum 45.2
+```
+
 ### POST /analyze
 
-Lance une recherche d'analyse financière.
+Run a financial research analysis.
 
 **Request:**
 ```json
@@ -58,18 +105,19 @@ Lance une recherche d'analyse financière.
 }
 ```
 
-| Champ | Type | Description |
+| Field | Type | Description |
 |-------|------|-------------|
-| `query` | string | Requête de recherche (10-1000 chars) |
-| `tickers` | string[] | Optionnel, max 5 tickers (auto-détecté sinon) |
+| `query` | string | Research query (10-1000 chars) |
+| `tickers` | string[] | Optional, max 5 (auto-detected if not provided) |
 
 **Response:**
 ```json
 {
   "success": true,
   "report": {
-    "summary": "...",
-    "analysis": "..."
+    "title": "...",
+    "full_report": "...",
+    "executive_summary": "..."
   },
   "market_data": {
     "NVDA": {...}
@@ -78,11 +126,9 @@ Lance une recherche d'analyse financière.
 }
 ```
 
-**Rate limit:** 10/minute
-
 ### GET /quote/{ticker}
 
-Récupère un quote temps réel pour un ticker.
+Get real-time quote for a stock.
 
 **Example:** `GET /quote/NVDA`
 
@@ -91,20 +137,19 @@ Récupère un quote temps réel pour un ticker.
 {
   "success": true,
   "data": {
-    "ticker": "NVDA",
+    "symbol": "NVDA",
     "price": 875.50,
     "pe_ratio": 65.2,
     "market_cap": 2150000000000,
-    "volume": 45000000
+    "volume": 45000000,
+    "change_percent": 2.5
   }
 }
 ```
 
-**Rate limit:** 30/minute
-
 ### GET /compare/{tickers}
 
-Compare les P/E ratios de plusieurs actions.
+Compare P/E ratios for multiple stocks.
 
 **Example:** `GET /compare/NVDA,AMD,INTC`
 
@@ -112,19 +157,17 @@ Compare les P/E ratios de plusieurs actions.
 ```json
 {
   "success": true,
-  "comparison": {
-    "NVDA": {"pe_ratio": 65.2, "price": 875.50},
-    "AMD": {"pe_ratio": 45.8, "price": 178.20},
-    "INTC": {"pe_ratio": 22.1, "price": 42.30}
-  }
+  "comparison": [
+    {"ticker": "NVDA", "pe_ratio": 65.2, "price": 875.50},
+    {"ticker": "AMD", "pe_ratio": 45.8, "price": 178.20},
+    {"ticker": "INTC", "pe_ratio": 22.1, "price": 42.30}
+  ]
 }
 ```
 
-**Rate limit:** 20/minute (max 5 tickers)
-
 ## Rate Limiting
 
-Implémenté avec `slowapi` pour éviter les abus :
+Implemented with `slowapi`:
 
 ```python
 from slowapi import Limiter
@@ -134,15 +177,15 @@ limiter = Limiter(key_func=get_remote_address)
 
 @app.post("/analyze")
 @limiter.limit("10/minute")
-async def analyze(request: Request, analysis_request: AnalyzeRequest):
+async def analyze(request: Request, ...):
     ...
 ```
 
-> **Note:** Depuis slowapi, le premier paramètre doit être `Request` pour que le rate limiting fonctionne.
+> **Note:** The first parameter must be `Request` for rate limiting to work.
 
-## Validation Pydantic
+## Pydantic Validation
 
-Les requêtes sont validées automatiquement :
+Requests are automatically validated:
 
 ```python
 from pydantic import BaseModel, Field
@@ -155,9 +198,9 @@ class AnalyzeRequest(BaseModel):
 ## CORS
 
 - **Dev:** `allow_origins=["*"]`
-- **Prod:** CORS désactivé (API-only)
+- **Prod:** CORS disabled (API-only, Telegram bot is internal)
 
-## Lancer le serveur
+## Running the Server
 
 ### Development
 
@@ -168,19 +211,19 @@ uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
 ### Production (Docker)
 
 ```bash
-docker-compose up app
+docker compose up -d
 ```
 
-## Documentation API
+## API Documentation
 
-Swagger UI auto-généré disponible sur :
+Auto-generated Swagger UI available at:
 - **Swagger:** http://localhost:8000/docs
 - **ReDoc:** http://localhost:8000/redoc
-- **Live:** https://<your-app>.azurecontainerapps.io/docs
 
-## Ressources
+## Resources
 
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Pydantic](https://docs.pydantic.dev/)
 - [Uvicorn](https://www.uvicorn.org/)
 - [slowapi](https://github.com/laurentS/slowapi)
+- [prometheus-client](https://github.com/prometheus/client_python)

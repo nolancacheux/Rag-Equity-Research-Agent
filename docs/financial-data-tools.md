@@ -1,60 +1,60 @@
 # Financial Data Tools
 
-## Vue d'ensemble
+## Overview
 
-Le projet utilise plusieurs sources de données financières :
+The project uses multiple financial data sources:
 
 ```
 src/tools/
-├── yfinance_tool.py    # Prix, fondamentaux, historique
+├── yfinance_tool.py    # Prices, fundamentals, history
 ├── sec_edgar_tool.py   # SEC filings (10-K, 10-Q, 8-K)
-└── search_tool.py      # DuckDuckGo pour news
+└── search_tool.py      # DuckDuckGo for news
 ```
 
 ## yfinance
 
-### Pourquoi yfinance ?
+### Why yfinance?
 
-- **Gratuit** : Pas d'API key requise
-- **Complet** : Prix, fondamentaux, dividendes, institutionnels
-- **Fiable** : Données Yahoo Finance
+- **Free**: No API key required
+- **Complete**: Prices, fundamentals, dividends, institutional holdings
+- **Reliable**: Yahoo Finance data
 
-### Données disponibles
+### Available Data
 
-| Type | Méthode | Cache TTL |
-|------|---------|-----------|
-| Prix temps réel | `get_price()` | 5 min |
-| Historique | `get_history()` | 1h |
-| Fondamentaux | `get_fundamentals()` | 1h |
-| Info entreprise | `get_info()` | 24h |
+| Type | Method | Cache TTL |
+|------|--------|-----------|
+| Real-time price | `get_price()` | 5 min |
+| History | `get_history()` | 1h |
+| Fundamentals | `get_fundamentals()` | 1h |
+| Company info | `get_info()` | 24h |
 
-### Utilisation
+### Usage
 
 ```python
 from src.tools.yfinance_tool import YFinanceTool
 
 tool = YFinanceTool()
 
-# Prix actuel
+# Current price
 price = tool.get_price("NVDA")
 # {"symbol": "NVDA", "price": 875.50, "change": 2.3, "volume": 45000000}
 
-# Fondamentaux
+# Fundamentals
 fundamentals = tool.get_fundamentals("NVDA")
 # {"pe_ratio": 65.2, "market_cap": 2150000000000, "revenue": 60922000000, ...}
 
-# Historique
+# History
 history = tool.get_history("NVDA", period="1mo")
-# DataFrame avec Open, High, Low, Close, Volume
+# DataFrame with Open, High, Low, Close, Volume
 ```
 
 ## SEC EDGAR
 
-### Pourquoi SEC EDGAR ?
+### Why SEC EDGAR?
 
-- **Officiel** : Source primaire pour les filings US
-- **Complet** : 10-K, 10-Q, 8-K, proxy statements
-- **Gratuit** : API publique
+- **Official**: Primary source for US filings
+- **Complete**: 10-K, 10-Q, 8-K, proxy statements
+- **Free**: Public API
 
 ### Configuration
 
@@ -62,63 +62,63 @@ history = tool.get_history("NVDA", period="1mo")
 SEC_USER_AGENT=EquityResearchAgent your-email@example.com
 ```
 
-> **Important** : SEC requiert un User-Agent valide avec email de contact.
+> **Important**: SEC requires a valid User-Agent with contact email.
 
-### Filings supportés
+### Supported Filings
 
-| Type | Description | Fréquence |
+| Type | Description | Frequency |
 |------|-------------|-----------|
-| 10-K | Rapport annuel | Annuel |
-| 10-Q | Rapport trimestriel | Trimestriel |
-| 8-K | Événements majeurs | Ad-hoc |
+| 10-K | Annual report | Yearly |
+| 10-Q | Quarterly report | Quarterly |
+| 8-K | Major events | Ad-hoc |
 
-### Utilisation
+### Usage
 
 ```python
 from src.tools.sec_edgar_tool import SECEdgarTool
 
 tool = SECEdgarTool()
 
-# Télécharger le dernier 10-K
+# Download latest 10-K
 filing = tool.download_filing("NVDA", "10-K")
 
-# Lister les filings récents
+# List recent filings
 filings = tool.list_filings("NVDA", form_type="10-K", count=5)
 ```
 
 ## DuckDuckGo Search
 
-### Pourquoi DuckDuckGo ?
+### Why DuckDuckGo?
 
-- **Gratuit** : Pas d'API key
-- **Pas de tracking** : Respect de la vie privée
-- **News** : Recherche d'actualités récentes
+- **Free**: No API key required
+- **No tracking**: Privacy-respecting
+- **News**: Recent news search
 
-### Utilisation
+### Usage
 
 ```python
 from src.tools.search_tool import SearchTool
 
 tool = SearchTool()
 
-# Recherche web générale
+# General web search
 results = tool.search("NVIDIA earnings Q4 2024")
 
-# Recherche news
+# News search
 news = tool.search_news("NVDA stock", max_results=10)
 ```
 
 ## Rate Limiting
 
-Toutes les sources externes ont du rate limiting :
+All external sources have rate limiting:
 
-| Source | Limite | Implémentation |
-|--------|--------|----------------|
+| Source | Limit | Implementation |
+|--------|-------|----------------|
 | yfinance | 2000/h | Built-in |
 | SEC EDGAR | 10/sec | `tenacity` retry |
 | DuckDuckGo | 20/min | `slowapi` |
 
-### Exemple avec tenacity
+### Example with tenacity
 
 ```python
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -131,7 +131,7 @@ def fetch_with_retry():
     ...
 ```
 
-## Ressources
+## Resources
 
 - [yfinance Documentation](https://github.com/ranaroussi/yfinance)
 - [SEC EDGAR](https://www.sec.gov/developer)
