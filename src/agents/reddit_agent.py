@@ -51,7 +51,7 @@ class RedditSentimentAgent:
         errors = []
 
         try:
-            result = await self._tool.get_sentiment(ticker)
+            result = await self._tool.analyze_sentiment(ticker)
         except Exception as e:
             logger.error("reddit_fetch_failed", ticker=ticker, error=str(e))
             return SocialSentiment(
