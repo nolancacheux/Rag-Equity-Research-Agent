@@ -98,3 +98,4 @@ secrets/
 terraform.tfvars
 .terraform/
 *.tfplan
+claude.md

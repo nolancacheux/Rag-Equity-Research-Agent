@@ -42,7 +42,8 @@ The agent autonomously:
 
 ## Architecture
 
-### High-Level System Design
+<details>
+<summary><b>🏗️ High-Level System Design</b> (click to expand)</summary>
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -106,7 +107,10 @@ The agent autonomously:
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### LangGraph Research Pipeline
+</details>
+
+<details>
+<summary><b>🔄 LangGraph Research Pipeline</b> (click to expand)</summary>
 
 ```
                               ┌─────────────┐
@@ -169,7 +173,10 @@ The agent autonomously:
                               └─────────────┘
 ```
 
-### Azure Deployment Architecture
+</details>
+
+<details>
+<summary><b>☁️ Azure Deployment Architecture</b> (click to expand)</summary>
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -223,7 +230,10 @@ The agent autonomously:
 └─────────────────┘      └─────────────────┘      └─────────────────┘
 ```
 
-### CI/CD Pipeline
+</details>
+
+<details>
+<summary><b>🚀 CI/CD Pipeline</b> (click to expand)</summary>
 
 ```
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
@@ -237,6 +247,8 @@ The agent autonomously:
 │  to Azure    │     │    ACR       │     │   Images     │     │   Validate   │
 └──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
 ```
+
+</details>
 
 ---
 
@@ -313,7 +325,8 @@ uv run mypy src/
 
 ## API Reference
 
-### Core Endpoints
+<details>
+<summary><b>📡 Core Endpoints</b></summary>
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -322,7 +335,10 @@ uv run mypy src/
 | `GET` | `/compare/{tickers}` | Compare multiple stocks |
 | `POST` | `/analyze` | Full research analysis |
 
-### Analysis Tools
+</details>
+
+<details>
+<summary><b>🔧 Analysis Tools</b></summary>
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -332,13 +348,18 @@ uv run mypy src/
 | `GET` | `/reddit/{ticker}` | Reddit sentiment |
 | `GET` | `/earnings/{ticker}` | Earnings call summary |
 
-### Watchlist
+</details>
+
+<details>
+<summary><b>📋 Watchlist</b></summary>
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/watchlist/{user_id}` | Get user's watchlist |
 | `POST` | `/watchlist/{user_id}/add` | Add stock to watchlist |
 | `POST` | `/watchlist/{user_id}/alert` | Create price alert |
+
+</details>
 
 ---
 
@@ -360,7 +381,8 @@ uv run mypy src/
 
 ## Configuration
 
-### Environment Variables
+<details>
+<summary><b>⚙️ Environment Variables</b></summary>
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -371,11 +393,14 @@ uv run mypy src/
 | `AZURE_OPENAI_*` | No | Azure OpenAI credentials (optional) |
 | `LANGCHAIN_API_KEY` | No | LangSmith tracing (optional) |
 
+</details>
+
 ---
 
 ## Azure Deployment
 
-### GitHub Secrets Required
+<details>
+<summary><b>🔐 GitHub Secrets Required</b></summary>
 
 ```
 AZURE_CREDENTIALS          # Service principal JSON
@@ -390,7 +415,10 @@ TELEGRAM_BOT_TOKEN        # Bot token
 GROQ_API_KEY              # Groq API key
 ```
 
-### Deploy with Terraform
+</details>
+
+<details>
+<summary><b>🌍 Deploy with Terraform</b></summary>
 
 ```bash
 cd terraform
@@ -399,7 +427,10 @@ terraform plan
 terraform apply
 ```
 
-### Estimated Costs
+</details>
+
+<details>
+<summary><b>💰 Estimated Costs</b></summary>
 
 | Resource | Monthly Cost |
 |----------|-------------|
@@ -407,6 +438,8 @@ terraform apply
 | Container Registry (Basic) | $5 |
 | Log Analytics | $0-5 |
 | **Total** | **~$5-20** |
+
+</details>
 
 ---
 
@@ -427,6 +460,9 @@ terraform apply
 ---
 
 ## Project Structure
+
+<details>
+<summary><b>📁 Directory Layout</b></summary>
 
 ```
 equity-research-agent/
@@ -468,6 +504,8 @@ equity-research-agent/
 ├── Dockerfile.bot        # Bot container
 └── docker-compose.yml    # Local development
 ```
+
+</details>
 
 ---
 
