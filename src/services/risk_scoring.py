@@ -246,28 +246,162 @@ class RiskScoringService:
             recommendations=recommendations,
         )
 
-    def quick_risk_assessment(self, ticker: str) -> RiskScore:
-        """Quick risk assessment without full 10-K (uses heuristics).
+    async def quick_risk_assessment(self, ticker: str) -> RiskScore:
+        """Quick risk assessment using LLM analysis of company data.
 
         Args:
             ticker: Stock ticker symbol.
 
         Returns:
-            RiskScore based on market data heuristics.
+            RiskScore with LLM-generated analysis.
         """
-        # This is a simplified version using market data
-        # Full version would fetch and analyze the 10-K
+        from langchain_groq import ChatGroq
 
-        return RiskScore(
-            ticker=ticker.upper(),
-            overall_score=5,  # Neutral
-            risk_factors=[],
-            market_risk=5,
-            operational_risk=5,
-            financial_risk=5,
-            summary=f"Quick assessment for {ticker}. For detailed analysis, use full 10-K scan.",
-            recommendations=["Review the latest 10-K for detailed risk factors"],
+        from src.config.settings import get_settings
+        from src.tools.yfinance_tool import YFinanceTool
+
+        settings = get_settings()
+        ticker = ticker.upper()
+
+        # Get basic company info for context
+        try:
+            yf_tool = YFinanceTool()
+            quote = yf_tool.get_quote(ticker)
+            _ = yf_tool.get_financials(ticker)  # noqa: F841
+            company_name = quote.name if quote else ticker
+            # sector info would come from yfinance  # Default, would get from yfinance
+        except Exception:
+            company_name = ticker
+            pass  # Company name fallback
+
+        if not settings.groq_api_key:
+            return RiskScore(
+                ticker=ticker,
+                overall_score=5,
+                risk_factors=[],
+                market_risk=5,
+                operational_risk=5,
+                financial_risk=5,
+                summary=f"Risk assessment unavailable for {ticker} (no LLM configured)",
+                recommendations=["Configure Groq API key for risk analysis"],
+            )
+
+        # Use LLM for quick risk assessment
+        llm = ChatGroq(
+            api_key=settings.groq_api_key,
+            model="llama-3.1-8b-instant",
+            temperature=0.3,
+            max_tokens=500,
         )
+
+        prompt = f"""Analyze the investment risks for {company_name} ({ticker}).
+
+Based on your knowledge of this company, provide a brief risk assessment:
+
+1. Overall risk score (1-10, where 10 is highest risk)
+2. Market risk score (1-10)
+3. Operational risk score (1-10)
+4. Financial risk score (1-10)
+5. Top 3 specific risks for this company
+6. One-paragraph summary
+
+Format your response EXACTLY as:
+OVERALL: [number]
+MARKET: [number]
+OPERATIONAL: [number]
+FINANCIAL: [number]
+RISKS:
+- [risk 1]
+- [risk 2]
+- [risk 3]
+SUMMARY: [your summary]"""
+
+        try:
+            response = await llm.ainvoke([{"role": "user", "content": prompt}])
+            text = response.content
+
+            # Parse response
+            overall = self._extract_score(text, "OVERALL")
+            market = self._extract_score(text, "MARKET")
+            operational = self._extract_score(text, "OPERATIONAL")
+            financial = self._extract_score(text, "FINANCIAL")
+            risks = self._extract_risks(text)
+            summary = self._extract_summary(text)
+
+            risk_factors = [
+                RiskFactor(
+                    category=RiskCategory.MARKET,
+                    description=risk,
+                    severity=3,
+                    keywords_found=[],
+                )
+                for risk in risks
+            ]
+
+            return RiskScore(
+                ticker=ticker,
+                overall_score=overall,
+                risk_factors=risk_factors,
+                market_risk=market,
+                operational_risk=operational,
+                financial_risk=financial,
+                summary=summary or f"Risk assessment for {ticker}",
+                recommendations=self._generate_recommendations(overall, risk_factors),
+            )
+
+        except Exception as e:
+            logger.error("llm_risk_assessment_failed", ticker=ticker, error=str(e))
+            return RiskScore(
+                ticker=ticker,
+                overall_score=5,
+                risk_factors=[],
+                market_risk=5,
+                operational_risk=5,
+                financial_risk=5,
+                summary=f"Could not complete risk assessment for {ticker}",
+                recommendations=["Try again later"],
+            )
+
+    def _extract_score(self, text: str, label: str) -> int:
+        """Extract a score from LLM response."""
+        import re
+
+        pattern = rf"{label}:\s*(\d+)"
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            score = int(match.group(1))
+            return min(max(score, 1), 10)
+        return 5
+
+    def _extract_risks(self, text: str) -> list[str]:
+        """Extract risk list from LLM response."""
+
+        risks = []
+        in_risks = False
+        for line in text.split("\n"):
+            if "RISKS:" in line.upper():
+                in_risks = True
+                continue
+            if in_risks:
+                if line.strip().startswith("-"):
+                    risk = line.strip().lstrip("-").strip()
+                    if risk:
+                        risks.append(risk)
+                elif "SUMMARY:" in line.upper():
+                    break
+        return risks[:5]
+
+    def _extract_summary(self, text: str) -> str:
+        """Extract summary from LLM response."""
+        import re
+
+        match = re.search(r"SUMMARY:\s*(.+)", text, re.IGNORECASE | re.DOTALL)
+        if match:
+            summary = match.group(1).strip()
+            # Take first paragraph only
+            summary = summary.split("\n\n")[0].strip()
+            return summary[:500]
+        return ""
 
     def _generate_summary(
         self, ticker: str, overall_score: int, risk_factors: list[RiskFactor]

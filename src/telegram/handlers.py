@@ -376,12 +376,12 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await handle_quote(update, tickers[0], lang)
         return
 
-    # Fallback - show menu
-    await update.message.reply_text(
-        get_text("not_understood", lang),
-        reply_markup=main_menu_keyboard(lang),
-        parse_mode=ParseMode.MARKDOWN,
-    )
+    # Fallback - conversational response
+    from src.services.chat import get_chat_service
+
+    chat_service = get_chat_service()
+    response = await chat_service.chat(text)
+    await update.message.reply_text(response)
 
 
 # =============================================================================

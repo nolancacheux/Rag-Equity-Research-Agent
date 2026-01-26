@@ -53,7 +53,7 @@ class RiskScoringAgent:
 
         try:
             # Use quick assessment (without full 10-K parsing)
-            result = self._service.quick_risk_assessment(ticker)
+            result = await self._service.quick_risk_assessment(ticker)
         except Exception as e:
             logger.error("risk_scoring_failed", ticker=ticker, error=str(e))
             return RiskAssessment(
