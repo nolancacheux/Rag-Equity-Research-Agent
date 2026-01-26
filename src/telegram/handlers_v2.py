@@ -1,11 +1,20 @@
 """New feature handlers for Telegram bot."""
 
+import re
+
+from telegram import Update
 from telegram.constants import ChatAction, ParseMode
 from telegram.ext import ContextTypes
 
 from src.telegram.client import APIClient
 from src.telegram.handlers import get_user_lang
-from telegram import Update
+
+
+def escape_markdown(text: str) -> str:
+    """Escape Markdown special characters."""
+    escape_chars = r"_*[]()~`>#+-=|{}.!"
+    return re.sub(f"([{re.escape(escape_chars)}])", r"\\\1", text)
+
 
 # Shared client reference
 api_client: APIClient | None = None
@@ -251,7 +260,7 @@ async def reddit_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if data.get("success") and data.get("data"):
             result = data["data"]
             await update.message.reply_text(
-                result.get("summary", "No Reddit sentiment available"),
+                escape_markdown(result.get("summary", "No Reddit sentiment available")),
                 parse_mode=ParseMode.MARKDOWN,
             )
         else:
