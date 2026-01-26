@@ -6,268 +6,141 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 
-class TestRedisCache:
-    """Tests for RedisCache class."""
+class TestMemoryCache:
+    """Tests for MemoryCache class."""
 
-    @patch("src.utils.cache.redis.from_url")
-    def test_connect_success(self, mock_from_url):
-        """Test successful Redis connection."""
-        from src.utils.cache import RedisCache
+    def test_init(self):
+        """Test cache initialization."""
+        from src.utils.cache import MemoryCache
 
-        mock_client = MagicMock()
-        mock_from_url.return_value = mock_client
-
-        cache = RedisCache("redis://localhost:6379", default_ttl=3600)
-        client = cache._connect()
-
-        assert client is not None
-        assert cache._connected is True
-
-    @patch("src.utils.cache.redis.from_url")
-    def test_connect_failure(self, mock_from_url):
-        """Test Redis connection failure."""
-        import redis
-        from src.utils.cache import RedisCache
-
-        mock_from_url.side_effect = redis.ConnectionError("Connection refused")
-
-        cache = RedisCache("redis://localhost:6379")
-        client = cache._connect()
-
-        assert client is None
-        assert cache._connected is False
-
-    @patch("src.utils.cache.redis.from_url")
-    def test_connect_cached(self, mock_from_url):
-        """Test that connection is reused."""
-        from src.utils.cache import RedisCache
-
-        mock_client = MagicMock()
-        mock_from_url.return_value = mock_client
-
-        cache = RedisCache("redis://localhost:6379")
-        cache._connect()
-        cache._connect()
-
-        # Should only connect once
-        assert mock_from_url.call_count == 1
+        cache = MemoryCache(default_ttl=3600)
+        assert cache._default_ttl == 3600
+        assert cache._cache == {}
 
     def test_make_key(self):
         """Test cache key generation."""
-        from src.utils.cache import RedisCache
+        from src.utils.cache import MemoryCache
 
-        key1 = RedisCache._make_key("prefix", "arg1", kwarg1="value1")
-        key2 = RedisCache._make_key("prefix", "arg1", kwarg1="value1")
-        key3 = RedisCache._make_key("prefix", "arg2", kwarg1="value1")
+        key1 = MemoryCache._make_key("prefix", "arg1", kwarg1="value1")
+        key2 = MemoryCache._make_key("prefix", "arg1", kwarg1="value1")
+        key3 = MemoryCache._make_key("prefix", "arg2", kwarg1="value1")
 
         assert key1 == key2  # Same args = same key
         assert key1 != key3  # Different args = different key
         assert key1.startswith("prefix:")
 
-    @patch("src.utils.cache.redis.from_url")
-    def test_get_success(self, mock_from_url):
-        """Test successful cache get."""
-        from src.utils.cache import RedisCache
+    def test_set_and_get(self):
+        """Test basic set and get operations."""
+        from src.utils.cache import MemoryCache
 
-        mock_client = MagicMock()
-        mock_from_url.return_value = mock_client
-        mock_client.get.return_value = '{"key": "value"}'
+        cache = MemoryCache(default_ttl=3600)
+        
+        result = cache.set("test_key", {"data": "value"})
+        assert result is True
+        
+        value = cache.get("test_key")
+        assert value == {"data": "value"}
 
-        cache = RedisCache("redis://localhost:6379")
-        result = cache.get("test_key")
-
-        assert result == {"key": "value"}
-
-    @patch("src.utils.cache.redis.from_url")
-    def test_get_miss(self, mock_from_url):
+    def test_get_miss(self):
         """Test cache miss."""
-        from src.utils.cache import RedisCache
+        from src.utils.cache import MemoryCache
 
-        mock_client = MagicMock()
-        mock_from_url.return_value = mock_client
-        mock_client.get.return_value = None
-
-        cache = RedisCache("redis://localhost:6379")
-        result = cache.get("test_key")
-
+        cache = MemoryCache()
+        result = cache.get("nonexistent_key")
         assert result is None
 
-    @patch("src.utils.cache.redis.from_url")
-    def test_get_error(self, mock_from_url):
-        """Test cache get error handling."""
-        import redis
-        from src.utils.cache import RedisCache
+    def test_get_expired(self):
+        """Test expired cache entry."""
+        from src.utils.cache import MemoryCache
 
-        mock_client = MagicMock()
-        mock_from_url.return_value = mock_client
-        mock_client.get.side_effect = redis.RedisError("Error")
-
-        cache = RedisCache("redis://localhost:6379")
+        cache = MemoryCache(default_ttl=1)
+        cache.set("test_key", {"data": "value"}, ttl=0)  # Immediate expiry
+        
+        # Wait a bit for expiry
+        time.sleep(0.1)
+        
         result = cache.get("test_key")
-
         assert result is None
 
-    @patch("src.utils.cache.redis.from_url")
-    def test_get_json_error(self, mock_from_url):
-        """Test cache get with invalid JSON."""
-        from src.utils.cache import RedisCache
-
-        mock_client = MagicMock()
-        mock_from_url.return_value = mock_client
-        mock_client.get.return_value = "invalid json {"
-
-        cache = RedisCache("redis://localhost:6379")
-        result = cache.get("test_key")
-
-        assert result is None
-
-    @patch("src.utils.cache.redis.from_url")
-    def test_get_no_connection(self, mock_from_url):
-        """Test cache get with no connection."""
-        import redis
-        from src.utils.cache import RedisCache
-
-        mock_from_url.side_effect = redis.ConnectionError()
-
-        cache = RedisCache("redis://localhost:6379")
-        result = cache.get("test_key")
-
-        assert result is None
-
-    @patch("src.utils.cache.redis.from_url")
-    def test_set_success(self, mock_from_url):
-        """Test successful cache set."""
-        from src.utils.cache import RedisCache
-
-        mock_client = MagicMock()
-        mock_from_url.return_value = mock_client
-
-        cache = RedisCache("redis://localhost:6379", default_ttl=3600)
-        result = cache.set("test_key", {"data": "value"})
-
-        assert result is True
-        mock_client.setex.assert_called_once()
-
-    @patch("src.utils.cache.redis.from_url")
-    def test_set_custom_ttl(self, mock_from_url):
+    def test_set_custom_ttl(self):
         """Test cache set with custom TTL."""
-        from src.utils.cache import RedisCache
+        from src.utils.cache import MemoryCache
 
-        mock_client = MagicMock()
-        mock_from_url.return_value = mock_client
-
-        cache = RedisCache("redis://localhost:6379", default_ttl=3600)
+        cache = MemoryCache(default_ttl=3600)
         cache.set("test_key", {"data": "value"}, ttl=7200)
+        
+        value, expiry = cache._cache["test_key"]
+        assert value == {"data": "value"}
+        # Expiry should be ~7200 seconds in the future
+        assert expiry > time.time() + 7000
 
-        mock_client.setex.assert_called_with("test_key", 7200, '{"data": "value"}')
+    def test_delete_existing(self):
+        """Test deleting existing key."""
+        from src.utils.cache import MemoryCache
 
-    @patch("src.utils.cache.redis.from_url")
-    def test_set_error(self, mock_from_url):
-        """Test cache set error handling."""
-        import redis
-        from src.utils.cache import RedisCache
-
-        mock_client = MagicMock()
-        mock_from_url.return_value = mock_client
-        mock_client.setex.side_effect = redis.RedisError("Error")
-
-        cache = RedisCache("redis://localhost:6379")
-        result = cache.set("test_key", {"data": "value"})
-
-        assert result is False
-
-    @patch("src.utils.cache.redis.from_url")
-    def test_set_no_connection(self, mock_from_url):
-        """Test cache set with no connection."""
-        import redis
-        from src.utils.cache import RedisCache
-
-        mock_from_url.side_effect = redis.ConnectionError()
-
-        cache = RedisCache("redis://localhost:6379")
-        result = cache.set("test_key", {"data": "value"})
-
-        assert result is False
-
-    @patch("src.utils.cache.redis.from_url")
-    def test_delete_success(self, mock_from_url):
-        """Test successful cache delete."""
-        from src.utils.cache import RedisCache
-
-        mock_client = MagicMock()
-        mock_from_url.return_value = mock_client
-
-        cache = RedisCache("redis://localhost:6379")
+        cache = MemoryCache()
+        cache.set("test_key", "value")
+        
         result = cache.delete("test_key")
-
         assert result is True
-        mock_client.delete.assert_called_with("test_key")
+        assert cache.get("test_key") is None
 
-    @patch("src.utils.cache.redis.from_url")
-    def test_delete_error(self, mock_from_url):
-        """Test cache delete error handling."""
-        import redis
-        from src.utils.cache import RedisCache
+    def test_delete_nonexistent(self):
+        """Test deleting nonexistent key."""
+        from src.utils.cache import MemoryCache
 
-        mock_client = MagicMock()
-        mock_from_url.return_value = mock_client
-        mock_client.delete.side_effect = redis.RedisError("Error")
-
-        cache = RedisCache("redis://localhost:6379")
-        result = cache.delete("test_key")
-
+        cache = MemoryCache()
+        result = cache.delete("nonexistent")
         assert result is False
 
-    @patch("src.utils.cache.redis.from_url")
-    def test_delete_no_connection(self, mock_from_url):
-        """Test cache delete with no connection."""
-        import redis
-        from src.utils.cache import RedisCache
+    def test_is_connected(self):
+        """Test is_connected property (always True for memory cache)."""
+        from src.utils.cache import MemoryCache
 
-        mock_from_url.side_effect = redis.ConnectionError()
-
-        cache = RedisCache("redis://localhost:6379")
-        result = cache.delete("test_key")
-
-        assert result is False
-
-    @patch("src.utils.cache.redis.from_url")
-    def test_is_connected(self, mock_from_url):
-        """Test is_connected property."""
-        from src.utils.cache import RedisCache
-
-        mock_client = MagicMock()
-        mock_from_url.return_value = mock_client
-
-        cache = RedisCache("redis://localhost:6379")
-        assert cache.is_connected is False
-
-        cache._connect()
+        cache = MemoryCache()
         assert cache.is_connected is True
+
+    def test_cleanup_expired(self):
+        """Test cleanup of expired entries."""
+        from src.utils.cache import MemoryCache
+
+        cache = MemoryCache()
+        
+        # Add entries with different expiries
+        cache._cache["expired"] = ("value", time.time() - 10)  # Already expired
+        cache._cache["valid"] = ("value", time.time() + 3600)  # Still valid
+        
+        cache._cleanup_expired()
+        
+        assert "expired" not in cache._cache
+        assert "valid" in cache._cache
 
 
 class TestGetCache:
     """Tests for get_cache function."""
 
-    @patch("src.utils.cache.RedisCache")
-    @patch("src.utils.cache.get_settings")
-    def test_get_cache(self, mock_settings, mock_cache_class):
+    def test_get_cache(self):
         """Test get_cache singleton."""
         from src.utils.cache import get_cache
 
         # Clear the lru_cache
         get_cache.cache_clear()
 
-        mock_settings_obj = MagicMock()
-        mock_settings_obj.redis_url = "redis://localhost:6379"
-        mock_settings_obj.cache_ttl_seconds = 3600
-        mock_settings.return_value = mock_settings_obj
-
         cache1 = get_cache()
         cache2 = get_cache()
 
         # Should return same instance (cached)
         assert cache1 is cache2
+
+
+class TestRedisBackwardsCompatibility:
+    """Test backwards compatibility alias."""
+
+    def test_redis_cache_alias(self):
+        """Test that RedisCache is aliased to MemoryCache."""
+        from src.utils.cache import RedisCache, MemoryCache
+
+        assert RedisCache is MemoryCache
 
 
 class TestRateLimiter:
