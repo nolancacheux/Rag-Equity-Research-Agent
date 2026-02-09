@@ -1,0 +1,406 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" fill="none">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/></marker>
+    <marker id="arr-b" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#3b82f6"/></marker>
+    <marker id="arr-g" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#059669"/></marker>
+    <marker id="arr-p" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#7c3aed"/></marker>
+    <marker id="arr-r" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#dc2626"/></marker>
+    <filter id="sh" x="-2%" y="-2%" width="104%" height="104%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.06"/></filter>
+    <filter id="sh-lg" x="-1%" y="-1%" width="102%" height="102%"><feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000" flood-opacity="0.08"/></filter>
+    <linearGradient id="g-blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#eff6ff"/><stop offset="100%" stop-color="#dbeafe"/></linearGradient>
+    <linearGradient id="g-green" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ecfdf5"/><stop offset="100%" stop-color="#d1fae5"/></linearGradient>
+    <linearGradient id="g-purple" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#faf5ff"/><stop offset="100%" stop-color="#ede9fe"/></linearGradient>
+    <linearGradient id="g-red" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fef2f2"/><stop offset="100%" stop-color="#fecdd3"/></linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="900" fill="#f8fafc"/>
+  <rect x="0" y="0" width="1200" height="4" fill="#7c3aed" opacity="0.6"/>
+
+  <!-- Title -->
+  <text x="600" y="38" text-anchor="middle" fill="#0f172a" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="700">RAG Equity Research Agent</text>
+  <text x="600" y="56" text-anchor="middle" fill="#64748b" font-family="system-ui, sans-serif" font-size="13">Multi-Agent System | LangGraph + Hybrid RAG + Azure Deployment</text>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- LEFT COLUMN: User Interfaces -->
+  <!-- ══════════════════════════════════════════════ -->
+  <g filter="url(#sh)">
+    <rect x="30" y="80" width="185" height="175" rx="12" fill="#ffffff" stroke="#bae6fd" stroke-width="1.5"/>
+  </g>
+  <rect x="30" y="80" width="185" height="5" rx="2.5" fill="#0284c7"/>
+  <text x="122" y="106" text-anchor="middle" fill="#0c4a6e" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Telegram Bot</text>
+  <text x="122" y="121" text-anchor="middle" fill="#64748b" font-family="system-ui, sans-serif" font-size="9">python-telegram-bot</text>
+  <rect x="45" y="132" width="75" height="18" rx="3" fill="#f0f9ff" stroke="#bae6fd" stroke-width="0.5"/>
+  <text x="82" y="145" text-anchor="middle" fill="#0369a1" font-family="monospace" font-size="8">/analyze</text>
+  <rect x="125" y="132" width="75" height="18" rx="3" fill="#f0f9ff" stroke="#bae6fd" stroke-width="0.5"/>
+  <text x="162" y="145" text-anchor="middle" fill="#0369a1" font-family="monospace" font-size="8">/quote</text>
+  <rect x="45" y="155" width="75" height="18" rx="3" fill="#f0f9ff" stroke="#bae6fd" stroke-width="0.5"/>
+  <text x="82" y="168" text-anchor="middle" fill="#0369a1" font-family="monospace" font-size="8">/dcf</text>
+  <rect x="125" y="155" width="75" height="18" rx="3" fill="#f0f9ff" stroke="#bae6fd" stroke-width="0.5"/>
+  <text x="162" y="168" text-anchor="middle" fill="#0369a1" font-family="monospace" font-size="8">/risk</text>
+  <rect x="45" y="178" width="75" height="18" rx="3" fill="#f0f9ff" stroke="#bae6fd" stroke-width="0.5"/>
+  <text x="82" y="191" text-anchor="middle" fill="#0369a1" font-family="monospace" font-size="8">/peers</text>
+  <rect x="125" y="178" width="75" height="18" rx="3" fill="#f0f9ff" stroke="#bae6fd" stroke-width="0.5"/>
+  <text x="162" y="191" text-anchor="middle" fill="#0369a1" font-family="monospace" font-size="8">/reddit</text>
+  <text x="122" y="218" text-anchor="middle" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="8">Inline keyboards + watchlists + alerts</text>
+  <rect x="45" y="225" width="155" height="16" rx="3" fill="#f0f9ff"/>
+  <text x="122" y="237" text-anchor="middle" fill="#0284c7" font-family="monospace" font-size="8">FastAPI REST API (Port 8000)</text>
+
+  <!-- Arrow: Interfaces → LangGraph -->
+  <line x1="215" y1="167" x2="260" y2="167" stroke="#0284c7" stroke-width="2" marker-end="url(#arr-b)"/>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- CENTER: LANGGRAPH ORCHESTRATOR (hero element) -->
+  <!-- ══════════════════════════════════════════════ -->
+  <g filter="url(#sh-lg)">
+    <rect x="270" y="75" width="400" height="190" rx="16" fill="url(#g-purple)" stroke="#c4b5fd" stroke-width="1.5"/>
+  </g>
+  <text x="470" y="100" text-anchor="middle" fill="#4c1d95" font-family="system-ui, sans-serif" font-size="15" font-weight="700" letter-spacing="1">LANGGRAPH ORCHESTRATOR</text>
+  <text x="470" y="116" text-anchor="middle" fill="#6d28d9" font-family="system-ui, sans-serif" font-size="10">StateGraph | Conditional Routing | Async Execution</text>
+
+  <!-- Pipeline flow inside LangGraph -->
+  <g filter="url(#sh)">
+    <rect x="290" y="130" width="80" height="35" rx="6" fill="#ffffff" stroke="#c4b5fd" stroke-width="1"/>
+  </g>
+  <text x="330" y="144" text-anchor="middle" fill="#4c1d95" font-family="system-ui, sans-serif" font-size="9" font-weight="700">Parse</text>
+  <text x="330" y="157" text-anchor="middle" fill="#7c3aed" font-family="monospace" font-size="8">tickers, intent</text>
+
+  <path d="M 370 147 L 390 147" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arr-p)"/>
+
+  <g filter="url(#sh)">
+    <rect x="398" y="130" width="85" height="35" rx="6" fill="#ffffff" stroke="#c4b5fd" stroke-width="1"/>
+  </g>
+  <text x="440" y="144" text-anchor="middle" fill="#4c1d95" font-family="system-ui, sans-serif" font-size="9" font-weight="700">Market Data</text>
+  <text x="440" y="157" text-anchor="middle" fill="#7c3aed" font-family="monospace" font-size="8">yfinance</text>
+
+  <path d="M 483 147 L 503 147" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arr-p)"/>
+
+  <!-- Conditional diamond -->
+  <polygon points="530,135 550,147 530,159 510,147" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="530" y="150" text-anchor="middle" fill="#7c3aed" font-family="system-ui, sans-serif" font-size="7" font-weight="700">?</text>
+
+  <!-- Branch: Yes (docs) -->
+  <path d="M 550 147 L 575 147" stroke="#059669" stroke-width="1" marker-end="url(#arr-g)"/>
+  <g filter="url(#sh)">
+    <rect x="580" y="130" width="70" height="35" rx="6" fill="#ffffff" stroke="#a7f3d0" stroke-width="1"/>
+  </g>
+  <text x="615" y="144" text-anchor="middle" fill="#065f46" font-family="system-ui, sans-serif" font-size="8" font-weight="700">Doc Reader</text>
+  <text x="615" y="157" text-anchor="middle" fill="#059669" font-family="monospace" font-size="7">SEC RAG</text>
+  <text x="565" y="135" fill="#059669" font-family="system-ui, sans-serif" font-size="7">docs?</text>
+
+  <!-- Branch: No (skip) -->
+  <path d="M 530 159 L 530 175 L 615 175" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="560" y="172" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="7">skip</text>
+
+  <!-- Parallel analysis -->
+  <path d="M 615 165 L 615 182 L 470 182 L 470 195" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arr-p)"/>
+  <g filter="url(#sh)">
+    <rect x="310" y="198" width="320" height="30" rx="6" fill="#ffffff" stroke="#c4b5fd" stroke-width="1"/>
+  </g>
+  <text x="470" y="217" text-anchor="middle" fill="#4c1d95" font-family="system-ui, sans-serif" font-size="10" font-weight="600">Parallel Analysis (asyncio.gather)</text>
+
+  <!-- Arrow down: to agents -->
+  <path d="M 470 228 L 470 245 L 470 265" stroke="#7c3aed" stroke-width="2" marker-end="url(#arr-p)"/>
+
+  <!-- Result: Synthesizer -->
+  <path d="M 630 213 L 645 213" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arr-p)"/>
+  <g filter="url(#sh)">
+    <rect x="650" y="198" width="80" height="50" rx="6" fill="#ffffff" stroke="#c4b5fd" stroke-width="1"/>
+  </g>
+  <text x="690" y="216" text-anchor="middle" fill="#4c1d95" font-family="system-ui, sans-serif" font-size="9" font-weight="700">Synthesizer</text>
+  <text x="690" y="230" text-anchor="middle" fill="#7c3aed" font-family="system-ui, sans-serif" font-size="8">Final report</text>
+  <text x="690" y="242" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="7">→ END</text>
+
+  <!-- LLM box (right of LangGraph) -->
+  <g filter="url(#sh)">
+    <rect x="710" y="80" width="175" height="105" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+  </g>
+  <rect x="710" y="80" width="175" height="5" rx="2.5" fill="#ea580c"/>
+  <text x="797" y="106" text-anchor="middle" fill="#7c2d12" font-family="system-ui, sans-serif" font-size="12" font-weight="700">LLM Providers</text>
+  <rect x="725" y="115" width="145" height="22" rx="4" fill="#fff7ed" stroke="#fed7aa" stroke-width="0.5"/>
+  <text x="797" y="130" text-anchor="middle" fill="#c2410c" font-family="monospace" font-size="9">Groq | Llama 3.3 70B</text>
+  <rect x="725" y="141" width="145" height="22" rx="4" fill="#eff6ff" stroke="#bfdbfe" stroke-width="0.5"/>
+  <text x="797" y="156" text-anchor="middle" fill="#2563eb" font-family="monospace" font-size="9">Azure | GPT-4o-mini</text>
+  <text x="797" y="178" text-anchor="middle" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="9">LangChain integration</text>
+
+  <!-- Arrow: LangGraph → LLM -->
+  <line x1="670" y1="120" x2="710" y2="120" stroke="#ea580c" stroke-width="1.5" stroke-dasharray="4,2"/>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- ROW 2: SPECIALIZED AGENTS (fan-out from LangGraph) -->
+  <!-- ══════════════════════════════════════════════ -->
+  <g filter="url(#sh-lg)">
+    <rect x="30" y="275" width="860" height="145" rx="14" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+  </g>
+  <rect x="30" y="275" width="860" height="5" rx="2.5" fill="#3b82f6"/>
+  <text x="460" y="300" text-anchor="middle" fill="#1e40af" font-family="system-ui, sans-serif" font-size="13" font-weight="700" letter-spacing="1">SPECIALIZED AGENTS</text>
+
+  <!-- Agent cards -->
+  <!-- News -->
+  <g filter="url(#sh)">
+    <rect x="48" y="312" width="125" height="90" rx="8" fill="url(#g-blue)" stroke="#bfdbfe" stroke-width="1"/>
+  </g>
+  <circle cx="68" cy="332" r="10" fill="#3b82f6"/>
+  <text x="68" y="336" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-size="9" font-weight="700">N</text>
+  <text x="120" y="336" text-anchor="middle" fill="#1e40af" font-family="system-ui, sans-serif" font-size="11" font-weight="700">News</text>
+  <text x="110" y="354" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">DuckDuckGo search</text>
+  <text x="110" y="368" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">LLM sentiment scoring</text>
+  <rect x="58" y="380" width="105" height="14" rx="3" fill="#dbeafe"/>
+  <text x="110" y="391" text-anchor="middle" fill="#1e40af" font-family="monospace" font-size="7">news_sentiment.py</text>
+
+  <!-- Reddit -->
+  <g filter="url(#sh)">
+    <rect x="185" y="312" width="125" height="90" rx="8" fill="url(#g-red)" stroke="#fca5a5" stroke-width="1"/>
+  </g>
+  <circle cx="205" cy="332" r="10" fill="#dc2626"/>
+  <text x="205" y="336" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-size="9" font-weight="700">R</text>
+  <text x="260" y="336" text-anchor="middle" fill="#991b1b" font-family="system-ui, sans-serif" font-size="11" font-weight="700">Reddit</text>
+  <text x="247" y="354" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">WSB, r/stocks</text>
+  <text x="247" y="368" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Community analysis</text>
+  <rect x="195" y="380" width="105" height="14" rx="3" fill="#fecdd3"/>
+  <text x="247" y="391" text-anchor="middle" fill="#991b1b" font-family="monospace" font-size="7">reddit_agent.py</text>
+
+  <!-- Earnings -->
+  <g filter="url(#sh)">
+    <rect x="322" y="312" width="125" height="90" rx="8" fill="url(#g-purple)" stroke="#ddd6fe" stroke-width="1"/>
+  </g>
+  <circle cx="342" cy="332" r="10" fill="#7c3aed"/>
+  <text x="342" y="336" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-size="9" font-weight="700">E</text>
+  <text x="395" y="336" text-anchor="middle" fill="#4c1d95" font-family="system-ui, sans-serif" font-size="11" font-weight="700">Earnings</text>
+  <text x="384" y="354" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Transcript analysis</text>
+  <text x="384" y="368" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Key metrics extraction</text>
+  <rect x="332" y="380" width="105" height="14" rx="3" fill="#ede9fe"/>
+  <text x="384" y="391" text-anchor="middle" fill="#4c1d95" font-family="monospace" font-size="7">earnings_agent.py</text>
+
+  <!-- Peers -->
+  <g filter="url(#sh)">
+    <rect x="459" y="312" width="125" height="90" rx="8" fill="url(#g-green)" stroke="#a7f3d0" stroke-width="1"/>
+  </g>
+  <circle cx="479" cy="332" r="10" fill="#059669"/>
+  <text x="479" y="336" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-size="9" font-weight="700">P</text>
+  <text x="535" y="336" text-anchor="middle" fill="#065f46" font-family="system-ui, sans-serif" font-size="11" font-weight="700">Peers</text>
+  <text x="521" y="354" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Auto peer detection</text>
+  <text x="521" y="368" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Side-by-side compare</text>
+  <rect x="469" y="380" width="105" height="14" rx="3" fill="#d1fae5"/>
+  <text x="521" y="391" text-anchor="middle" fill="#065f46" font-family="monospace" font-size="7">peer_agent.py</text>
+
+  <!-- Risk -->
+  <g filter="url(#sh)">
+    <rect x="596" y="312" width="125" height="90" rx="8" fill="#fff7ed" stroke="#fed7aa" stroke-width="1"/>
+  </g>
+  <circle cx="616" cy="332" r="10" fill="#ea580c"/>
+  <text x="616" y="336" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-size="9" font-weight="700">K</text>
+  <text x="668" y="336" text-anchor="middle" fill="#7c2d12" font-family="system-ui, sans-serif" font-size="11" font-weight="700">Risk (10-K)</text>
+  <text x="658" y="354" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Keyword risk scoring</text>
+  <text x="658" y="368" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">SEC filing analysis</text>
+  <rect x="606" y="380" width="105" height="14" rx="3" fill="#ffedd5"/>
+  <text x="658" y="391" text-anchor="middle" fill="#7c2d12" font-family="monospace" font-size="7">risk_agent.py</text>
+
+  <!-- DCF -->
+  <g filter="url(#sh)">
+    <rect x="733" y="312" width="140" height="90" rx="8" fill="#f0f9ff" stroke="#bae6fd" stroke-width="1"/>
+  </g>
+  <circle cx="753" cy="332" r="10" fill="#0284c7"/>
+  <text x="753" y="336" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-size="9" font-weight="700">D</text>
+  <text x="815" y="336" text-anchor="middle" fill="#0c4a6e" font-family="system-ui, sans-serif" font-size="11" font-weight="700">DCF Valuation</text>
+  <text x="803" y="354" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Cash flow modeling</text>
+  <text x="803" y="368" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Intrinsic value calc</text>
+  <rect x="748" y="380" width="115" height="14" rx="3" fill="#dbeafe"/>
+  <text x="805" y="391" text-anchor="middle" fill="#0c4a6e" font-family="monospace" font-size="7">dcf_valuation.py</text>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- Arrow: Agents → RAG Pipeline -->
+  <!-- ══════════════════════════════════════════════ -->
+  <path d="M 460 420 L 460 448" stroke="#059669" stroke-width="2" marker-end="url(#arr-g)"/>
+  <text x="502" y="438" fill="#059669" font-family="system-ui, sans-serif" font-size="9" font-weight="500">Document queries feed RAG</text>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- ROW 3: HYBRID RAG PIPELINE -->
+  <!-- ══════════════════════════════════════════════ -->
+  <g filter="url(#sh-lg)">
+    <rect x="30" y="455" width="860" height="150" rx="14" fill="url(#g-green)" stroke="#a7f3d0" stroke-width="1.5"/>
+  </g>
+  <text x="460" y="480" text-anchor="middle" fill="#065f46" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="1">HYBRID RAG PIPELINE</text>
+  <text x="460" y="496" text-anchor="middle" fill="#047857" font-family="system-ui, sans-serif" font-size="10">SEC 10-K filings → Semantic chunks → Dual retrieval → Fusion reranking</text>
+
+  <!-- Pipeline stages as connected boxes -->
+  <g filter="url(#sh)">
+    <rect x="48" y="510" width="140" height="75" rx="8" fill="#ffffff" stroke="#a7f3d0" stroke-width="1"/>
+  </g>
+  <text x="118" y="532" text-anchor="middle" fill="#065f46" font-family="system-ui, sans-serif" font-size="11" font-weight="700">Chunking</text>
+  <text x="118" y="548" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Semantic splitting</text>
+  <text x="118" y="562" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Metadata enrichment</text>
+  <rect x="58" y="568" width="120" height="12" rx="3" fill="#d1fae5"/>
+  <text x="118" y="578" text-anchor="middle" fill="#065f46" font-family="monospace" font-size="7">chunking.py</text>
+
+  <!-- Arrow -->
+  <path d="M 188 547 L 215 547" stroke="#059669" stroke-width="2" marker-end="url(#arr-g)"/>
+
+  <!-- BM25 -->
+  <g filter="url(#sh)">
+    <rect x="225" y="510" width="140" height="75" rx="8" fill="#ffffff" stroke="#fed7aa" stroke-width="1"/>
+  </g>
+  <text x="295" y="532" text-anchor="middle" fill="#9a3412" font-family="system-ui, sans-serif" font-size="11" font-weight="700">BM25 Sparse</text>
+  <text x="295" y="548" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Okapi BM25 (k1=1.5)</text>
+  <text x="295" y="562" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Exact keyword matching</text>
+  <rect x="240" y="568" width="110" height="12" rx="3" fill="#ffedd5"/>
+  <text x="295" y="578" text-anchor="middle" fill="#9a3412" font-family="monospace" font-size="7">hybrid_search.py</text>
+
+  <!-- Plus sign -->
+  <circle cx="388" cy="547" r="12" fill="#ffffff" stroke="#059669" stroke-width="1.5"/>
+  <text x="388" y="552" text-anchor="middle" fill="#059669" font-family="system-ui, sans-serif" font-size="14" font-weight="700">+</text>
+
+  <!-- Dense -->
+  <g filter="url(#sh)">
+    <rect x="410" y="510" width="160" height="75" rx="8" fill="#ffffff" stroke="#c4b5fd" stroke-width="1"/>
+  </g>
+  <text x="490" y="532" text-anchor="middle" fill="#4c1d95" font-family="system-ui, sans-serif" font-size="11" font-weight="700">Dense Embeddings</text>
+  <text x="490" y="548" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">text-embedding-ada-002</text>
+  <text x="490" y="562" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Semantic similarity</text>
+  <rect x="430" y="568" width="120" height="12" rx="3" fill="#ede9fe"/>
+  <text x="490" y="578" text-anchor="middle" fill="#4c1d95" font-family="monospace" font-size="7">embeddings.py</text>
+
+  <!-- Arrow to RRF -->
+  <path d="M 570 547 L 600 547" stroke="#7c3aed" stroke-width="2" marker-end="url(#arr-p)"/>
+
+  <!-- RRF Fusion -->
+  <g filter="url(#sh)">
+    <rect x="610" y="510" width="130" height="75" rx="8" fill="#ffffff" stroke="#059669" stroke-width="1.5"/>
+  </g>
+  <text x="675" y="530" text-anchor="middle" fill="#065f46" font-family="system-ui, sans-serif" font-size="11" font-weight="700">RRF Fusion</text>
+  <text x="675" y="546" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Reciprocal Rank</text>
+  <text x="675" y="560" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">Merge + Rerank</text>
+  <rect x="625" y="568" width="100" height="12" rx="3" fill="#d1fae5"/>
+  <text x="675" y="578" text-anchor="middle" fill="#065f46" font-family="monospace" font-size="7">reranker.py</text>
+
+  <!-- Arrow to Qdrant -->
+  <path d="M 740 547 L 770 547" stroke="#059669" stroke-width="2" marker-end="url(#arr-g)"/>
+
+  <!-- Qdrant -->
+  <g filter="url(#sh)">
+    <rect x="780" y="505" width="95" height="85" rx="8" fill="#ffffff" stroke="#dc2626" stroke-width="1.5"/>
+  </g>
+  <!-- DB icon -->
+  <ellipse cx="827" cy="525" rx="25" ry="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1"/>
+  <path d="M 802 525 L 802 548 Q 802 556 827 556 Q 852 556 852 548 L 852 525" fill="#fef2f2" stroke="#dc2626" stroke-width="1"/>
+  <ellipse cx="827" cy="548" rx="25" ry="8" fill="none" stroke="#dc2626" stroke-width="1"/>
+  <text x="827" y="575" text-anchor="middle" fill="#991b1b" font-family="system-ui, sans-serif" font-size="10" font-weight="700">Qdrant</text>
+  <text x="827" y="586" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="7">Port 6333</text>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- ROW 4: DATA SOURCES + AZURE DEPLOYMENT -->
+  <!-- ══════════════════════════════════════════════ -->
+
+  <!-- Data Sources (left) -->
+  <text x="30" y="635" fill="#64748b" font-family="system-ui, sans-serif" font-size="11" font-weight="600" letter-spacing="1.5">EXTERNAL DATA SOURCES</text>
+
+  <g filter="url(#sh)">
+    <rect x="30" y="650" width="130" height="55" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  </g>
+  <rect x="30" y="650" width="130" height="4" rx="2" fill="#7c3aed"/>
+  <text x="95" y="672" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="10" font-weight="700">Yahoo Finance</text>
+  <text x="95" y="688" text-anchor="middle" fill="#64748b" font-family="system-ui, sans-serif" font-size="9">Quotes, financials, history</text>
+  <text x="95" y="700" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="8">yfinance</text>
+
+  <g filter="url(#sh)">
+    <rect x="172" y="650" width="130" height="55" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  </g>
+  <rect x="172" y="650" width="130" height="4" rx="2" fill="#059669"/>
+  <text x="237" y="672" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="10" font-weight="700">SEC EDGAR</text>
+  <text x="237" y="688" text-anchor="middle" fill="#64748b" font-family="system-ui, sans-serif" font-size="9">10-K annual reports</text>
+  <text x="237" y="700" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="8">sec_edgar_tool.py</text>
+
+  <g filter="url(#sh)">
+    <rect x="314" y="650" width="130" height="55" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  </g>
+  <rect x="314" y="650" width="130" height="4" rx="2" fill="#dc2626"/>
+  <text x="379" y="672" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="10" font-weight="700">Reddit API</text>
+  <text x="379" y="688" text-anchor="middle" fill="#64748b" font-family="system-ui, sans-serif" font-size="9">WSB, stocks, investing</text>
+  <text x="379" y="700" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="8">reddit_sentiment_tool.py</text>
+
+  <g filter="url(#sh)">
+    <rect x="456" y="650" width="130" height="55" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  </g>
+  <rect x="456" y="650" width="130" height="4" rx="2" fill="#ea580c"/>
+  <text x="521" y="672" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="10" font-weight="700">DuckDuckGo</text>
+  <text x="521" y="688" text-anchor="middle" fill="#64748b" font-family="system-ui, sans-serif" font-size="9">News article search</text>
+  <text x="521" y="700" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="8">search_tool.py</text>
+
+  <!-- Azure Deployment (right) -->
+  <g filter="url(#sh-lg)">
+    <rect x="620" y="625" width="270" height="175" rx="14" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+  </g>
+  <rect x="620" y="625" width="270" height="5" rx="2.5" fill="#0284c7"/>
+  <text x="755" y="652" text-anchor="middle" fill="#0c4a6e" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Azure Deployment</text>
+  <text x="755" y="667" text-anchor="middle" fill="#64748b" font-family="system-ui, sans-serif" font-size="9">Terraform IaC | Container Apps</text>
+
+  <rect x="635" y="678" width="120" height="22" rx="4" fill="#f0f9ff" stroke="#bae6fd" stroke-width="0.5"/>
+  <text x="695" y="693" text-anchor="middle" fill="#0369a1" font-family="monospace" font-size="8">API Container App</text>
+  <rect x="760" y="678" width="120" height="22" rx="4" fill="#f0f9ff" stroke="#bae6fd" stroke-width="0.5"/>
+  <text x="820" y="693" text-anchor="middle" fill="#0369a1" font-family="monospace" font-size="8">Bot Container App</text>
+
+  <rect x="635" y="706" width="120" height="22" rx="4" fill="#fef2f2" stroke="#fca5a5" stroke-width="0.5"/>
+  <text x="695" y="721" text-anchor="middle" fill="#b91c1c" font-family="monospace" font-size="8">Qdrant Container</text>
+  <rect x="760" y="706" width="120" height="22" rx="4" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="0.5"/>
+  <text x="820" y="721" text-anchor="middle" fill="#6d28d9" font-family="monospace" font-size="8">Container Registry</text>
+
+  <rect x="635" y="734" width="120" height="22" rx="4" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="0.5"/>
+  <text x="695" y="749" text-anchor="middle" fill="#047857" font-family="monospace" font-size="8">Key Vault</text>
+  <rect x="760" y="734" width="120" height="22" rx="4" fill="#fff7ed" stroke="#fed7aa" stroke-width="0.5"/>
+  <text x="820" y="749" text-anchor="middle" fill="#c2410c" font-family="monospace" font-size="8">Log Analytics</text>
+
+  <!-- CI/CD -->
+  <rect x="635" y="765" width="245" height="20" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.5"/>
+  <text x="757" y="779" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="8">GitHub Actions → Lint → Test → Security → Build → Deploy</text>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- Utility features (bottom right) -->
+  <!-- ══════════════════════════════════════════════ -->
+  <g filter="url(#sh)">
+    <rect x="920" y="275" width="250" height="190" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+  </g>
+  <rect x="920" y="275" width="250" height="5" rx="2.5" fill="#059669"/>
+  <text x="1045" y="300" text-anchor="middle" fill="#065f46" font-family="system-ui, sans-serif" font-size="12" font-weight="700">Utility Services</text>
+
+  <rect x="935" y="312" width="220" height="20" rx="4" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="0.5"/>
+  <text x="1045" y="326" text-anchor="middle" fill="#047857" font-family="monospace" font-size="9">Rate Limiter (token bucket)</text>
+  <rect x="935" y="338" width="220" height="20" rx="4" fill="#f0f9ff" stroke="#bae6fd" stroke-width="0.5"/>
+  <text x="1045" y="352" text-anchor="middle" fill="#0369a1" font-family="monospace" font-size="9">In-Memory Cache (TTL)</text>
+  <rect x="935" y="364" width="220" height="20" rx="4" fill="#fff7ed" stroke="#fed7aa" stroke-width="0.5"/>
+  <text x="1045" y="378" text-anchor="middle" fill="#c2410c" font-family="monospace" font-size="9">Watchlist Service (per-user)</text>
+  <rect x="935" y="390" width="220" height="20" rx="4" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="0.5"/>
+  <text x="1045" y="404" text-anchor="middle" fill="#6d28d9" font-family="monospace" font-size="9">Price Alerts (background)</text>
+  <rect x="935" y="416" width="220" height="20" rx="4" fill="#fef2f2" stroke="#fecaca" stroke-width="0.5"/>
+  <text x="1045" y="430" text-anchor="middle" fill="#b91c1c" font-family="monospace" font-size="9">Auth Middleware (API keys)</text>
+  <rect x="935" y="442" width="220" height="14" rx="3" fill="#f8fafc"/>
+  <text x="1045" y="453" text-anchor="middle" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="8">structlog logging | Pydantic validation</text>
+
+  <!-- Quality metrics (bottom right) -->
+  <g filter="url(#sh)">
+    <rect x="920" y="480" width="250" height="85" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+  </g>
+  <rect x="920" y="480" width="250" height="5" rx="2.5" fill="#1e293b"/>
+  <text x="1045" y="506" text-anchor="middle" fill="#0f172a" font-family="system-ui, sans-serif" font-size="12" font-weight="700">Quality &amp; Metrics</text>
+  <text x="1045" y="526" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="10">205 test cases | 53% coverage</text>
+  <text x="1045" y="542" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="10">10,400+ LOC | Bandit security scan</text>
+  <text x="1045" y="556" text-anchor="middle" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="9">~$50-110/month Azure cost</text>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- TECH FOOTER -->
+  <!-- ══════════════════════════════════════════════ -->
+  <line x1="30" y1="830" x2="1170" y2="830" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="30" y="850" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10" font-weight="600" letter-spacing="1.5">STACK</text>
+  <g transform="translate(80, 838)">
+    <rect x="0" y="0" width="72" height="20" rx="10" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="0.5"/><text x="36" y="14" text-anchor="middle" fill="#6d28d9" font-family="system-ui, sans-serif" font-size="9">LangGraph</text>
+    <rect x="78" y="0" width="72" height="20" rx="10" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="0.5"/><text x="114" y="14" text-anchor="middle" fill="#6d28d9" font-family="system-ui, sans-serif" font-size="9">LangChain</text>
+    <rect x="156" y="0" width="55" height="20" rx="10" fill="#fef2f2" stroke="#fecaca" stroke-width="0.5"/><text x="183" y="14" text-anchor="middle" fill="#b91c1c" font-family="system-ui, sans-serif" font-size="9">Qdrant</text>
+    <rect x="217" y="0" width="48" height="20" rx="10" fill="#fff7ed" stroke="#fed7aa" stroke-width="0.5"/><text x="241" y="14" text-anchor="middle" fill="#c2410c" font-family="system-ui, sans-serif" font-size="9">Groq</text>
+    <rect x="271" y="0" width="55" height="20" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="0.5"/><text x="298" y="14" text-anchor="middle" fill="#2563eb" font-family="system-ui, sans-serif" font-size="9">FastAPI</text>
+    <rect x="332" y="0" width="55" height="20" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="0.5"/><text x="359" y="14" text-anchor="middle" fill="#2563eb" font-family="system-ui, sans-serif" font-size="9">Python</text>
+    <rect x="393" y="0" width="55" height="20" rx="10" fill="#f0f9ff" stroke="#bae6fd" stroke-width="0.5"/><text x="420" y="14" text-anchor="middle" fill="#0369a1" font-family="system-ui, sans-serif" font-size="9">Docker</text>
+    <rect x="454" y="0" width="48" height="20" rx="10" fill="#f0f9ff" stroke="#bae6fd" stroke-width="0.5"/><text x="478" y="14" text-anchor="middle" fill="#0369a1" font-family="system-ui, sans-serif" font-size="9">Azure</text>
+    <rect x="508" y="0" width="68" height="20" rx="10" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="0.5"/><text x="542" y="14" text-anchor="middle" fill="#047857" font-family="system-ui, sans-serif" font-size="9">Terraform</text>
+    <rect x="582" y="0" width="65" height="20" rx="10" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="0.5"/><text x="614" y="14" text-anchor="middle" fill="#047857" font-family="system-ui, sans-serif" font-size="9">Telegram</text>
+    <rect x="653" y="0" width="85" height="20" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="0.5"/><text x="695" y="14" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="9">GitHub Actions</text>
+  </g>
+</svg>
