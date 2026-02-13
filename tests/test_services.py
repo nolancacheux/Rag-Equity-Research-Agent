@@ -1,7 +1,6 @@
 """Tests for service modules."""
 
 
-import pytest
 
 
 class TestChatService:
@@ -10,7 +9,7 @@ class TestChatService:
     def test_system_prompt_defined(self):
         """Test that system prompt is defined."""
         from src.services.chat import SYSTEM_PROMPT
-        
+
         assert SYSTEM_PROMPT is not None
         assert "FinanceAgent" in SYSTEM_PROMPT
 

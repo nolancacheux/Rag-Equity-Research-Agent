@@ -3,7 +3,7 @@
 import json
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 import structlog
@@ -11,7 +11,7 @@ import structlog
 logger = structlog.get_logger()
 
 
-class AlertType(str, Enum):
+class AlertType(StrEnum):
     """Type of price alert."""
 
     PRICE_ABOVE = "price_above"

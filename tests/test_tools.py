@@ -138,7 +138,7 @@ class TestYFinanceTool:
 
         tool = YFinanceTool()
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             tool.get_quote("NVDA")
 
     def test_safe_float_with_nan(self):
@@ -223,7 +223,7 @@ class TestYFinanceTool:
 
         tool = YFinanceTool()
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             tool.get_financials("NVDA")
 
     @patch("src.tools.yfinance_tool.yf.Ticker")
@@ -347,7 +347,7 @@ class TestDuckDuckGoSearchTool:
 
         tool = DuckDuckGoSearchTool()
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             tool.search("test query")
 
     @patch("src.tools.search_tool.DDGS")
@@ -404,7 +404,7 @@ class TestDuckDuckGoSearchTool:
 
         tool = DuckDuckGoSearchTool()
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             tool.search_news("test")
 
     @patch("src.tools.search_tool.DDGS")

@@ -1,14 +1,14 @@
 """Risk scoring service based on 10-K analysis and market data."""
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 import structlog
 
 logger = structlog.get_logger()
 
 
-class RiskCategory(str, Enum):
+class RiskCategory(StrEnum):
     """Risk categories."""
 
     MARKET = "market"

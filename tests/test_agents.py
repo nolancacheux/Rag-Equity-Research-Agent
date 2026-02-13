@@ -695,7 +695,7 @@ class TestSynthesizerAgent:
             with patch("langchain_groq.ChatGroq") as mock_groq:
                 from src.agents.synthesizer import SynthesizerAgent
 
-                agent = SynthesizerAgent()
+                agent = SynthesizerAgent() # noqa: F841
                 mock_groq.assert_called_once()
 
     def test_create_llm_azure(self):
@@ -712,7 +712,7 @@ class TestSynthesizerAgent:
             with patch("langchain_openai.AzureChatOpenAI") as mock_azure:
                 from src.agents.synthesizer import SynthesizerAgent
 
-                agent = SynthesizerAgent()
+                agent = SynthesizerAgent() # noqa: F841
                 mock_azure.assert_called_once()
 
     def test_create_llm_openai(self):
@@ -727,7 +727,7 @@ class TestSynthesizerAgent:
             with patch("langchain_openai.ChatOpenAI") as mock_openai:
                 from src.agents.synthesizer import SynthesizerAgent
 
-                agent = SynthesizerAgent()
+                agent = SynthesizerAgent() # noqa: F841
                 mock_openai.assert_called_once()
 
     def test_create_llm_no_provider(self):

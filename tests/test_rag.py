@@ -437,7 +437,7 @@ class TestQdrantStore:
         from src.rag.vector_store import QdrantStore
 
         store = QdrantStore()
-        client = store._get_client()
+        _ = store._get_client()
 
         mock_client_class.assert_called_once()
 
