@@ -25,7 +25,7 @@ dependencies = [
     
     # Financial Data
     "yfinance>=0.2.40",
-    "sec-edgar-downloader>=5.0.0",
+    "sec-edgar-downloader>=5.1.0",
     
     # RAG & Vector DB
     "qdrant-client>=1.9.0",
