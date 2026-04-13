@@ -54,7 +54,7 @@ dependencies = [
     "structlog>=24.0.0",
     
     # Telegram Bot
-    "python-telegram-bot>=21.0",
+    "python-telegram-bot>=22.7",
 ]
 
 [project.optional-dependencies]
