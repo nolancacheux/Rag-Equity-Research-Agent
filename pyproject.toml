@@ -50,7 +50,7 @@ dependencies = [
     
     # Monitoring
     "prometheus-client>=0.20.0",
-    "python-dotenv>=1.0.0",
+    "python-dotenv>=1.2.2",
     "structlog>=24.0.0",
     
     # Telegram Bot
